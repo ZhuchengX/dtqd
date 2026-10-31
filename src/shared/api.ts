@@ -213,7 +213,7 @@ export type {
   CanvasApi,
 } from './canvas';
 
-export type { TeamsApi } from './teams';
+export type { TeamsApi, TeamsSyncResult } from './teams';
 
 export type {
   ExtensionSessionState,

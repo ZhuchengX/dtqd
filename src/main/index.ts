@@ -27,6 +27,7 @@ import type { TrayAction } from '../shared/window';
 import { registerCanvasIpc, refreshCanvasTrees } from './canvas/ipc';
 import { flushTeamsSession } from './teams/session';
 import { registerTeamsIpc } from './teams/window';
+import { registerTeamsSyncIpc, scheduleStartupTeamsSync } from './teams/sync';
 import { registerShuiyuanIpc } from './shuiyuan/ipc';
 import { openShuiyuanLinkInApp } from './shuiyuan/links';
 import { registerPreviewProtocol, registerPreviewScheme } from './workspace/preview';
@@ -223,6 +224,8 @@ app
     registerVsjtuIpc();
     registerCanvasIpc();
     registerTeamsIpc();
+    registerTeamsSyncIpc();
+    scheduleStartupTeamsSync();
     registerShuiyuanIpc();
     registerAgentIpc();
     registerWorkspaceIpc(subscribeChat, invalidateSessions);

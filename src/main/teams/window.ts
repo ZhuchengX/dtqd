@@ -62,6 +62,16 @@ function configureTeamsSession(teams: Session): void {
   );
 }
 
+/** 已配置好的 Teams 分区（同步用的隐藏窗口与可见窗口共用）。 */
+export function teamsSession(): Promise<Session> {
+  return getTeamsSession(configureTeamsSession);
+}
+
+/** 正在显示的 Teams 窗口（若有），同步时优先复用它。 */
+export function visibleTeamsWindow(): BrowserWindow | undefined {
+  return teamsWindow && !teamsWindow.isDestroyed() ? teamsWindow : undefined;
+}
+
 let teamsWindow: BrowserWindow | undefined;
 
 function guardNavigation(window: BrowserWindow): void {
