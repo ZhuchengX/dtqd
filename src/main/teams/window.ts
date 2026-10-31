@@ -1,9 +1,9 @@
 // Microsoft Teams 网页版独立窗口：学生在窗内自行登录 Dundee 账号，DTQD 不读取其中的消息或令牌。
 // 独立持久分区，与校园会话互不影响；只允许微软登录与 Teams 相关域名在窗内打开，其余链接交给系统浏览器。
-import { BrowserWindow, ipcMain, session, shell, type Session } from 'electron';
+import { BrowserWindow, ipcMain, shell, type Session } from 'electron';
 import { attachContextMenu, checkWorkspaceSender } from '../ipc';
+import { flushTeamsSession, getTeamsSession, TEAMS_PARTITION } from './session';
 
-export const TEAMS_PARTITION = 'persist:dtqd-teams';
 export const TEAMS_URL = 'https://teams.cloud.microsoft/';
 
 const MICROSOFT_ROOTS = [
@@ -50,10 +50,7 @@ const ALLOWED_PERMISSIONS = new Set([
   'display-capture',
 ]);
 
-let configured: Session | undefined;
-function teamsSession(): Session {
-  if (configured) return configured;
-  const teams = session.fromPartition(TEAMS_PARTITION);
+function configureTeamsSession(teams: Session): void {
   teams.setUserAgent(teamsUserAgent(teams.getUserAgent()));
   // 通知、麦克风/摄像头、剪贴板只授予微软域内的页面（Teams 通话与提醒需要）。
   teams.setPermissionRequestHandler((contents, permission, callback) => {
@@ -63,8 +60,6 @@ function teamsSession(): Session {
     (_contents, permission, origin) =>
       ALLOWED_PERMISSIONS.has(permission) && isTeamsInternalUrl(origin),
   );
-  configured = teams;
-  return teams;
 }
 
 let teamsWindow: BrowserWindow | undefined;
@@ -97,10 +92,16 @@ function guardNavigation(window: BrowserWindow): void {
 }
 
 /** 打开 Teams 窗口；已打开则前置。 */
-export function openTeamsWindow(): void {
+export async function openTeamsWindow(): Promise<void> {
   if (teamsWindow && !teamsWindow.isDestroyed()) {
     if (teamsWindow.isMinimized()) teamsWindow.restore();
     teamsWindow.show();
+    teamsWindow.focus();
+    return;
+  }
+  const teams = await getTeamsSession(configureTeamsSession);
+  // 等会话准备期间又点了一次：窗口已由前一次打开，前置即可。
+  if (teamsWindow && !teamsWindow.isDestroyed()) {
     teamsWindow.focus();
     return;
   }
@@ -112,7 +113,7 @@ export function openTeamsWindow(): void {
     autoHideMenuBar: true,
     title: 'Teams · DTQD',
     webPreferences: {
-      session: teamsSession(),
+      session: teams,
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -120,6 +121,7 @@ export function openTeamsWindow(): void {
   });
   attachContextMenu(window.webContents);
   guardNavigation(window);
+  window.on('close', () => void flushTeamsSession());
   window.on('closed', () => {
     teamsWindow = undefined;
   });
@@ -128,8 +130,8 @@ export function openTeamsWindow(): void {
 }
 
 export function registerTeamsIpc(): void {
-  ipcMain.handle('teams:open', (event) => {
+  ipcMain.handle('teams:open', async (event) => {
     checkWorkspaceSender(event);
-    openTeamsWindow();
+    await openTeamsWindow();
   });
 }

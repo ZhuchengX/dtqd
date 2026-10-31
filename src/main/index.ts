@@ -25,6 +25,7 @@ import { registerVsjtuIpc } from './vsjtu/ipc';
 import { attachContextMenu, checkWorkspaceSender } from './ipc';
 import type { TrayAction } from '../shared/window';
 import { registerCanvasIpc, refreshCanvasTrees } from './canvas/ipc';
+import { flushTeamsSession } from './teams/session';
 import { registerTeamsIpc } from './teams/window';
 import { registerShuiyuanIpc } from './shuiyuan/ipc';
 import { openShuiyuanLinkInApp } from './shuiyuan/links';
@@ -500,6 +501,7 @@ app.on('window-all-closed', () => {
 let sessionsClosed = false;
 app.on('before-quit', (event) => {
   quitting = true;
+  void flushTeamsSession();
   if (!sessionsClosed && hasLiveSessions()) {
     event.preventDefault();
     sessionsClosed = true;
