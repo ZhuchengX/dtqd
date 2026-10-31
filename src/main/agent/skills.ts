@@ -31,6 +31,12 @@ import diicsuPolicySkill from './skills/diicsu-policy/SKILL.md?raw';
 import diicsuProgrammesSkill from './skills/diicsu-programmes/SKILL.md?raw';
 import studyCoachSkill from './skills/study-coach/SKILL.md?raw';
 import researchStarterSkill from './skills/research-starter/SKILL.md?raw';
+import writingFeedbackSkill from './skills/writing-feedback/SKILL.md?raw';
+import staffEmailSkill from './skills/staff-email/SKILL.md?raw';
+import glossarySkill from './skills/glossary/SKILL.md?raw';
+import gradePlannerSkill from './skills/grade-planner/SKILL.md?raw';
+import examPrepSkill from './skills/exam-prep/SKILL.md?raw';
+import mcHelperSkill from './skills/mc-helper/SKILL.md?raw';
 
 const SKILL_ENTRY_FILE = 'SKILL.md';
 const CAPABILITY_SETUP_KEY = 'capabilities-onboarding-completed';
@@ -77,6 +83,12 @@ const BUILTIN_SKILLS: Readonly<Record<string, { path: string; content: string }[
   'diicsu-programmes': [{ path: SKILL_ENTRY_FILE, content: diicsuProgrammesSkill }],
   'study-coach': [{ path: SKILL_ENTRY_FILE, content: studyCoachSkill }],
   'research-starter': [{ path: SKILL_ENTRY_FILE, content: researchStarterSkill }],
+  'writing-feedback': [{ path: SKILL_ENTRY_FILE, content: writingFeedbackSkill }],
+  'staff-email': [{ path: SKILL_ENTRY_FILE, content: staffEmailSkill }],
+  'glossary': [{ path: SKILL_ENTRY_FILE, content: glossarySkill }],
+  'grade-planner': [{ path: SKILL_ENTRY_FILE, content: gradePlannerSkill }],
+  'exam-prep': [{ path: SKILL_ENTRY_FILE, content: examPrepSkill }],
+  'mc-helper': [{ path: SKILL_ENTRY_FILE, content: mcHelperSkill }],
 };
 
 let builtinEnsured = false;
