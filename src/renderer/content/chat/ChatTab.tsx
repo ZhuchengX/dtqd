@@ -17,6 +17,7 @@ import { errorText, useWorkspaceStore } from '../../workspace/store';
 import { openTarget } from '../../workbench/open-target';
 import { showToast } from '../../app/toasts';
 import { reviewTabId } from '../review/tab-id';
+import { HomeDigest } from '../../features/home/HomeDigest';
 import { SidechatPanel } from './SidechatPanel';
 import { openSidechat, useSidechats } from './sidechat-store';
 
@@ -265,6 +266,8 @@ const ChatSessionView = memo(function ChatSessionView({
             <h1 className="mb-6 text-center text-3xl font-semibold tracking-tight @max-[400px]:text-2xl">
               现在想聊些什么？
             </h1>
+            {/* 首页（随聊、无项目）在输入框上方显示今天 / 本周；项目会话不显示。 */}
+            {projectId === null && <HomeDigest />}
             {composer(true)}
           </div>
         </div>
