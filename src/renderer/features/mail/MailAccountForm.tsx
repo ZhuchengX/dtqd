@@ -1,11 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { MailConfigureInput } from '../../../shared/mail';
 import { SegmentedControl } from '../../components/ui/beautifului/atoms/SegmentedControl';
 import { Input } from '../../components/ui/input';
 import { cn } from '../../lib/utils';
 
-const modes = ['交大邮箱', '第三方 IMAP'] as const;
+const modes = ['交大邮箱', 'Dundee Outlook', '第三方 IMAP'] as const;
 
 /** 向导页与邮箱空态共用的连接表单：交大邮箱走预设，第三方 IMAP 自填服务器参数。 */
 export function MailAccountForm({
@@ -29,6 +29,27 @@ export function MailAccountForm({
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('465');
   const custom = mode === '第三方 IMAP';
+  const microsoft = mode === 'Dundee Outlook';
+  // Dundee Outlook（Microsoft 365）：只填 Azure 应用 ID，登录在微软页面完成（含 MFA）。
+  const [clientId, setClientId] = useState('');
+  const [tenant, setTenant] = useState('organizations');
+  const [channels, setChannels] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const load = window.dela?.mail.getMicrosoftConfig;
+    if (!load) return;
+    void load()
+      .then((config) => {
+        if (cancelled) return;
+        setClientId((current) => current || config.clientId);
+        setTenant((current) => (current === 'organizations' ? config.tenant : current));
+        setChannels(config.channels);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const wizard = variant === 'wizard';
   const field = wizard ? 'h-10 rounded-card' : '';
   const label = wizard ? 'text-13 font-medium text-ink-2' : 'text-xs font-medium text-ink-3';
@@ -38,6 +59,14 @@ export function MailAccountForm({
       className={wizard ? 'grid gap-5' : 'grid gap-4'}
       onSubmit={(event) => {
         event.preventDefault();
+        if (microsoft) {
+          onSubmit({
+            address: address.trim(),
+            password: '',
+            microsoft: { clientId: clientId.trim(), tenant: tenant.trim(), channels },
+          });
+          return;
+        }
         onSubmit({
           address: address.trim(),
           password,
@@ -61,24 +90,64 @@ export function MailAccountForm({
           autoComplete="off"
           className={field}
           onChange={(event) => setAddress(event.target.value)}
-          placeholder={custom ? 'name@example.com' : 'name@sjtu.edu.cn'}
-          required
+          placeholder={
+            microsoft ? 'studentID@dundee.ac.uk' : custom ? 'name@example.com' : 'name@sjtu.edu.cn'
+          }
+          required={!microsoft}
           type="email"
           value={address}
         />
       </label>
-      <label className="grid gap-2">
-        <span className={label}>密码</span>
-        <Input
-          autoComplete="current-password"
-          className={field}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder={custom ? '邮箱密码或授权码' : 'jAccount 密码'}
-          required
-          type="password"
-          value={password}
-        />
-      </label>
+      {microsoft ? (
+        <div className="grid gap-4">
+          <label className="grid gap-2">
+            <span className={label}>Azure 应用（客户端）ID</span>
+            <Input
+              autoComplete="off"
+              className={field}
+              onChange={(event) => setClientId(event.target.value)}
+              placeholder="00000000-0000-0000-0000-000000000000"
+              value={clientId}
+            />
+          </label>
+          <label className="grid gap-2">
+            <span className={label}>租户（tenant）</span>
+            <Input
+              autoComplete="off"
+              className={field}
+              onChange={(event) => setTenant(event.target.value)}
+              placeholder="organizations"
+              value={tenant}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-ink-3">
+            <input
+              checked={channels}
+              onChange={(event) => setChannels(event.target.checked)}
+              type="checkbox"
+            />
+            同时读取 Teams 团队频道消息（需学校管理员同意，不确定就别勾）
+          </label>
+          <p className="text-xs leading-relaxed text-ink-3">
+            {clientId.trim()
+              ? '点击登录后在微软页面完成账号与 MFA 验证；邮件经 IMAP/SMTP OAuth2 收发，Teams 聊天只读。'
+              : '需先在 Azure 注册应用，并把「应用程序（客户端）ID」填到上面（步骤见 docs/microsoft365-setup.md）。'}
+          </p>
+        </div>
+      ) : (
+        <label className="grid gap-2">
+          <span className={label}>密码</span>
+          <Input
+            autoComplete="current-password"
+            className={field}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder={custom ? '邮箱密码或授权码' : 'jAccount 密码'}
+            required
+            type="password"
+            value={password}
+          />
+        </label>
+      )}
       <AnimatePresence initial={false}>
         {custom && (
           <motion.div

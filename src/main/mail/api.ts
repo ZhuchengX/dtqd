@@ -29,8 +29,10 @@ import {
   specialUseRank,
   toSummary,
   type FolderRow,
+  type ImapSecret,
   type MessageRow,
 } from './store';
+import { mailUsesMicrosoft, resolveMailSecret } from './microsoft';
 import { emitMailCacheChanged, SYNC_WINDOW, syncStatus } from './sync';
 
 // 邮件域入口：查询、读信、附件、已读、本地回收站与发送。同步与账号配置在 sync.ts，
@@ -61,7 +63,7 @@ async function fetchMissingBody(row: MessageRow, folderPath: string): Promise<vo
   const account = getAccountRow();
   const credential = account ? loadMailCredentials() : null;
   if (!account || !credential) throw new Error('邮箱未配置');
-  const client = connectImap(account.address, credential.password);
+  const client = connectImap(account.address, await resolveMailSecret(credential));
   try {
     await client.connect();
     const lock = await client.getMailboxLock(folderPath);
@@ -237,7 +239,7 @@ export async function saveMailAttachment(
     dirname(targetPath),
     `.${basename(targetPath)}.${randomUUID()}.download`,
   );
-  const client = connectImap(account.address, credential.password);
+  const client = connectImap(account.address, await resolveMailSecret(credential));
   try {
     await client.connect();
     const lock = await client.getMailboxLock(row.folder_path);
@@ -324,7 +326,13 @@ export async function markMailSeen(messageId: unknown): Promise<MailResult> {
   const account = getAccountRow();
   const credential = account ? loadMailCredentials() : null;
   if (!account || !credential) return { ok: false, error: '邮箱未配置' };
-  const client = connectImap(account.address, credential.password);
+  let secret: ImapSecret;
+  try {
+    secret = await resolveMailSecret(credential);
+  } catch (error) {
+    return { ok: false, error: friendlyError(error) };
+  }
+  const client = connectImap(account.address, secret);
   try {
     await client.connect();
     const lock = await client.getMailboxLock(row.folder_path);
@@ -378,7 +386,13 @@ export async function markAllMailSeen(): Promise<MailResult> {
     group.uids.push(row.uid);
     group.ids.push(row.id);
   }
-  const client = connectImap(account.address, credential.password);
+  let secret: ImapSecret;
+  try {
+    secret = await resolveMailSecret(credential);
+  } catch (error) {
+    return { ok: false, error: friendlyError(error) };
+  }
+  const client = connectImap(account.address, secret);
   try {
     await client.connect();
     for (const group of byFolder.values()) {
@@ -514,7 +528,14 @@ export async function sendMessage(input: unknown): Promise<MailResult> {
     sentPath = sent?.path ?? null;
   }
   return sendMailMessage(credential, input, async (message) => {
-    const client = connectImap(credential.address, credential.password);
+    // Exchange Online 会把 SMTP AUTH 提交的邮件自动存入「已发送邮件」，再 APPEND 会重复一份（待真实账号实测确认）。
+    if (mailUsesMicrosoft()) return null;
+    let client;
+    try {
+      client = connectImap(credential.address, await resolveMailSecret(credential));
+    } catch {
+      return '邮件已发送，但未能保存到“已发送”文件夹';
+    }
     try {
       await client.connect();
       const destination =

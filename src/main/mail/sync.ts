@@ -4,9 +4,16 @@ import { BrowserWindow } from 'electron';
 import type { ImapFlow, ListResponse } from 'imapflow';
 import { z } from 'zod';
 import type { MailAddress, MailConfigureInput, MailResult, MailSyncStatus } from '../../shared/api';
-import { SJTU_MAIL_SERVER } from '../../shared/mail';
+import { SJTU_MAIL_SERVER, type MailServerConfig } from '../../shared/mail';
 import { getDatabase } from '../database';
 import { clearMailCredentials, loadMailCredentials, saveMailCredentials } from '../credentials';
+import type { MailCredential } from '../credentials';
+import {
+  forgetMicrosoftAccount,
+  mailUsesMicrosoft,
+  resolveMailSecret,
+  setMailAuthProvider,
+} from './microsoft';
 import {
   addressJson,
   collectAttachments,
@@ -26,6 +33,7 @@ import {
   writeMailSetting,
   type AccountRow,
   type FolderRow,
+  type ImapSecret,
 } from './store';
 
 export const SYNC_WINDOW = 300;
@@ -226,11 +234,11 @@ async function purgeServerDrafts(client: ImapFlow, listed: ListResponse[], addre
   writeMailSetting('mail-drafts-purged', address);
 }
 
-async function runSync(account: AccountRow, password: string): Promise<void> {
+async function runSync(account: AccountRow, credential: MailCredential): Promise<void> {
   const generation = syncGeneration;
   const db = getDatabase();
   const isStale = () => generation !== syncGeneration;
-  const client = connectImap(account.address, password);
+  // 先同步置为 connecting（调用方据此判断同步已开始），再按需刷新令牌。
   updateSync({
     phase: 'connecting',
     folderPath: null,
@@ -240,12 +248,27 @@ async function runSync(account: AccountRow, password: string): Promise<void> {
     startedAt: new Date().toISOString(),
     finishedAt: null,
   });
+  let password: ImapSecret;
+  try {
+    // Dundee Outlook 账号在这里按需刷新 OAuth2 令牌；密码账号原样返回密码。
+    password = await resolveMailSecret(credential);
+  } catch (error) {
+    updateSync({
+      phase: 'error',
+      folderPath: null,
+      error: friendlyError(error),
+      finishedAt: new Date().toISOString(),
+    });
+    return;
+  }
+  const client = connectImap(account.address, password);
   try {
     await client.connect();
     updateSync({ phase: 'syncing' });
     const listed = await client.list();
     try {
-      await purgeServerDrafts(client, listed, account.address);
+      // 交大历史迁移用的一次性清理；Dundee Outlook 的草稿与网页版/桌面版共享，绝不清空。
+      if (!mailUsesMicrosoft()) await purgeServerDrafts(client, listed, account.address);
     } catch {
       // 服务器草稿箱清理失败不写键（下次同步重试），也不中断其余文件夹同步。
     }
@@ -330,7 +353,6 @@ export async function configureMailAccount(input: MailConfigureInput): Promise<M
   if (!input.server && !address.endsWith('@sjtu.edu.cn')) {
     return { ok: false, error: '交大邮箱地址需以 @sjtu.edu.cn 结尾，或改选第三方 IMAP' };
   }
-  const db = getDatabase();
   const client = connectImap(address, password, server);
   try {
     await client.connect();
@@ -339,6 +361,25 @@ export async function configureMailAccount(input: MailConfigureInput): Promise<M
     return { ok: false, error: friendlyError(error) };
   }
   client.close();
+  const stored = storeMailAccount(address, server, password);
+  if (stored.ok) {
+    // 改回密码登录：旧的 Microsoft 365 登录（含 Teams）随之失效。
+    setMailAuthProvider('password');
+    forgetMicrosoftAccount();
+  }
+  return stored;
+}
+
+/**
+ * 写入（或更新）唯一的邮箱账号行并保存凭据；换地址时清掉旧账号缓存。
+ * 密码登录与 Dundee Outlook OAuth2 登录共用（后者 password 为空串，令牌另存）。
+ */
+export function storeMailAccount(
+  address: string,
+  server: MailServerConfig,
+  password: string,
+): MailResult {
+  const db = getDatabase();
   const existing = getAccountRow();
   if (existing && existing.address !== address) {
     syncGeneration += 1;
@@ -378,6 +419,9 @@ export function disconnectMailAccount(): MailResult {
   } catch {
     // 凭据文件已不存在时忽略。
   }
+  // Dundee Outlook 登录（含 Teams 令牌）随邮箱一起断开。
+  setMailAuthProvider('password');
+  forgetMicrosoftAccount();
   updateSync({
     phase: 'idle',
     folderPath: null,
@@ -407,7 +451,7 @@ export function startMailSync(): void {
     return;
   }
   syncGeneration += 1;
-  activeSync = runSync(account, credential.password).finally(() => {
+  activeSync = runSync(account, credential).finally(() => {
     activeSync = null;
   });
 }

@@ -91,11 +91,72 @@ export const SJTU_MAIL_SERVER: MailServerConfig = {
   smtpPort: 465,
 };
 
+/**
+ * Dundee Outlook（Microsoft 365 / Exchange Online）预设：基本认证已被微软禁用，
+ * IMAP/SMTP 均走 OAuth2 XOAUTH2。SMTP 用 587 + STARTTLS（不是隐式 TLS 465）。
+ */
+export const MICROSOFT_MAIL_SERVER: MailServerConfig = {
+  imapHost: 'outlook.office365.com',
+  imapPort: 993,
+  smtpHost: 'smtp.office365.com',
+  smtpPort: 587,
+};
+
+/** Dundee 学生账号形如 studentID@dundee.ac.uk。 */
+export const DUNDEE_MAIL_DOMAIN = 'dundee.ac.uk';
+
+/** Microsoft 365 登录参数：clientId 是熊祝成在 Azure 注册的应用 ID，不内置任何第三方应用的 ID。 */
+export interface MicrosoftLoginInput {
+  readonly clientId: string;
+  /** 默认 organizations（任意工作/学校账号）；也可填 dundee.ac.uk 或租户 GUID。 */
+  readonly tenant?: string;
+  /** 额外请求团队频道权限（ChannelMessage.Read.All 需管理员同意）。 */
+  readonly channels?: boolean;
+}
+
 export interface MailConfigureInput {
   readonly address: string;
   readonly password: string;
   /** 不传即交大邮箱预设；第三方 IMAP 传自填的服务器参数。 */
   readonly server?: MailServerConfig;
+  /** 传入即走 Dundee Outlook（Microsoft 365）OAuth2 登录；此时 password 忽略，address 只作登录提示。 */
+  readonly microsoft?: MicrosoftLoginInput;
+}
+
+/** 设置里保存的 Microsoft 应用参数（不含任何令牌），供表单回填。 */
+export interface MicrosoftConfigView {
+  readonly clientId: string;
+  readonly tenant: string;
+  readonly channels: boolean;
+  /** 当前邮箱是否经 Microsoft 365 登录（Teams 能力随之可用）。 */
+  readonly signedIn: boolean;
+  readonly address: string | null;
+}
+
+export interface TeamsChatSummary {
+  readonly id: string;
+  readonly topic: string | null;
+  readonly chatType: string;
+  /** 只为没有主题的聊天（多为 1:1）补成员名，用来辨认对方。 */
+  readonly members: readonly string[];
+  readonly lastUpdatedAt: string | null;
+  /** 最后一条消息预览：列表按它的时间排序（lastUpdatedAt 只反映改名/成员变动）。 */
+  readonly lastMessage: {
+    readonly from: string | null;
+    readonly text: string;
+    readonly createdAt: string | null;
+  } | null;
+  readonly webUrl: string | null;
+}
+
+export interface TeamsMessage {
+  readonly id: string;
+  readonly createdAt: string | null;
+  readonly from: string | null;
+  readonly text: string;
+  readonly messageType: string;
+  readonly attachments: readonly string[];
+  readonly webUrl: string | null;
 }
 
 export type MailComposeFileKind = 'attachment' | 'inline';
@@ -175,4 +236,10 @@ export interface MailApi {
   onRequestClose(listener: (quitting: boolean) => void): () => void;
   syncNow(): Promise<void>;
   onSyncStatus(listener: (status: MailSyncStatus) => void): () => void;
+  /** Dundee Outlook：读取已保存的 Azure 应用参数与登录状态。 */
+  getMicrosoftConfig(): Promise<MicrosoftConfigView>;
+  /** Teams（Microsoft Graph，只读）：最近聊天列表。 */
+  listTeamsChats(limit?: number): Promise<readonly TeamsChatSummary[]>;
+  /** Teams（Microsoft Graph，只读）：某个聊天的最近消息。 */
+  listTeamsMessages(chatId: string, limit?: number): Promise<readonly TeamsMessage[]>;
 }

@@ -41,4 +41,8 @@ export const mail = {
   syncNow: () => invoke('mail:sync'),
   onSyncStatus: (listener: (status: MailSyncStatus) => void) =>
     on<MailSyncStatus>('mail:sync-status', listener),
+  getMicrosoftConfig: () => invoke('mail:get-microsoft-config'),
+  listTeamsChats: (limit?: number) => invoke('mail:list-teams-chats', limit),
+  listTeamsMessages: (chatId: string, limit?: number) =>
+    invoke('mail:list-teams-messages', chatId, limit),
 } satisfies MailApi;

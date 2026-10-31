@@ -79,7 +79,7 @@ function MailUnavailable() {
     <div className="grid h-full place-items-center p-8">
       <div className="grid w-full max-w-[28.75rem] gap-2">
         <p className="text-2xs font-medium text-ink-3">浏览器预览</p>
-        <h2 className="text-lg font-semibold tracking-tight">邮箱仅在 Dela 桌面端可用</h2>
+        <h2 className="text-lg font-semibold tracking-tight">邮箱仅在 DTQD 桌面端可用</h2>
         <p className="text-13 leading-relaxed text-ink-3">
           邮件账户、凭据与本地缓存不会暴露给浏览器。请通过 Electron 窗口测试同步和阅读。
         </p>

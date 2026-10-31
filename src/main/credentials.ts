@@ -24,6 +24,7 @@ export class CredentialDecryptionError extends Error {
           'mail-credentials.bin': '邮箱凭据',
           'canvas-token.bin': 'Canvas 凭据',
           'shuiyuan-key.bin': '水源凭据',
+          'microsoft-oauth.bin': 'Microsoft 365 登录',
         } as Record<string, string>
       )[basename(path)] ?? '凭据';
     super(`本机无法解密${label}，请在设置中重新配置。原加密文件仍保留，重新保存时会自动备份。`, {
@@ -88,6 +89,54 @@ export function loadMailCredentials(): MailCredential | null {
 
 export function clearMailCredentials(): void {
   removeSealed(credentialPath());
+}
+
+/**
+ * Microsoft 365（Dundee Outlook / Teams）登录：只存 refresh token 与换令牌所需的应用参数。
+ * access token 只在主进程内存里缓存，不落盘。
+ */
+export interface MicrosoftCredential {
+  address: string;
+  clientId: string;
+  tenant: string;
+  refreshToken: string;
+  /** 登录时是否请求了团队频道权限（ChannelMessage.Read.All 需管理员同意）。 */
+  channels: boolean;
+  savedAt: string;
+}
+
+function microsoftPath(): string {
+  return join(app.getPath('userData'), 'microsoft-oauth.bin');
+}
+
+export function saveMicrosoftCredential(credential: MicrosoftCredential): void {
+  writeSealed(microsoftPath(), JSON.stringify(credential));
+}
+
+export function loadMicrosoftCredential(): MicrosoftCredential | null {
+  const payload = readSealed(microsoftPath());
+  if (payload === null) return null;
+  const parsed = JSON.parse(payload) as Partial<MicrosoftCredential>;
+  if (
+    typeof parsed.address !== 'string' ||
+    typeof parsed.clientId !== 'string' ||
+    typeof parsed.tenant !== 'string' ||
+    typeof parsed.refreshToken !== 'string'
+  ) {
+    return null;
+  }
+  return {
+    address: parsed.address,
+    clientId: parsed.clientId,
+    tenant: parsed.tenant,
+    refreshToken: parsed.refreshToken,
+    channels: parsed.channels === true,
+    savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : '',
+  };
+}
+
+export function clearMicrosoftCredential(): void {
+  removeSealed(microsoftPath());
 }
 
 function canvasTokenPath(): string {

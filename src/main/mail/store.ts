@@ -65,10 +65,24 @@ export interface MessageRow {
   deleted_at: string | null;
 }
 
+// 与 microsoft.ts 的 MAIL_AUTH_PROVIDER_KEY 同一个键；此处直接读，避免 store ↔ microsoft 循环依赖。
+function usesMicrosoftAuth(): boolean {
+  try {
+    return readMailSetting('mail-auth-provider') === 'microsoft';
+  } catch {
+    return false;
+  }
+}
+
 export function friendlyError(error: unknown): string {
   if (error instanceof Error) {
     const message = error.message;
+    // Microsoft 365 登录/令牌错误自带中文说明，不能被下方 auth 正则误报成「密码错误」。
+    if (error.name === 'MicrosoftAuthError') return message;
     if (/auth|login|password|credential|invalid/i.test(message)) {
+      if (usesMicrosoftAuth()) {
+        return 'Microsoft 365 授权失效或学校关闭了 IMAP/SMTP：请在邮件设置中重新登录 Dundee Outlook';
+      }
       return '登录被拒绝：请检查邮箱地址与密码';
     }
     if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|ECONNRESET|certificate|TLS|SSL/i.test(message)) {
@@ -79,16 +93,22 @@ export function friendlyError(error: unknown): string {
   return String(error);
 }
 
+/** IMAP 登录凭据：字符串即密码（交大/第三方）；对象即 OAuth2 access token（Dundee Outlook XOAUTH2）。 */
+export type ImapSecret = string | { readonly accessToken: string };
+
 export function connectImap(
   address: string,
-  password: string,
+  password: ImapSecret,
   server: MailServerConfig = storedMailServer(),
 ): ImapFlow {
   const client = new ImapFlow({
     host: server.imapHost,
     port: server.imapPort,
     secure: true,
-    auth: { user: address, pass: password },
+    auth:
+      typeof password === 'string'
+        ? { user: address, pass: password }
+        : { user: address, accessToken: password.accessToken },
     logger: false,
   });
   client.on('error', () => {

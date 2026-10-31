@@ -36,6 +36,9 @@ vi.mock('../../credentials', () => ({
   clearMailCredentials: vi.fn(),
   loadMailCredentials: vi.fn(),
   saveMailCredentials: vi.fn(),
+  clearMicrosoftCredential: vi.fn(),
+  loadMicrosoftCredential: vi.fn(),
+  saveMicrosoftCredential: vi.fn(),
 }));
 
 // ImapFlow 桩：行为由 imapHarness 驱动，只覆盖 runSync 走到的路径。

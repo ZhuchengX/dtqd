@@ -6,6 +6,7 @@ import { z } from 'zod';
 import type { MailComposeFile, MailComposeFileKind, MailResult } from '../../shared/api';
 import type { MailCredential } from '../credentials';
 import { storedMailServer } from './server';
+import { resolveSmtpAuth } from './microsoft';
 
 import nodemailer from 'nodemailer';
 
@@ -190,6 +191,11 @@ function attachmentSource(file: SelectedFile): { path: string } | { content: Buf
 
 function friendlySendError(error: unknown): string {
   if (error instanceof Error) {
+    if (error.name === 'MicrosoftAuthError') return error.message;
+    // Exchange Online 租户/邮箱关闭 SMTP AUTH 时返回 5.7.139 / 5.7.3。
+    if (/5\.7\.139|SmtpClientAuthentication|5\.7\.3/i.test(error.message)) {
+      return '学校邮箱关闭了 SMTP 发信（SMTP AUTH）：可在网页版 Outlook 发送，或请学校 IT 为该邮箱开启';
+    }
     if (/auth|login|password|credential|invalid/i.test(error.message)) {
       return '发件服务器拒绝登录，请检查邮箱账号状态';
     }
@@ -223,11 +229,20 @@ export async function sendMailMessage(
   }
 
   const server = storedMailServer();
+  let auth;
+  try {
+    auth = await resolveSmtpAuth(credential);
+  } catch (error) {
+    return { ok: false, error: friendlySendError(error) };
+  }
+  // 587 是 STARTTLS 提交端口（Microsoft 365 只开这个），其余端口保持原来的隐式 SSL/TLS。
+  const startTls = server.smtpPort === 587;
   const transporter = nodemailer.createTransport({
     host: server.smtpHost,
     port: server.smtpPort,
-    secure: true,
-    auth: { user: credential.address, pass: credential.password },
+    secure: !startTls,
+    requireTLS: startTls,
+    auth,
     connectionTimeout: SMTP_CONNECT_TIMEOUT,
     greetingTimeout: SMTP_CONNECT_TIMEOUT,
     socketTimeout: SMTP_SOCKET_TIMEOUT,

@@ -26,6 +26,9 @@ import { basename } from 'node:path';
 import { z } from 'zod';
 import type { MailResult } from '../../shared/api';
 import { addComposeImage, pickComposeFiles, releaseComposeFiles } from './send';
+import { listTeamsChatMessages, listTeamsChats } from './graph';
+import { getMicrosoftConfig } from './microsoft';
+import { configureMicrosoftMailAccount } from './microsoft-account';
 
 const composingClients = new Set<number>();
 export function hasMailComposer(id: number) {
@@ -68,7 +71,26 @@ export function registerMailIpc(): void {
   });
   ipcMain.handle('mail:get-state', () => getMailState());
 
-  ipcMain.handle('mail:configure', (_event, input: unknown): Promise<MailResult> => {
+  ipcMain.handle('mail:configure', (event, input: unknown): Promise<MailResult> => {
+    // Dundee Outlook（Microsoft 365）：OAuth2 登录窗授权，不收密码。
+    const microsoft = z
+      .object({
+        address: z.string().max(320),
+        password: z.string().optional(),
+        microsoft: z.object({
+          clientId: z.string().trim().max(64),
+          tenant: z.string().trim().max(253).optional(),
+          channels: z.boolean().optional(),
+        }),
+      })
+      .safeParse(input);
+    if (microsoft.success) {
+      return configureMicrosoftMailAccount(event.sender, {
+        address: microsoft.data.address,
+        password: '',
+        microsoft: microsoft.data.microsoft,
+      });
+    }
     const parsed = z
       .object({
         address: z.string(),
@@ -162,5 +184,13 @@ export function registerMailIpc(): void {
 
   ipcMain.handle('mail:sync', () => {
     startMailSync();
+  });
+
+  // Dundee Outlook 应用参数回填与 Teams（Graph）只读查询。
+  handle('get-microsoft-config', () => getMicrosoftConfig());
+  handle('list-teams-chats', (limit: unknown) => listTeamsChats(limit));
+  handle('list-teams-messages', async (chatId: unknown, limit: unknown) => {
+    const { items } = await listTeamsChatMessages(chatId, limit);
+    return items;
   });
 }
