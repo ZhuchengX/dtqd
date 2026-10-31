@@ -277,11 +277,11 @@ export function ConnectionsSection({
         <Dialog.Portal>
           <Dialog.Overlay className={dialogOverlay} />
           <Dialog.Content className={cn(dialogPanel, 'max-h-[85vh] max-w-md overflow-y-auto')}>
-            <Dialog.Title className="text-base font-semibold">配置 Canvas</Dialog.Title>
+            <Dialog.Title className="text-base font-semibold">连接 myDundee</Dialog.Title>
             <Dialog.Description className="mt-2 text-xs leading-relaxed text-ink-3">
               {canvas.connected
-                ? '输入新的个人 Access Token 以替换当前连接。'
-                : '输入个人 Access Token，验证成功后读取课程列表；凭据加密保存在本机。'}
+                ? '已连接；登录过期时重新登录或导入即可。'
+                : '登录一次即可，之后自动保持；登录过期时 DTQD 会提示重新登录。'}
             </Dialog.Description>
             <CanvasTokenForm
               actions={
