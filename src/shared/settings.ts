@@ -60,6 +60,7 @@ export type SettingsSectionId =
   | 'workspace'
   | 'archived'
   | 'connections'
+  | 'inbox'
   | 'providers'
   | 'capabilities'
   | 'commands'

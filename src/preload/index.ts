@@ -3,6 +3,7 @@ import { version } from '../../package.json';
 import type { DelaApi } from '../shared/api';
 import { canvas } from './canvas';
 import { teams } from './teams';
+import { inbox } from './inbox';
 import { cache } from './cache';
 import { chat } from './chat';
 import { consent } from './consent';
@@ -48,6 +49,7 @@ contextBridge.exposeInMainWorld('dela', {
   shuiyuan,
   canvas,
   teams,
+  inbox,
   workspace,
   session,
   sidechat,

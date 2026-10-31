@@ -5,6 +5,7 @@ import type { CacheApi } from './cache';
 import type { CapabilityApi } from './capabilities';
 import type { CanvasApi } from './canvas';
 import type { TeamsApi } from './teams';
+import type { InboxApi } from './inbox';
 import type { ChatApi } from './chat';
 import type { PackageApi } from './packages';
 import type { ConsentApi } from './consent';
@@ -62,6 +63,7 @@ export interface DelaApi {
   readonly shuiyuan: ShuiyuanApi;
   readonly canvas: CanvasApi;
   readonly teams: TeamsApi;
+  readonly inbox: InboxApi;
   readonly workspace: WorkspaceApi;
   readonly session: SessionApi;
   readonly sidechat: SidechatApi;
@@ -214,6 +216,17 @@ export type {
 } from './canvas';
 
 export type { TeamsApi, TeamsSyncResult } from './teams';
+export type {
+  InboxApi,
+  InboxPrefs,
+  InboxRun,
+  InboxRunStatus,
+  InboxSource,
+  InboxSourceStatus,
+  InboxSourceStatusKind,
+  InboxState,
+} from './inbox';
+export { inboxInterestOptions, inboxSourceLabels } from './inbox';
 
 export type {
   ExtensionSessionState,

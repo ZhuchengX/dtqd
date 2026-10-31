@@ -18,6 +18,7 @@ import { SettingsView } from '../features/settings';
 import { UpdatePrompt } from '../features/settings/UpdatePrompt';
 import { ExtensionUiHost } from '../content/chat/ExtensionUiHost';
 import { ReleaseNotesDialog } from '../features/release-notes/ReleaseNotesDialog';
+import { InboxNoticeDialog } from '../features/inbox/InboxNoticeDialog';
 import { useUpdateState } from '../features/settings/update';
 import { useExperimental, useExperimentEnabled } from '../features/settings/experimental';
 import { parsePreviewTabId } from '../content/preview/tab-id';
@@ -438,6 +439,7 @@ export default function App() {
       {appVisible && <UpdatePrompt />}
       {appVisible && <ExtensionUiHost />}
       {launchStage === 'app' && <ReleaseNotesDialog />}
+      {launchStage === 'app' && <InboxNoticeDialog />}
       {launchStage === 'completion' && <CompletionOverlay onFinished={finishCompletion} />}
     </>
   );

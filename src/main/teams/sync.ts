@@ -11,7 +11,6 @@ import { availablePath, diskName, storageDirectory } from '../storage';
 import { buildThreads, digestMarkdown, threadMarkdown, type TeamsThread } from './digest';
 import type { TeamsSyncResult } from '../../shared/teams';
 import { extractScript, STATS_SCRIPT, type RawTeamsSnapshot } from './extract';
-import { triageTeamsDigest } from './triage';
 import { TEAMS_URL, teamsSession, visibleTeamsWindow } from './window';
 
 const POLL_MS = 5000;
@@ -109,10 +108,13 @@ async function withTeamsPage<T>(run: (contents: WebContents) => Promise<T>): Pro
   }
 }
 
-let running: Promise<TeamsSyncResult> | undefined;
+/** 同步结果；digest 是本次新消息的汇总正文，交给重要事项提取（不经 IPC 发给页面）。 */
+export type TeamsSyncOutcome = TeamsSyncResult & { digest?: string };
+
+let running: Promise<TeamsSyncOutcome> | undefined;
 
 /** 同步一次；已在同步中时返回 busy。 */
-export function syncTeams(): Promise<TeamsSyncResult> {
+export function syncTeams(): Promise<TeamsSyncOutcome> {
   if (running) return Promise.resolve({ status: 'busy', newMessages: 0, conversations: 0 });
   running = withTeamsPage(async (contents) => {
     const ready = await waitUntilSynced(contents);
@@ -130,28 +132,16 @@ export function syncTeams(): Promise<TeamsSyncResult> {
     for (const thread of threads) await archiveThread(dir, state, thread);
     const now = Date.now();
     const digestPath = join(dir, '最近更新.md');
-    // 没有新消息时保留上一份「最近更新」，没来得及提取待办（如还没配模型）的内容不会被空汇总冲掉。
-    if (threads.length > 0 || !existsSync(digestPath))
-      await writeFile(digestPath, digestMarkdown(threads, state.since, now));
+    const digest = digestMarkdown(threads, state.since, now);
+    // 没有新消息时保留上一份「最近更新」，学生翻看时还能看到最近一批。
+    if (threads.length > 0 || !existsSync(digestPath)) await writeFile(digestPath, digest);
     await writeState(dir, { since: Math.max(state.since, snapshot.latest), files: state.files });
-    const newMessages = threads.reduce((sum, thread) => sum + thread.messages.length, 0);
-    // 没有新消息时不再花一次模型调用；从没提取过（比如刚配好模型）则补一次。
-    const triage =
-      newMessages > 0 || !existsSync(join(dir, '待办提取.md'))
-        ? await triageTeamsDigest(dir).then(
-            ({ status, items, todos }) => ({ status, items: items.length, todos }),
-            (error: unknown) => {
-              console.warn('[teams] 待办提取失败', error instanceof Error ? error.message : error);
-              return { status: 'failed' as const, items: 0, todos: 0 };
-            },
-          )
-        : undefined;
     return {
       status: 'ok',
-      newMessages,
+      newMessages: threads.reduce((sum, thread) => sum + thread.messages.length, 0),
       conversations: threads.length,
       digestPath,
-      triage,
+      digest,
     } as const;
   }).finally(() => {
     running = undefined;
@@ -164,28 +154,10 @@ export function hasTeamsLogin(): boolean {
   return existsSync(join(app.getPath('userData'), 'teams-session.bin'));
 }
 
-/** 启动后稍等再同步，避开开机时的其他初始化。 */
-export function scheduleStartupTeamsSync(delayMs = 20000): void {
-  if (!hasTeamsLogin()) return;
-  setTimeout(() => {
-    void syncTeams()
-      .then((result) =>
-        console.info(
-          '[teams] 启动同步',
-          result.status,
-          result.newMessages,
-          result.triage
-            ? `待办提取 ${result.triage.status} ${result.triage.items}/${result.triage.todos}`
-            : '',
-        ),
-      )
-      .catch((error: unknown) => console.warn('[teams] 启动同步失败', error));
-  }, delayMs);
-}
-
 export function registerTeamsSyncIpc(): void {
-  ipcMain.handle('teams:sync', (event) => {
+  ipcMain.handle('teams:sync', async (event) => {
     checkWorkspaceSender(event);
-    return syncTeams();
+    const { digest: _digest, ...result } = await syncTeams();
+    return result;
   });
 }

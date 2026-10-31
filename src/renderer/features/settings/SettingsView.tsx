@@ -15,6 +15,7 @@ import { SkillsSection } from './sections/SkillsSection';
 import { TermsSection } from './sections/TermsSection';
 import { WorkspaceSection } from './sections/WorkspaceSection';
 import { ConnectionsSection } from './connections/ConnectionsSection';
+import { InboxSection } from '../inbox/InboxSection';
 import { SettingsNav, type SettingsSectionId } from './SettingsNav';
 import type { ThemePreference, ZoomPreference } from '../../../shared/api';
 
@@ -77,6 +78,7 @@ export function SettingsView({
               onOpenTimetable={onOpenTimetable}
             />
           )}
+          {section === 'inbox' && <InboxSection />}
           {section === 'providers' && <LlmSection />}
           {section === 'remotes' && <RemoteSection />}
           {section === 'capabilities' && <CapabilitiesSection />}

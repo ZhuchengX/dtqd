@@ -162,6 +162,25 @@ export const settingsSearchItems: SettingsSearchItem[] = [
     title: '中南大学教务系统',
     keywords: ['连接', '教务', '课表', 'timetable', '课程表'],
   },
+  // 重要事项
+  {
+    id: 'inbox-ai',
+    section: 'inbox',
+    title: 'AI 提取重要事项',
+    keywords: ['重要事项', '待办', '提取', 'teams', '通知', 'ai', '模型', '隐私'],
+  },
+  {
+    id: 'inbox-interests',
+    section: 'inbox',
+    title: '我关心的方向',
+    keywords: ['兴趣', '实习', '保研', '竞赛', '出国', '考研'],
+  },
+  {
+    id: 'inbox-sources',
+    section: 'inbox',
+    title: '来源与同步',
+    keywords: ['同步', 'teams', 'outlook', 'mydundee', 'qq', '立即同步'],
+  },
   {
     id: 'shuiyuan',
     section: 'connections',
@@ -241,6 +260,7 @@ export const settingsSectionLabels: Record<SettingsSectionId, string> = {
   workspace: '工作区',
   archived: '已归档',
   connections: '连接',
+  inbox: '重要事项',
   remotes: '远程',
   providers: '模型供应商',
   capabilities: '内置能力',
@@ -261,6 +281,7 @@ export const settingsSectionSummaries: Record<SettingsSectionId, string> = {
   workspace: '工作目录与布局',
   archived: '恢复或永久删除已归档对话',
   connections: 'Canvas、邮箱、教务与水源连接',
+  inbox: 'Teams、Outlook、myDundee、QQ 的重要事项提取与同步状态',
   remotes: 'SSH 远程主机与连接',
   providers: 'AI 模型与 API 提供商',
   capabilities: '内置 Agent 能力开关',
