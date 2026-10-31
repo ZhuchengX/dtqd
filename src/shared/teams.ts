@@ -4,6 +4,8 @@ export interface TeamsSyncResult {
   newMessages: number;
   conversations: number;
   digestPath?: string;
+  /** 模型提取截止日期/通知/待回复：no-model 表示还没配模型。 */
+  triage?: { status: 'ok' | 'no-model' | 'failed'; items: number; todos: number };
 }
 
 export interface TeamsApi {
