@@ -1,12 +1,12 @@
 // 功能入口的单一真源：侧栏、折叠后标题栏图标与设置 › 通用 的显示开关都读这里。
 // 功能开启 > 入口显示：隐藏只影响导航，能力仍在；功能关闭（目前只有水源）时入口消失。首页固定显示，不在此列表。
-import { CalendarDays, FolderOpen, Mail, MonitorPlay } from 'lucide-react';
+import { CalendarDays, FolderOpen, Mail, MessagesSquare, MonitorPlay } from 'lucide-react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ShuiyuanIcon } from '../components/ui/shuiyuan-icon';
 import { useExperimentEnabled } from '../features/settings/experimental';
 
-export type NavEntryId = 'sources' | 'mail' | 'timetable' | 'classroom' | 'shuiyuan';
+export type NavEntryId = 'sources' | 'teams' | 'mail' | 'timetable' | 'classroom' | 'shuiyuan';
 
 export const navEntries: Array<{
   id: NavEntryId;
@@ -14,6 +14,8 @@ export const navEntries: Array<{
   icon: typeof Mail | typeof ShuiyuanIcon;
 }> = [
   { id: 'sources', label: '资料', icon: FolderOpen },
+  // DTQD：Teams 是 DIICSU 第一通知渠道，点开独立的 Teams 网页窗口，不是应用内页面。
+  { id: 'teams', label: 'Teams', icon: MessagesSquare },
   { id: 'mail', label: '邮箱', icon: Mail },
   { id: 'timetable', label: '课表', icon: CalendarDays },
   { id: 'classroom', label: '课堂视频', icon: MonitorPlay },

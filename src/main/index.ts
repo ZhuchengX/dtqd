@@ -25,6 +25,7 @@ import { registerVsjtuIpc } from './vsjtu/ipc';
 import { attachContextMenu, checkWorkspaceSender } from './ipc';
 import type { TrayAction } from '../shared/window';
 import { registerCanvasIpc, refreshCanvasTrees } from './canvas/ipc';
+import { registerTeamsIpc } from './teams/window';
 import { registerShuiyuanIpc } from './shuiyuan/ipc';
 import { openShuiyuanLinkInApp } from './shuiyuan/links';
 import { registerPreviewProtocol, registerPreviewScheme } from './workspace/preview';
@@ -220,6 +221,7 @@ app
     registerTimetableIpc();
     registerVsjtuIpc();
     registerCanvasIpc();
+    registerTeamsIpc();
     registerShuiyuanIpc();
     registerAgentIpc();
     registerWorkspaceIpc(subscribeChat, invalidateSessions);

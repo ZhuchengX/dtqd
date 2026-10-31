@@ -4,6 +4,7 @@ import type { BackupApi } from './backup';
 import type { CacheApi } from './cache';
 import type { CapabilityApi } from './capabilities';
 import type { CanvasApi } from './canvas';
+import type { TeamsApi } from './teams';
 import type { ChatApi } from './chat';
 import type { PackageApi } from './packages';
 import type { ConsentApi } from './consent';
@@ -60,6 +61,7 @@ export interface DelaApi {
   readonly timetable: TimetableApi;
   readonly shuiyuan: ShuiyuanApi;
   readonly canvas: CanvasApi;
+  readonly teams: TeamsApi;
   readonly workspace: WorkspaceApi;
   readonly session: SessionApi;
   readonly sidechat: SidechatApi;
@@ -210,6 +212,8 @@ export type {
   CanvasState,
   CanvasApi,
 } from './canvas';
+
+export type { TeamsApi } from './teams';
 
 export type {
   ExtensionSessionState,

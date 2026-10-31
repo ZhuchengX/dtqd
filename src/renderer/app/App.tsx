@@ -309,7 +309,11 @@ export default function App() {
             void useNavigationStore.getState().openChat(sessionId, owner);
           }}
           onOpenGeneralChat={() => void useNavigationStore.getState().openGeneralChat(false)}
-          onNavigateBusiness={(id) => void useNavigationStore.getState().navigate(id)}
+          onNavigateBusiness={(id) =>
+            id === 'teams'
+              ? void window.dela?.teams.open()
+              : void useNavigationStore.getState().navigate(id)
+          }
         >
           <MotionConfig reducedMotion="user">
             <AnimatePresence initial={false} mode="wait">
