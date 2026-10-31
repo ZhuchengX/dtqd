@@ -1,7 +1,7 @@
 import type { TimetableLesson } from './api';
 
 // 上海交大教务处公布的本科生节次表。第 13 节仅用于 11–13 节连上的课程。
-export const classPeriods = [
+export const sjtuClassPeriods = [
   [8 * 60, 8 * 60 + 45],
   [8 * 60 + 55, 9 * 60 + 40],
   [10 * 60, 10 * 60 + 45],
@@ -16,6 +16,26 @@ export const classPeriods = [
   [18 * 60 + 55, 19 * 60 + 40],
   [19 * 60 + 50, 20 * 60 + 20],
 ] as const;
+
+/**
+ * 中南大学（潇湘校区）节次表：每大节 1 小时 40 分，按两小节各 45 分钟、课间 10 分钟拆分。
+ * 大节起止由熊祝成 2026-10-31 提供；11–12 节官方时间待核实，暂不排入。
+ */
+export const csuClassPeriods = [
+  [8 * 60, 8 * 60 + 45],
+  [8 * 60 + 55, 9 * 60 + 40],
+  [10 * 60, 10 * 60 + 45],
+  [10 * 60 + 55, 11 * 60 + 40],
+  [14 * 60, 14 * 60 + 45],
+  [14 * 60 + 55, 15 * 60 + 40],
+  [16 * 60, 16 * 60 + 45],
+  [16 * 60 + 55, 17 * 60 + 40],
+  [19 * 60, 19 * 60 + 45],
+  [19 * 60 + 55, 20 * 60 + 40],
+] as const;
+
+// DTQD 面向 DIICSU，默认用中南节次表；交大表保留供上游同步。
+export const classPeriods: readonly (readonly [number, number])[] = csuClassPeriods;
 
 export function lessonOccurrences(
   lessons: readonly TimetableLesson[],

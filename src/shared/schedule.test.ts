@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TimetableLesson } from './api';
-import { lessonOccurrences } from './schedule';
+import { classPeriods, lessonOccurrences } from './schedule';
 
 const lesson: TimetableLesson = {
   id: 1,
@@ -59,5 +59,17 @@ describe('campus lesson dates', () => {
       lessonOccurrences([lesson], '2026-02-30', '2026-09-01T00:00:00Z', '2026-10-01T00:00:00Z')
         .warnings,
     ).toEqual(['学期开始日期无效']);
+  });
+});
+
+describe('csuClassPeriods', () => {
+  it('中南大节起止：1-2 8:00–9:40，5-6 14:00–15:40，9-10 19:00–20:40', () => {
+    const range = (start: number, end: number) => [
+      classPeriods[start - 1]![0],
+      classPeriods[end - 1]![1],
+    ];
+    expect(range(1, 2)).toEqual([8 * 60, 9 * 60 + 40]);
+    expect(range(5, 6)).toEqual([14 * 60, 15 * 60 + 40]);
+    expect(range(9, 10)).toEqual([19 * 60, 20 * 60 + 40]);
   });
 });
