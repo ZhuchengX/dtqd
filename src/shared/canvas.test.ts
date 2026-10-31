@@ -107,3 +107,17 @@ describe('groupCanvasCoursesByTerm', () => {
     expect(groupCanvasCoursesByTerm([])).toEqual([]);
   });
 });
+
+describe('邓迪模块学期键', () => {
+  it('按 第二学期 > 第一学期 > 全学年 > 更早学年 排序，最新学期取第二学期', () => {
+    const terms = ['2024-2025-1', '2025-2026 全学年', '2025-2026-1', '2025-2026-2', '未标注学期'];
+    expect([...terms].sort(compareCanvasTerms)).toEqual([
+      '2025-2026-2',
+      '2025-2026-1',
+      '2025-2026 全学年',
+      '2024-2025-1',
+      '未标注学期',
+    ]);
+    expect(latestTermOf(terms.map((term) => ({ term })))).toBe('2025-2026-2');
+  });
+});

@@ -135,7 +135,7 @@ export function ConnectionsSection({
   const connections: Connection[] = [
     {
       itemId: 'canvas',
-      name: 'Canvas',
+      name: 'myDundee（Blackboard）',
       icon: GraduationCap,
       state: canvas.connected ? '已连接' : '未连接',
       connected: canvas.connected,

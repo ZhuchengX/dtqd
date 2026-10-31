@@ -199,10 +199,15 @@ export function blackboardSubmission(grade: Row | undefined): Row | undefined {
 
 /** 学期名：优先 terms 接口的 name，其次课程名里的学年（如 2025/26、2025-26）。 */
 export function blackboardTerm(termName: string, course: Row): string {
-  if (termName) return termName;
   const text = `${str(course.name)} ${str(course.courseId)}`;
-  const match = text.match(/(20\d{2})\s*[/-]\s*(\d{2,4})/);
-  if (!match) return '未标注学期';
+  // DIICSU 模块名带「( SEM 1 25/26 )」，换成与中南课表一致的学期键 2025-2026-1。
+  const semester = text.match(/SEM\s*([12])(?:\s*-\s*([12]))?\s+(\d{2})\/(\d{2})/i);
+  if (semester) {
+    const year = `20${semester[3]}-20${semester[4]}`;
+    return semester[2] ? `${year} 全学年` : `${year}-${semester[1]}`;
+  }
+  const match = `${termName} ${text}`.match(/(20\d{2})\s*[/-]\s*(\d{2,4})/);
+  if (!match) return termName || '未标注学期';
   const end = match[2]!.length === 2 ? `20${match[2]}` : match[2]!;
   return `${match[1]}-${end} 学年`;
 }

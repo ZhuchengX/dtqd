@@ -50,7 +50,7 @@ export function SourcesTree({
   const confirmCourse =
     confirmCourseId === null ? undefined : canvas.courses.find((c) => c.id === confirmCourseId);
   const nodes: ExplorerItem[] = [];
-  if (bySource) nodes.push({ id: 'canvas', parentId: null, name: 'Canvas', container: true });
+  if (bySource) nodes.push({ id: 'canvas', parentId: null, name: 'myDundee', container: true });
   const terms = [...new Set(canvas.courses.map((c) => c.term))].sort(compareCanvasTerms);
   const latestTerm = latestTermOf(canvas.courses);
   const archivedTerms = new Set(

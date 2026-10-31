@@ -137,8 +137,18 @@ export const settingsSearchItems: SettingsSearchItem[] = [
   {
     id: 'canvas',
     section: 'connections',
-    title: 'Canvas',
-    keywords: ['连接', 'canvas', '令牌', 'token', '课程', '作业'],
+    title: 'myDundee（Blackboard）',
+    keywords: [
+      '连接',
+      'mydundee',
+      'dundee',
+      'blackboard',
+      'canvas',
+      '令牌',
+      'token',
+      '课程',
+      '作业',
+    ],
   },
   {
     id: 'mail',

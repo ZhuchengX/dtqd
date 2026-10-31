@@ -123,9 +123,19 @@ describe('blackboardSubmission', () => {
 });
 
 describe('blackboardTerm', () => {
-  it('优先 terms 名称，其次课程名里的学年', () => {
-    expect(blackboardTerm('2025/26 Semester 1', {})).toBe('2025/26 Semester 1');
+  it('模块名里的 SEM 换成中南学期键，其次 terms 名称与课程名里的学年', () => {
+    expect(blackboardTerm('2025-26', { name: 'DI41011 - Graph Theory ( SEM 1 25/26 )' })).toBe(
+      '2025-2026-1',
+    );
+    expect(blackboardTerm('', { name: 'DI42005 - Mathematical Biology II ( SEM 2 25/26 )' })).toBe(
+      '2025-2026-2',
+    );
+    expect(blackboardTerm('', { name: 'DI40001 - Honours Project ( SEM 1-2 25/26 )' })).toBe(
+      '2025-2026 全学年',
+    );
+    expect(blackboardTerm('2025-26', { name: 'Statistics' })).toBe('2025-2026 学年');
     expect(blackboardTerm('', { name: 'Calculus 2 (2025/26)' })).toBe('2025-2026 学年');
+    expect(blackboardTerm('Open Term', { name: 'No year' })).toBe('Open Term');
     expect(blackboardTerm('', { name: 'No year' })).toBe('未标注学期');
   });
 });

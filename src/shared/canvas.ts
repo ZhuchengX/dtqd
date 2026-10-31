@@ -33,6 +33,13 @@ export interface CanvasState {
 /** 可识别学期按年份、季节降序并排在前面；同一时期或均无法识别时沿用名称降序。 */
 export function compareCanvasTerms(a: string, b: string): number {
   const order = (term: string) => {
+    // 邓迪模块学期键：2025-2026-1 / 2025-2026-2 / 2025-2026 全学年。
+    const dundee = term.match(/^(\d{4})-(\d{4})(?:-([12])| 全学年| 学年)$/);
+    if (dundee) {
+      const start = Number(dundee[1]);
+      if (dundee[3] === '2') return (start + 1) * 3;
+      return start * 3 + (dundee[3] === '1' ? 2 : 1.5);
+    }
     const match = term.match(
       /(?:^|\D)(\d{4})(?:\s*-\s*(\d{4}))?\s*(?:学年|年)?[\s_]*(Fall|Spring|Summer|秋季?|春季?|夏季?)(?:学期)?\s*$/i,
     );

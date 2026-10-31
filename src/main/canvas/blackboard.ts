@@ -151,6 +151,8 @@ export async function loginBlackboard(sender: WebContents): Promise<void> {
     title: '登录 myDundee',
     url: `${BLACKBOARD_ORIGIN}/ultra/course`,
     reached: (url) => {
+      // 跳转途中窗口地址可能短暂为空，不能直接 new URL。
+      if (!URL.canParse(url)) return false;
       const parsed = new URL(url);
       return parsed.origin === BLACKBOARD_ORIGIN && parsed.pathname.startsWith('/ultra');
     },
