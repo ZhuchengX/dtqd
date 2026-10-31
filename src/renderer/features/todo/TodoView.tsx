@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  CalendarArrowDown,
   CalendarCheck,
   CalendarDays,
   CalendarPlus,
@@ -256,6 +257,22 @@ export function TodoView({ request }: { request?: { id: string } }) {
       setBusy(false);
     }
   };
+  const exportIcs = async () => {
+    setBusy(true);
+    try {
+      const count = await window.dela!.todo.exportIcs();
+      if (count !== null)
+        showToast({
+          variant: 'success',
+          title: `已导出 ${count} 个截止时间`,
+          description: '双击 .ics 文件加入系统日历',
+        });
+    } catch (reason) {
+      showToast({ variant: 'error', title: '导出失败', description: errorText(reason) });
+    } finally {
+      setBusy(false);
+    }
+  };
   const detail = state?.items.find((item) => item.id === detailId);
   const editing = state?.items.find((item) => item.id === editingId);
   const items =
@@ -323,6 +340,16 @@ export function TodoView({ request }: { request?: { id: string } }) {
               onClick={() => void run(() => window.dela!.todo.refresh(), { failTitle: '同步失败' })}
             >
               <RefreshCw className={cn('size-4', state?.syncing && 'animate-spin')} />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="导出截止时间到日历"
+              title="导出截止时间到日历（.ics，含提前 1 天与 3 小时提醒）"
+              disabled={busy || !window.dela?.todo?.exportIcs}
+              onClick={() => void exportIcs()}
+            >
+              <CalendarArrowDown className="size-4" />
             </Button>
             <Button
               size="sm"

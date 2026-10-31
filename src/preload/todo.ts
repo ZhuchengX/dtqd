@@ -7,5 +7,6 @@ export const todo = {
   save: (input: TodoSaveInput) => invoke('todo:save', input),
   remove: (id: string) => invoke('todo:remove', id),
   markRead: (id: string) => invoke('todo:mark-read', id),
+  exportIcs: () => invoke('todo:export-ics'),
   onUpdate: (listener: (state: TodoState) => void) => on<TodoState>('todo:state', listener),
 } satisfies TodoApi;

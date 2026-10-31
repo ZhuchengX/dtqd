@@ -48,6 +48,8 @@ export interface TodoApi {
   save(input: TodoSaveInput): Promise<TodoState>;
   remove(id: string): Promise<TodoState>;
   markRead(id: string): Promise<TodoState>;
+  /** 没完成、有截止时间的待办导出 .ics；返回导出件数，取消保存时为 null。 */
+  exportIcs(): Promise<number | null>;
   onUpdate(listener: (state: TodoState) => void): () => void;
 }
 

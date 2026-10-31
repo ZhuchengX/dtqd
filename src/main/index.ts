@@ -29,6 +29,7 @@ import { flushTeamsSession } from './teams/session';
 import { registerTeamsIpc } from './teams/window';
 import { registerTeamsSyncIpc } from './teams/sync';
 import { registerInboxIpc, scheduleInbox } from './inbox';
+import { registerReminderIpc, scheduleReminders } from './todo/reminders';
 import { registerShuiyuanIpc } from './shuiyuan/ipc';
 import { openShuiyuanLinkInApp } from './shuiyuan/links';
 import { registerPreviewProtocol, registerPreviewScheme } from './workspace/preview';
@@ -236,6 +237,8 @@ app
     registerSearchIpc();
     registerNotificationsIpc();
     registerTodoIpc();
+    registerReminderIpc();
+    scheduleReminders();
     registerUpdateIpc();
     initializeNotifications();
     // 回收未被任何会话引用的内联图片（上次运行遗留的草稿图片等）。

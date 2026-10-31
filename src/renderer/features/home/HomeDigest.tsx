@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { TimetableLesson, TodoItem } from '../../../shared/api';
 import { useNavigationStore } from '../../navigation/view';
 import { cn } from '../../lib/utils';
-import { dateLabel } from '../todo/todo-format';
+import { dualDueLabel } from '../../../shared/deadline';
 import { digestIsEmpty, dueDistance, homeDigest } from './home-digest';
 
 const LIST_LIMIT = 5;
@@ -51,7 +51,7 @@ function TodoRow({ item, now, urgent }: { item: TodoItem; now: Date; urgent?: bo
         <span className="min-w-0 flex-1 truncate text-13 text-ink">{item.title}</span>
         {item.dueAt && (
           <span className={cn('shrink-0 text-xs', urgent ? 'text-red' : 'text-ink-3')}>
-            {dateLabel(item.dueAt)} · {dueDistance(item.dueAt, now)}
+            {dualDueLabel(item.dueAt)} · {dueDistance(item.dueAt, now)}
           </span>
         )}
       </button>

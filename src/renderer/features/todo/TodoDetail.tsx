@@ -16,6 +16,44 @@ import { sanitizeHtml } from '../../lib/sanitize-html';
 import { cn } from '../../lib/utils';
 import { TodoSheet } from './TodoSheet';
 import { dateLabel } from './todo-format';
+import { dualDueLabel } from '../../../shared/deadline';
+import {
+  needsSubmitChecklist,
+  readChecked,
+  submitChecklist,
+  writeChecked,
+} from './submit-checklist';
+
+function SubmitChecklist({ id }: { id: string }) {
+  const [checked, setChecked] = useState<number[]>(() => readChecked(id));
+  const toggle = (index: number) => {
+    const next = checked.includes(index)
+      ? checked.filter((value) => value !== index)
+      : [...checked, index];
+    setChecked(next);
+    writeChecked(id, next);
+  };
+  return (
+    <fieldset className="mt-3 shrink-0 border-t pt-3">
+      <legend className="text-xs font-medium text-ink-3">
+        提交前检查 {checked.length}/{submitChecklist.length}
+      </legend>
+      <div className="mt-1.5 grid gap-1">
+        {submitChecklist.map((label, index) => (
+          <label className="flex items-start gap-2 text-13 text-ink-2" key={label}>
+            <input
+              checked={checked.includes(index)}
+              className="mt-0.5"
+              onChange={() => toggle(index)}
+              type="checkbox"
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 /** 未量到真实高度前的初始描述高度(px)，与邮件正文一致。 */
 const INITIAL_BODY_HEIGHT = 240;
@@ -95,7 +133,7 @@ export function TodoDetail({
         </p>
         <p className={cn('flex items-center gap-1.5', overdue && 'text-red')}>
           <CalendarClock className="size-3.5 shrink-0" />
-          截止：{dateLabel(item.dueAt)}
+          截止：{item.dueAt ? dualDueLabel(item.dueAt) : dateLabel(null)}
         </p>
         {item.submittedAt && (
           <p className="flex items-center gap-1.5">
@@ -110,6 +148,7 @@ export function TodoDetail({
           </p>
         )}
       </div>
+      {needsSubmitChecklist(item) && <SubmitChecklist id={item.id} />}
       {personal ? (
         item.notes && (
           <div className="mt-3 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words border-t pt-3 text-13 [scrollbar-width:none]">
