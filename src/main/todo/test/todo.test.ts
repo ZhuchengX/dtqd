@@ -26,6 +26,7 @@ import {
   removeTodo,
   saveTodo,
   todoNotifications,
+  addNoticedTodo,
 } from '..';
 
 let db: DatabaseSync;
@@ -108,6 +109,27 @@ describe('TODO 持久化与同步', () => {
     vi.mocked(listTodoCanvasAssignments).mockResolvedValue([]);
     await refreshTodos();
     expect(getTodoState().items).toHaveLength(0);
+  });
+  it('自动提取的待办是未读个人待办，进通知中心，正文取备注首行', () => {
+    const state = addNoticedTodo({
+      title: '提交 DI12006 作业 3',
+      notes: 'Teams · Statistics · 占期末 20%\n在 My Dundee 提交',
+      dueAt: '2026-11-05T15:59:00.000Z',
+      calendar: true,
+    });
+    expect(state.items[0]).toMatchObject({
+      source: 'personal',
+      status: 'pending',
+      readAt: null,
+      calendar: true,
+    });
+    expect(todoNotifications()).toEqual([
+      expect.objectContaining({
+        title: '提交 DI12006 作业 3',
+        body: 'Teams · Statistics · 占期末 20%',
+        readAt: null,
+      }),
+    ]);
   });
   it('个人待办可编辑、完成、重开和删除，不能手动完成 Canvas 作业', async () => {
     const item = saveTodo({ title: '准备报告' }).items[0]!;

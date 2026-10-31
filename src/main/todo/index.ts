@@ -113,6 +113,44 @@ export function saveTodo(input: unknown): TodoState {
   return broadcastTodos();
 }
 
+/** 自动提取（如 Teams 消息）新建的个人待办：同时进通知中心并弹系统通知，通知正文取备注首行。 */
+export function addNoticedTodo(input: unknown): TodoState {
+  const value = todoSaveSchema.omit({ id: true, completed: true }).parse(input);
+  const now = new Date().toISOString();
+  const item: TodoItem = {
+    id: randomUUID(),
+    source: 'personal',
+    title: value.title,
+    notes: value.notes ?? '',
+    dueAt: value.dueAt ?? null,
+    status: 'pending',
+    calendar: value.calendar ?? false,
+    color: value.color,
+    createdAt: now,
+    readAt: null,
+  };
+  getDatabase()
+    .prepare(
+      "INSERT INTO todo_items(id, owner, data, read_at, notice_at) VALUES (?, 'local', ?, NULL, ?)",
+    )
+    .run(item.id, JSON.stringify(item), now);
+  systemNotifyItem({
+    id: `todo:${item.id}`,
+    source: 'todo',
+    title: item.title,
+    body: noticeBody(item),
+    createdAt: now,
+    readAt: null,
+    href: { kind: 'todo', todoId: item.id },
+  });
+  return broadcastTodos();
+}
+
+function noticeBody(item: TodoItem): string {
+  if (item.source === 'canvas') return `${item.courseName ?? 'Canvas'} · 新作业`;
+  return item.notes.split('\n')[0] || '新待办';
+}
+
 export function removeTodo(input: unknown): TodoState {
   getDatabase()
     .prepare("DELETE FROM todo_items WHERE id=? AND owner='local'")
@@ -139,7 +177,7 @@ export function todoNotifications(): NotificationItem[] {
         id: `todo:${row.id}`,
         source: 'todo',
         title: item.title,
-        body: `${item.courseName ?? 'Canvas'} · 新作业`,
+        body: noticeBody(item),
         createdAt: row.notice_at!,
         readAt: row.read_at,
         href: { kind: 'todo', todoId: item.id },
