@@ -1,7 +1,7 @@
 <div align="center">
 
 <picture>
-  <img src="assets/Dela_white_bg.png" alt="Dela" width="160">
+  <img src="assets/DTQD_white_bg.png" alt="DTQD" width="160">
 </picture>
 
 </div>
@@ -10,58 +10,61 @@
 
 <div align="center">
 
-**An Agent Harness designed for SJTUer**
-</div>
-
-<div align="center">
-
-_The world keeps changing. Dela stays with you._
+**DTQD · 面向 DIICSU 学生的本地 AI 学习工作台**
 
 </div>
 
 ---
 
 > [!IMPORTANT]
-> 下载、安装或使用 Dela，即视为你已阅读并同意本项目的[使用条款](docs/terms.md)与[隐私条款](docs/privacy.md)。
-> 如果你不同意其中部分内容，可以跳过对应服务的配置、不提供该项凭据，从而仅使用其余功能；如果你不同意全部条款，请停止使用并卸载本软件。
+> **本项目基于 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）修改，修改日期 2026-10-31。** 修改摘要与源码获取方式见 [NOTICE.md](NOTICE.md)。
 >
-> Demo 演示与下载见 [Dela 官网](https://dela.changyo.me)。
+> **DTQD 为第三方工具，与中南大学、邓迪大学（University of Dundee）及中南大学邓迪国际学院（DIICSU）无官方关系**，不代表任何学校或学院立场。DTQD 只是学习辅助工具，不承诺任何成绩或结果。
+>
+> 下载、安装或使用 DTQD，即视为你已阅读并同意本项目的[使用条款](docs/terms.md)与[隐私条款](docs/privacy.md)（DTQD 版条款目前为草稿）。如果你不同意其中部分内容，可以跳过对应服务的配置、不提供该项凭据，从而仅使用其余功能；如果你不同意全部条款，请停止使用并卸载本软件。
 
-Dela 是一款专门面向 SJTUer 的 Agent 产品。
+DTQD 是邓途启迪基于开源项目 Dela 改造的本地 AI 学习工作台，面向中南大学邓迪国际学院（DIICSU）学生。
 
-Dela 的内核基于 Pi 构建，所有的校园服务功能都通过交大公开 API 和学校服务器交互。凭据经系统钥匙串加密后保存在本机，其余数据保存在本地，不上传服务器。
+DTQD 的 Agent 内核沿用 Dela 的 Pi 架构。凭据经系统钥匙串加密后保存在本机，其余数据保存在本地，不上传 DTQD 服务器（DTQD 没有服务器）；联网只发生在你主动配置的服务之间：myDundee / Blackboard（University of Dundee）、Microsoft（Outlook / Teams），以及你自己配置的大模型服务。
 
 ## 功能概览
 
-**水源社区与课堂视频下载属于试验功能，可在 “设置 > 通用 > 试验功能” 中开关；所有侧栏功能入口可在 “设置 > 通用 > 导航入口” 中隐藏。**
+**所有侧栏功能入口可在 “设置 > 通用 > 导航入口” 中显示或隐藏；试验功能可在 “设置 > 通用 > 试验功能” 中开关。**
 
-### 校园信息服务
+### 校园信息服务（DIICSU）
 
-- **Canvas 课程资料快捷预览**：利用 access token 同步课程资料，快捷查看和切换不同课件，还支持一键批量下载；「添加到项目」可将课件引用放入所选本地项目的根目录，支持批量导出课件
-- **校园邮箱**：支持交大邮箱和任意第三方 IMAP/SMTP 邮箱的收信与写信功能，还可以本地保存草稿
-- **课堂视频回看**：支持在应用内查看自己的课堂视频回放，支持语音识别文稿跳转和录音稿导出，还支持将课堂视频全量缓存到本地；重新打开时从上次播放位置继续
-- **课表日历**：通过教学信息网获取个人课表，月视图支持“滑拽式”创建事件，支持和 TODO 双向互通
-- **水源社区（beta）**：通过 Discourse User API Key 安全授权，为您提供水源的另一种阅读体验，并且可以接入 Agent 被调用
-- **全局搜索**：搜索内容跨项目、会话、邮件、课程资料和设置
-- **TODO**：支持 Canvas 课程作业完成状态提醒，支持写入课表日历；可以在月历图和列表两种视图中切换
+- **myDundee（Blackboard）课件**：同步课程资料，快捷预览与切换课件，可批量下载、添加到本地项目
+- **Outlook 邮箱**：收信、写信与本地草稿；同时保留任意 IMAP/SMTP 邮箱的支持
+- **Teams**（规划中）：课程群消息与文件的查看与归档
+- **微信 / QQ 接收文件归档**（规划中）：把聊天里收到的课件、作业文件按课程整理进本地项目
+- **全局搜索**：跨项目、会话、邮件、课程资料和设置搜索
+- **TODO**：作业与待办提醒，支持月历与列表两种视图
+
+### 学习辅导与科研
+
+- **学习辅导 skills**：课程知识点讲解、作业思路引导、复习规划（引导你自己完成，不代写作业）
+- **科研 skills**：文献检索与阅读、研究入门指引
+- **DIICSU 资料 skills**：专业培养方案、学院政策等公开资料的检索与解读（以学院官方发布为准）
+
+### 上游功能（DIICSU 暂无对应，默认隐藏）
+
+以下是上游 Dela 面向上海交大的专属功能，DTQD 保留代码但**默认隐藏**，可在设置中重新打开：
+
+- **课堂视频回看与下载**（交大课堂视频平台）：导航入口「课堂视频」默认隐藏；视频下载属于试验功能，默认关闭
+- **水源社区**（交大论坛）：试验功能，默认关闭
+- **交大课表**（教学信息网）：导航入口「课表」默认隐藏
 
 ### Agent 功能
 
-Dela Harness 基于 Pi 构建，可以作为一款通用 agent 产品使用，并且 Dela 在 Coding 领域进行了特别加强。
+DTQD 沿用 Dela 的 Agent 能力：支持导入第三方 skills 和接入 MCPs；提供自定义的 `web_search` 工具接入（如 DeepSeek、Brave、Google，默认关闭，需自备 API KEY）与免费的 `web_fetch` 工具（默认开启）；兼容大部分 Pi Packages 生态（扩展、skills、提示模板，来源支持 npm、git 与本地目录；扩展与 DTQD 同权限运行，安装前请确认来源可信）。
 
-Dela 支持导入第三方 skills 和接入 MCPs，通过**内置的校园 skills** 可以快速获取到用户的校园信息数据，比如读取 Canvas 课程状态，获取 Canvas 课程资料，读取个人所有邮件，获取课表，获取水源讯息、按时间范围读取课堂语音文稿与批量保存文稿等等，详情可以直接阅读应用内的内置校园 skills。
-
-Dela 提供自定义的 `web_search` 工具接入（如 DeepSeek、Brave、Google，默认关闭，需自备 API KEY），还提供免费的 `web_fetch` 工具（默认开启）。
-
-此外 Dela 还兼容大部分 Pi Packages 生态。可以安装 Pi 社区的 package（扩展、skills、提示模板），来源支持 npm、git 与本地目录；扩展与 Dela 同权限运行，安装前请确认来源可信。
-
-Dela 的 **remote project** 可以把远端服务器目录登记为项目：通过 SSH 建立连接后，Dela 上传 helper runtime 维持本机与服务器之间的稳定通道，Agent 的读写与命令直接在服务器上执行，远端目录变化实时同步到文件树。远端文件可在应用内预览与下载。
+**remote project** 可以把远端服务器目录登记为项目：通过 SSH 建立连接后，上传 helper runtime 维持本机与服务器之间的稳定通道，Agent 的读写与命令直接在服务器上执行，远端目录变化实时同步到文件树。
 
 ### 工作台功能
 
 - **Markdown 笔记编辑**：支持对 `.md` 文件即时渲染编辑，支持数学公式与 mermaid 流程图
-- **文件编辑**：任意文本文件都能打开编辑（包括 `.env`、`Makefile`、无后缀日志），按内容而不是扩展名识别；1 MB 以上只读预览
-- **内置终端**：用户可以直接在应用打开内置终端（Git Bash），如果是 remote project 则默认为 ssh，默认继承项目目录作为启动路径
+- **文件编辑**：任意文本文件都能打开编辑，按内容而不是扩展名识别；1 MB 以上只读预览
+- **内置终端**：在应用内直接打开终端（Windows 为 Git Bash），remote project 默认为 ssh
 
 ## 技术栈
 
@@ -75,7 +78,9 @@ Dela 的 **remote project** 可以把远端服务器目录登记为项目：通�
 
 ## 下载安装
 
-从 [Dela 官网](https://dela.changyo.me) 或 [GitHub Releases](https://github.com/Chang-Yo/Dela/releases/latest) 下载对应平台的安装包。Dela 支持应用内更新。
+DTQD 安装包的分发渠道：**待定**。分发安装包时会同时提供对应源码（GPL-3.0 要求）。
+
+DTQD 版**默认关闭应用内更新**（上游 Dela 的更新源已停用，避免被“更新”回 Dela）；DTQD 自有更新渠道确定后再开启。
 
 ## 本地开发
 
@@ -108,18 +113,23 @@ pnpm dev
 | [功能边界](docs/what-we-not-do.md) | 明确不做与需先讨论的功能           | 贡献者         |
 | [安全策略](SECURITY.md)            | 漏洞报告渠道、支持范围与安全边界   | 使用者、贡献者 |
 | [校园接口资料](docs/sjtu-apis.md)  | Canvas 实测数据结构与交大接口索引  | 贡献者         |
-
-## 贡献者
-
-![Contributors](https://contrib.rocks/image?repo=Chang-Yo/Dela 'Contributors')
+| [NOTICE](NOTICE.md)                | 上游项目、许可证与本 fork 修改摘要 | 使用者、贡献者 |
 
 ## 许可
 
-本项目以 GNU General Public License v3.0（GPL-3.0-or-later）发布，全文见 [LICENSE](LICENSE)。代码与素材版权归原作者所有。
+本项目以 GNU General Public License v3.0（GPL-3.0-or-later）发布，全文见 [LICENSE](LICENSE)。DTQD 是 Dela 的修改版，修改说明见 [NOTICE.md](NOTICE.md)。
 
-## 赞助鸣谢
+Dela 的名称与 logo 等素材版权归原作者所有，不在 GPL 授权范围内，DTQD 已替换为自有名称与字标；上游代码版权归 Dela 原作者与贡献者所有。
 
-您可以前往 “设置 > 关于” 页面为作者提供赞助 🙏
+## 上游致谢
+
+DTQD 站在 Dela 的肩膀上。感谢原作者 **[ChangYo](https://github.com/Chang-Yo)** 与所有 [Dela 贡献者](https://github.com/Chang-Yo/Dela/graphs/contributors) 的开源工作。
+
+![Contributors](https://contrib.rocks/image?repo=Chang-Yo/Dela 'Dela Contributors')
+
+### 上游赞助鸣谢
+
+以下是上游 Dela 项目的赞助鸣谢，原样保留：
 
 <table>
   <tr>
@@ -135,3 +145,5 @@ pnpm dev
     </td>
   </tr>
 </table>
+
+如果想支持上游 Dela 作者，请前往 [Dela 仓库](https://github.com/Chang-Yo/Dela)。

@@ -209,7 +209,7 @@ it('只有已经有本机数据的安装才显示导出入口与导出提示', a
 it('导出成功后显示保存位置', async () => {
   const exportData = vi.fn().mockResolvedValue({
     status: 'exported',
-    path: 'D:\\备份\\Dela 备份 2026-10-15 17-30',
+    path: 'D:\\备份\\DTQD 备份 2026-10-15 17-30',
     skipped: [],
   });
   vi.stubGlobal('dela', { backup: { exportData } });
@@ -217,7 +217,7 @@ it('导出成功后显示保存位置', async () => {
 
   await act(async () => button('导出本机数据').click());
   expect(exportData).toHaveBeenCalledTimes(1);
-  expect(container.textContent).toContain('D:\\备份\\Dela 备份 2026-10-15 17-30');
+  expect(container.textContent).toContain('D:\\备份\\DTQD 备份 2026-10-15 17-30');
 });
 
 it('导出期间两个按钮都锁住，连点不会重复导出', async () => {
@@ -258,13 +258,13 @@ it('用户取消导出后回到可导出状态；漏拷的条目如实列出', a
 it('保存位置不能用时说清原因，不让人反复重试', async () => {
   const exportData = vi.fn().mockResolvedValue({
     status: 'failed',
-    reason: '不能保存到 Dela 的数据目录里，请另选一个位置',
+    reason: '不能保存到 DTQD 的数据目录里，请另选一个位置',
   });
   vi.stubGlobal('dela', { backup: { exportData } });
   await render(vi.fn(), true);
 
   await act(async () => button('导出本机数据').click());
-  expect(container.textContent).toContain('不能保存到 Dela 的数据目录里，请另选一个位置');
+  expect(container.textContent).toContain('不能保存到 DTQD 的数据目录里，请另选一个位置');
   expect(button('导出本机数据').disabled).toBe(false);
 });
 

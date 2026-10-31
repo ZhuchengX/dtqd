@@ -7,6 +7,8 @@ body:
   - type: markdown
     attributes:
       value: |
+        > DTQD fork：本模板沿用上游 Dela；DTQD 本 fork 的反馈渠道待定，DTQD 版问题请勿报给上游作者。
+
         感谢你帮助改进 Dela。提交前请先搜索现有 Issue，避免重复建议。
   - type: textarea
     id: scenario

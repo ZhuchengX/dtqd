@@ -1,7 +1,7 @@
-appId: io.dela.desktop
-productName: Dela
+appId: com.dtqd.desktop
+productName: DTQD
 artifactName: '${productName}-${version}-${os}-${arch}.${ext}'
-icon: assets/Dela_white_bg.png
+icon: assets/DTQD_white_bg.png
 asar: true
 directories:
   output: dist
@@ -10,8 +10,8 @@ files:
   - out/preload/**/*
   - out/renderer/**/*
   - package.json
-  - assets/Dela_white_bg.png
-  - assets/Dela_black_bg.png
+  - assets/DTQD_white_bg.png
+  - assets/DTQD_black_bg.png
   # 渲染层依赖已移入 devDependencies，由 Vite 打进 out/；
   # 下面只兜底排除依赖收集中漏进产物或带全平台 prebuild 的部分。
   # esbuild 是 Vite 的构建期工具，electron-builder 的 pnpm 依赖收集会漏收它。
@@ -34,7 +34,7 @@ asarUnpack:
   # 引导开场的可选视频；文件不存在时该行无副作用
   - out/renderer/assets/*.mp4
 extraResources:
-  # 远端 helper 的静态二进制：Dela 上传到远端后经 ssh -L 隧道访问（主进程按 resources/dela-helper 探测）
+  # 远端 helper 的静态二进制：DTQD 上传到远端后经 ssh -L 隧道访问（主进程按 resources/dela-helper 探测）
   - from: vendor/dela-helper
     to: dela-helper
     filter:
@@ -46,12 +46,15 @@ extraResources:
       - 'LICENSE-*.txt'
       - 'README.md'
 npmRebuild: false
+# DTQD：已停用自动更新源。上游 Dela 的更新目录在 openlist.frameneo.com，保留会让 fork 被「更新」回 Dela；
+# 待 DTQD 自有发布渠道确定后再按下方注释格式恢复（应用内开关见 src/main/update/index.ts 的 UPDATES_ENABLED）。
+publish: null
 win:
-  publish:
-    provider: generic
-    url: https://openlist.frameneo.com/sd/Dela_latest_release/
-    channel: latest
-    useMultipleRangeRequest: false
+  # publish:
+  #   provider: generic
+  #   url: https://openlist.frameneo.com/sd/Dela_latest_release/
+  #   channel: latest
+  #   useMultipleRangeRequest: false
   extraResources:
     - from: vendor/openssh
       to: openssh
@@ -72,15 +75,15 @@ win:
       arch:
         - x64
 mac:
-  icon: out/main/icons/Dela_white_bg.png
+  icon: out/main/icons/DTQD_white_bg.png
   category: public.app-category.productivity
   # 与 Windows 同一个 CDN 目录：electron-updater 据此生成 latest-mac.yml 并把
   # app-update.yml 打进 .app；mac 更新走 zip，dmg 仅供首次安装。
-  publish:
-    provider: generic
-    url: https://openlist.frameneo.com/sd/Dela_latest_release/
-    channel: latest
-    useMultipleRangeRequest: false
+  # publish:
+  #   provider: generic
+  #   url: https://openlist.frameneo.com/sd/Dela_latest_release/
+  #   channel: latest
+  #   useMultipleRangeRequest: false
   target:
     - target: dmg
       arch:

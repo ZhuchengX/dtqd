@@ -117,7 +117,7 @@ it('审阅与打开按解析出的标签键落位，已删除文件的打开被�
   });
 
   dela.chat.locateFile.mockResolvedValue('E:\\workspace\\Test\\src\\app.ts');
-  const open = host.querySelector<HTMLButtonElement>('[title="在 Dela 中打开"]')!;
+  const open = host.querySelector<HTMLButtonElement>('[title="在 DTQD 中打开"]')!;
   await act(async () => open.click());
   expect(dela.chat.locateFile).toHaveBeenCalledWith(sessionId, 'src/app.ts');
   await act(async () => {});
@@ -152,7 +152,7 @@ it('随聊只列文件并提供打开，不读取 diff 详情或显示审阅与�
   expect(dela.chat.readTurnChanges).toHaveBeenCalledWith(sessionId, turn.turnId, false);
   expect(host.querySelectorAll('[aria-label="选择打开方式"]')).toHaveLength(2);
 
-  await act(async () => host.querySelector<HTMLButtonElement>('[title="在 Dela 中打开"]')!.click());
+  await act(async () => host.querySelector<HTMLButtonElement>('[title="在 DTQD 中打开"]')!.click());
   expect(dela.chat.locateFile).toHaveBeenCalledWith(sessionId, 'src/app.ts');
   expect(openTarget).toHaveBeenCalledWith('preview:E:\\workspace\\Test\\src\\app.ts', {
     aside: true,

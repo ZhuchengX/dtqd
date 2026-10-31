@@ -217,8 +217,8 @@ export function EntryDialogs({
               : request?.action === 'remove'
                 ? workspace.entries.find((entry) => entry.id === request.id)?.kind === 'project'
                   ? workspace.entries.find((entry) => entry.id === request.id)?.remoteId
-                    ? '从 Dela 移除项目并删除其全部聊天记录；远端目录与文件保留。'
-                    : '从 Dela 移除项目并删除其全部聊天记录；目录与文件保留。'
+                    ? '从 DTQD 移除项目并删除其全部聊天记录；远端目录与文件保留。'
+                    : '从 DTQD 移除项目并删除其全部聊天记录；目录与文件保留。'
                   : workspace.entries.find((entry) => entry.id === request.id)?.kind === 'source'
                     ? '解除此处的资料关联，原始资料保留。'
                     : '将文件或文件夹移至系统回收站。'

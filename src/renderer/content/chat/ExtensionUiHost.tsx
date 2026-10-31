@@ -37,7 +37,7 @@ export function ExtensionUiHost() {
         else if (event.type === 'unsupported')
           showToast({
             variant: 'neutral',
-            title: '扩展的部分界面在 Dela 中不可用',
+            title: '扩展的部分界面在 DTQD 中不可用',
             description: `${event.feature}依赖 Pi 的终端界面，已忽略。`,
           });
         else if (event.type === 'editor-text') {

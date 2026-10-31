@@ -113,7 +113,7 @@ function headlessMembers(theme: ExtensionUIContext['theme']) {
     },
     getAllThemes: () => [],
     getTheme: () => undefined,
-    setTheme: () => ({ success: false, error: 'Dela 不支持切换终端主题' }),
+    setTheme: () => ({ success: false, error: 'DTQD 不支持切换终端主题' }),
     getToolsExpanded: () => false,
     setToolsExpanded: () => {},
   } satisfies Partial<ExtensionUIContext>;

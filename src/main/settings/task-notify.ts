@@ -13,7 +13,7 @@ export function notifyRunFinished(sessionId: string, status: 'completed' | 'fail
     const row = getDatabase().prepare('SELECT title FROM sessions WHERE id=?').get(sessionId) as
       { title: string } | undefined;
     const title = status === 'completed' ? '任务完成' : '任务失败';
-    systemNotifyToast(title, row?.title ?? 'Dela 会话');
+    systemNotifyToast(title, row?.title ?? 'DTQD 会话');
   } catch {
     // 通知属于尽力而为：任何读取/弹出失败都静默，不掩盖执行结果本身。
   }

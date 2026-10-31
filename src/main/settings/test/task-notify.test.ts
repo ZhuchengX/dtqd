@@ -50,6 +50,6 @@ describe('notifyRunFinished', () => {
 
   it('falls back to a generic body for unknown sessions', () => {
     notifyRunFinished('missing', 'failed');
-    expect(systemNotifyToast).toHaveBeenCalledWith('任务失败', 'Dela 会话');
+    expect(systemNotifyToast).toHaveBeenCalledWith('任务失败', 'DTQD 会话');
   });
 });

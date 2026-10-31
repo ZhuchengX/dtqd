@@ -1,5 +1,6 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 想法还不成熟？先去讨论区聊聊
+  # DTQD fork：下方链接指向上游 Dela 项目，仅作上游引用保留；DTQD 本 fork 的反馈渠道待定。
+  - name: （上游 Dela）想法还不成熟？先去讨论区聊聊
     url: https://github.com/Chang-Yo/Dela/discussions/new
-    about: 如果还不确定想法是否适合 Dela 或能否实现，可以先与大家讨论。
+    about: 上游 Dela 项目的讨论区。DTQD 版问题请勿报给上游，DTQD 反馈渠道待定。

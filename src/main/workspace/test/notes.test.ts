@@ -90,8 +90,8 @@ function insertFileEntry(db: Database.Database, path: string, kind: 'file') {
   return id;
 }
 
-/** 工作区根目录（storageDirectory() 无自定义设置时为 <root>/Dela/workspace）。 */
-const workspaceRoot = () => join(state.root, 'Dela', 'workspace');
+/** 工作区根目录（storageDirectory() 无自定义设置时为 <root>/DTQD/workspace）。 */
+const workspaceRoot = () => join(state.root, 'DTQD', 'workspace');
 const localPathOf = (id: string) => entry(id).path!;
 
 /** VS Code 已安装的替身：where code 指向 bin/code.cmd，同安装目录有 Code.exe；启动只报成功。 */
@@ -490,7 +490,7 @@ describe('createWorkspaceEntry', () => {
     expect(() => createWorkspaceEntry({ parentId: null, name: 'p/./q', kind: 'folder' })).toThrow(
       '路径段',
     );
-    expect(existsSync(join(state.root, 'Dela', 'escape.md'))).toBe(false);
+    expect(existsSync(join(state.root, 'DTQD', 'escape.md'))).toBe(false);
     expect(() => createWorkspaceEntry({ parentId: null, name: 'a.md/b', kind: 'file' })).toThrow(
       '不是文件夹',
     );

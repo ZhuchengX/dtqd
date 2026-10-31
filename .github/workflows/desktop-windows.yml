@@ -69,5 +69,5 @@ jobs:
           cmp vendor/dela-helper/dela-helper-linux-arm64 dist/win-unpacked/resources/dela-helper/dela-helper-linux-arm64
       - name: Smoke test packaged app
         env:
-          PACKAGED_EXECUTABLE: dist/win-unpacked/Dela.exe
+          PACKAGED_EXECUTABLE: dist/win-unpacked/DTQD.exe
         run: '"$PACKAGED_EXECUTABLE" --smoke-test'

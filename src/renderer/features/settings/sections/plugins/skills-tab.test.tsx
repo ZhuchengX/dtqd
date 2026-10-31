@@ -232,7 +232,7 @@ it('groups skills by where they come from and toggles them by id', async () => {
     (section) => section.firstElementChild?.textContent ?? '',
   );
   expect(titles.map((title) => title.split(/随|~|Pi|项目里/)[0])).toEqual([
-    'Dela 内置',
+    'DTQD 内置',
     '本机',
     'autoresearch',
     'alpha',

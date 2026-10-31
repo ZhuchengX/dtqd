@@ -16,7 +16,7 @@ export function ShuiyuanView() {
     return (
       <DesktopOnlyNotice
         description="水源的授权密钥只在主进程保存和使用，不会暴露给浏览器。"
-        title="水源仅在 Dela 桌面端可用"
+        title="水源仅在 DTQD 桌面端可用"
       />
     );
   }

@@ -111,7 +111,7 @@ it('跳过可再生缓存、保留用户数据，并给数据库取一致快照'
 
   const result = exported(await exportUserData(null));
   // 文件夹名不能带 Windows 非法字符（时间用 - 而不是 :）。
-  expect(result.path).toMatch(/Dela 备份 \d{4}-\d{2}-\d{2} \d{2}-\d{2}$/);
+  expect(result.path).toMatch(/DTQD 备份 \d{4}-\d{2}-\d{2} \d{2}-\d{2}$/);
   expect(result.skipped).toEqual([]);
   const data = join(result.path, '应用数据');
 
@@ -161,7 +161,7 @@ it('目标落在数据目录里面时直接拒绝，不在源目录里建备份�
 
   expect(result).toMatchObject({ status: 'failed', reason: expect.stringContaining('数据目录') });
   // 读工作目录设置本身要开库（dela.db 因此出现在 userData 里），但导出不该往里写备份。
-  expect(readdirSync(userData).filter((name) => name.startsWith('Dela 备份'))).toEqual([]);
+  expect(readdirSync(userData).filter((name) => name.startsWith('DTQD 备份'))).toEqual([]);
 });
 
 it('单个条目复制失败不影响其余条目，名字如实回报', async () => {

@@ -19,7 +19,7 @@ export function ClassroomView() {
     return (
       <DesktopOnlyNotice
         description="交大视频的校园会话与签名媒体地址只在主进程保存和使用，不会暴露给浏览器。"
-        title="课堂视频仅在 Dela 桌面端可用"
+        title="课堂视频仅在 DTQD 桌面端可用"
       />
     );
   }

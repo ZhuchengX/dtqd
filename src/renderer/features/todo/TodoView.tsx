@@ -399,7 +399,7 @@ export function TodoView({ request }: { request?: { id: string } }) {
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none]">
         {!state ? (
           <p className="py-8 text-center text-13 text-ink-3">
-            {window.dela?.todo ? '正在加载…' : '请在 Dela 桌面端使用 TODO'}
+            {window.dela?.todo ? '正在加载…' : '请在 DTQD 桌面端使用 TODO'}
           </p>
         ) : view === 'calendar' ? (
           <TodoCalendar items={items} month={month} onOpenItem={(item) => openItem(item.id)} />

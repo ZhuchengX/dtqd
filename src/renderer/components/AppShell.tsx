@@ -708,7 +708,7 @@ export function AppShell({
                   sidebarCollapsed && 'opacity-0',
                 )}
               >
-                Dela
+                DTQD
               </span>
             </div>
             <div className="flex-1" />

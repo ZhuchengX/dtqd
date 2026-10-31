@@ -1,6 +1,9 @@
 // 后台检查循环：用户不打开设置页时也要能发现新版本，仅在打包版已有窗口时检查。
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// DTQD 默认关闭应用内更新（见 index.test.ts）；这里验证开关打开后的上游后台流程。
+process.env.DTQD_ENABLE_UPDATES = '1';
+
 const mocks = vi.hoisted(() => ({
   windows: [] as {
     isDestroyed: () => boolean;

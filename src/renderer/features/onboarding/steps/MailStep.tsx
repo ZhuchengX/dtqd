@@ -14,7 +14,7 @@ export function MailStep({ onDone }: { onDone: () => void }) {
     return (
       <DesktopOnlyNotice
         description="邮箱凭据不会暴露给浏览器。"
-        title="邮箱仅在 Dela 桌面端可用"
+        title="邮箱仅在 DTQD 桌面端可用"
       />
     );
   }

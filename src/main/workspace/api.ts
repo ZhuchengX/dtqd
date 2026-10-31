@@ -535,7 +535,7 @@ export function linkProjectFolder(path: unknown): WorkspaceEntry {
   if (!statSync(resolved, { throwIfNoEntry: false })?.isDirectory())
     throw new Error('请选择一个文件夹');
   if (resolved === resolve(containerPath(null)))
-    throw new Error('这是 Dela 的工作区目录本身，请在其中新建项目');
+    throw new Error('这是 DTQD 的工作区目录本身，请在其中新建项目');
   const db = getDatabase();
   // 同一目录只登记一次：重复导入返回已有项目，不产生两个身份。
   const existing = db

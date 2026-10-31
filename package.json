@@ -1,9 +1,9 @@
 {
-  "name": "dela",
+  "name": "dtqd",
   "version": "2.2.2",
   "private": true,
-  "description": "A local-first campus project workspace",
-  "author": "Dela contributors",
+  "description": "DTQD: a local-first AI study workspace for DIICSU students (fork of Chang-Yo/Dela)",
+  "author": "DTQD (based on Dela by Dela contributors)",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "main": "out/main/index.cjs",

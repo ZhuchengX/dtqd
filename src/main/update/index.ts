@@ -6,13 +6,16 @@ import { savedPendingInstall, setPendingInstall } from '../settings/prefs';
 import { failureEvent, initialUpdateState, reduceUpdate, type UpdateEvent } from './state';
 import type { UpdateReason, UpdateSnapshot, UpdateStep } from '../../shared/update';
 
+// 上游 Dela 的发布目录；DTQD 尚无自有更新源，UPDATES_ENABLED 默认关闭，避免 fork 被「更新」回 Dela。
+// 自建更新源后：改 electron-builder.yml 的 publish 与这里的下载页，再把开关改为常开。
 const DOWNLOAD_PAGE_URL = 'https://openlist.frameneo.com/@s/Dela_latest_release';
+const UPDATES_ENABLED = process.env.DTQD_ENABLE_UPDATES === '1';
 export const BACKGROUND_CHECK_INTERVAL = 2 * 60 * 60 * 1000;
 export const BACKGROUND_CHECK_DELAY = 30_000;
 export const PENDING_INSTALL_DELAY = 5_000;
 // 目前只有 Windows 与 macOS 发布更新产物；其余平台保持 unsupported，不发起任何更新请求。
 function updatesAvailable(): boolean {
-  return process.platform === 'win32' || process.platform === 'darwin';
+  return UPDATES_ENABLED && (process.platform === 'win32' || process.platform === 'darwin');
 }
 
 let snapshot: UpdateSnapshot | null = null;

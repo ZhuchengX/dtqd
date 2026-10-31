@@ -28,7 +28,7 @@ export interface UpdateView {
 
 const REASON_STATUS: Record<UpdateReason, string> = {
   'not-packaged': '开发运行不支持应用内更新',
-  'platform-unsupported': '当前平台暂未提供应用内更新',
+  'platform-unsupported': '当前版本暂未提供应用内更新',
   'feed-unavailable': '暂时无法获取更新信息，请稍后重试',
   'invalid-update': '更新文件校验失败，请重新下载',
   cancelled: '已取消',
@@ -69,14 +69,14 @@ export function updateView(state: UpdateSnapshot): UpdateView {
       };
     case 'ready':
       return {
-        status: '更新已下载，安装时将退出 Dela 并打开安装向导',
+        status: '更新已下载，安装时将退出 DTQD 并打开安装向导',
         action: 'install',
         label: '安装更新',
         progress: null,
       };
     case 'installing':
       return {
-        status: '正在打开安装向导，Dela 即将退出',
+        status: '正在打开安装向导，DTQD 即将退出',
         action: null,
         label: null,
         progress: null,
@@ -133,7 +133,7 @@ export const useUpdateState = create<UpdateState>((set, get) => ({
     if (!api) return;
     attached = true;
     if (window.dela?.updatedOnLaunch) {
-      showToast({ variant: 'success', title: `已更新至 Dela ${window.dela.version}` });
+      showToast({ variant: 'success', title: `已更新至 DTQD ${window.dela.version}` });
     }
     const receive = (snapshot: UpdateSnapshot) => {
       const previous = get().snapshot;

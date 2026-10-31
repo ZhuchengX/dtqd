@@ -37,15 +37,20 @@ beforeEach(() => {
   database.exec('CREATE TABLE workspace_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
 });
 
-it('keeps experiments on for new or corrupt settings and persists an explicit opt-out', () => {
-  expect(savedExperiments()).toEqual({ master: true, shuiyuan: true, videoDownload: true });
+it('keeps the master switch on but SJTU-only sub-items off by default, and persists explicit choices', () => {
+  expect(savedExperiments()).toEqual({ master: true, shuiyuan: false, videoDownload: false });
   insert("INSERT INTO workspace_settings VALUES ('experimental-features', 'broken')");
+  insert("INSERT INTO workspace_settings VALUES ('experimental-shuiyuan', 'broken')");
   expect(savedExperiments().master).toBe(true);
-  expect(setExperiment('shuiyuan', false).shuiyuan).toBe(false);
+  expect(savedExperiments().shuiyuan).toBe(false);
   expect(setExperiment('shuiyuan', true).shuiyuan).toBe(true);
+  expect(setExperiment('shuiyuan', false).shuiyuan).toBe(false);
 });
 
 it('treats a sub-item as unavailable while the master switch is off', () => {
+  expect(experimentEnabled('videoDownload')).toBe(false);
+  setExperiment('shuiyuan', true);
+  setExperiment('videoDownload', true);
   expect(experimentEnabled('videoDownload')).toBe(true);
   setExperiment('master', false);
   expect(experimentEnabled('videoDownload')).toBe(false);

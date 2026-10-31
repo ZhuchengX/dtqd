@@ -54,7 +54,7 @@ export function RemoteSection() {
             新建连接
           </Button>
         }
-        description="经 SSH 使用远端主机上的目录；Dela 只保存目的地与私钥路径，凭据由 ssh 自己读取。~/.ssh/config 里的主机会出现在「新建远程项目」的服务器列表里。"
+        description="经 SSH 使用远端主机上的目录；DTQD 只保存目的地与私钥路径，凭据由 ssh 自己读取。~/.ssh/config 里的主机会出现在「新建远程项目」的服务器列表里。"
         title="远程"
       />
       {connections !== null && connections.length === 0 && (

@@ -12,7 +12,7 @@ const touchedFiles = ['dela.db', 'llm-providers.bin'];
 export class UnsupportedDataVersionError extends Error {
   constructor(version: number) {
     super(
-      `本机数据来自过旧的 Dela 版本（数据格式 v${version}），无法自动升级。请先备份数据目录，再删除其中的 dela.db 后重新打开。`,
+      `本机数据来自过旧的 DTQD/Dela 版本（数据格式 v${version}），无法自动升级。请先备份数据目录，再删除其中的 dela.db 后重新打开。`,
     );
     this.name = 'UnsupportedDataVersionError';
   }
@@ -26,7 +26,7 @@ export function runMigrations(context: MigrationContext, target: number): number
   try {
     const version = db.pragma('user_version', { simple: true }) as number;
     if (version === 0 || version === target) return 0;
-    if (version > target) throw new Error('数据库由更新版本的 Dela 创建，请升级到最新版本');
+    if (version > target) throw new Error('数据库由更新版本的 DTQD 创建，请升级到最新版本');
     const steps: Migration[] = [];
     for (let from = version; from < target; from++) {
       const step = migrations.find((migration) => migration.from === from);

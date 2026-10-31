@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { UpdateSnapshot } from '../../../shared/update';
 
+// DTQD 默认关闭应用内更新；其余用例在打开开关的前提下验证上游更新流程本身。
+process.env.DTQD_ENABLE_UPDATES = '1';
+
 const mocks = vi.hoisted(() => ({
   handlers: new Map<string, () => Promise<UpdateSnapshot>>(),
   listeners: new Map<string, (value: unknown) => void>(),
@@ -97,6 +100,30 @@ it.each([true, false])(
     expect(mocks.listeners.size).toBe(0);
   },
 );
+
+it('DTQD 默认关闭更新：未开启开关时 Windows 打包版也不联网、不打开下载页', async () => {
+  delete process.env.DTQD_ENABLE_UPDATES;
+  try {
+    vi.resetModules();
+    mocks.handlers.clear();
+    const { registerUpdateIpc, startBackgroundUpdateCheck } = await import('../index');
+    registerUpdateIpc();
+    for (const action of ['get-state', 'check', 'download', 'install']) {
+      expect(await invoke(action)).toMatchObject({
+        phase: 'unsupported',
+        reason: 'platform-unsupported',
+      });
+    }
+    await invoke('open-download-page');
+    startBackgroundUpdateCheck()();
+    expect(mocks.checkForUpdates).not.toHaveBeenCalled();
+    expect(mocks.downloadUpdate).not.toHaveBeenCalled();
+    expect(mocks.openExternal).not.toHaveBeenCalled();
+    expect(mocks.listeners.size).toBe(0);
+  } finally {
+    process.env.DTQD_ENABLE_UPDATES = '1';
+  }
+});
 
 it('Mac packaged 与 Windows 同流程：可检查更新，打不开更新时给下载页', async () => {
   vi.stubGlobal('process', { ...process, platform: 'darwin' });

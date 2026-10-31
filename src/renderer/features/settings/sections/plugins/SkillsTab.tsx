@@ -26,7 +26,7 @@ const FILTER_LABELS: Record<'all' | SkillOrigin, string> = {
   ...ORIGIN_LABELS,
 };
 const ORIGIN_DESCRIPTIONS: Record<SkillOrigin, string> = {
-  builtin: '随 Dela 安装，写在 ~/.dela/skills',
+  builtin: '随 DTQD 安装，写在 ~/.dela/skills',
   user: '~/.dela/skills 与 ~/.agents/skills 里你自己放的',
   package: 'Pi Package',
   project: '项目里的 .agents/skills、.pi/skills 与 .agent/skills',
@@ -49,7 +49,7 @@ function groupSkills(skills: SkillView[]): SkillGroup[] {
       group = {
         key,
         origin: skill.origin,
-        title: skill.group?.label ?? (skill.origin === 'builtin' ? 'Dela 内置' : '本机'),
+        title: skill.group?.label ?? (skill.origin === 'builtin' ? 'DTQD 内置' : '本机'),
         items: [],
       };
       groups.push(group);

@@ -26,7 +26,7 @@ jobs:
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       DELA_REMOTE_HOST: ''
-      PACKAGED_APP: dist/mac-arm64/Dela.app
+      PACKAGED_APP: dist/mac-arm64/DTQD.app
     steps:
       - uses: actions/checkout@v6
         with:
@@ -78,7 +78,7 @@ jobs:
         run: node scripts/verify-macos-package.ts "$PACKAGED_APP"
       - name: Smoke test packaged app and native dependencies
         run: |
-          node scripts/ci-smoke.ts "Packaged Electron and native dependencies" "$PACKAGED_APP/Contents/MacOS/Dela" --smoke-test
+          node scripts/ci-smoke.ts "Packaged Electron and native dependencies" "$PACKAGED_APP/Contents/MacOS/DTQD" --smoke-test
           node scripts/ci-smoke.ts "Packaged desktop behavior" pnpm smoke:desktop "$PACKAGED_APP/Contents/Resources/app.asar"
           node scripts/ci-smoke.ts "Packaged terminal behavior" pnpm exec electron scripts/terminal-smoke.cjs "$PACKAGED_APP/Contents/Resources/app.asar"
       - uses: actions/upload-artifact@v6

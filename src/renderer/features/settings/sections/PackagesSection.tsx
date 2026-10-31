@@ -101,7 +101,7 @@ export function PackagesSection() {
             </Button>
           ) : undefined
         }
-        description="安装 Pi 社区的扩展、Skills 与提示模板。扩展与 Dela 同权限运行，只安装你信任的来源。"
+        description="安装 Pi 社区的扩展、Skills 与提示模板。扩展与 DTQD 同权限运行，只安装你信任的来源。"
         title="Pi Packages"
       />
 
@@ -254,7 +254,7 @@ export function PackagesSection() {
                       ),
                   )}
                   {item.counts.themes > 0 && (
-                    <span className="text-xs text-ink-3" title="终端主题在 Dela 中不生效">
+                    <span className="text-xs text-ink-3" title="终端主题在 DTQD 中不生效">
                       主题 {item.counts.themes}（不适用）
                     </span>
                   )}

@@ -7,7 +7,13 @@ export function storageDirectory() {
   const row = getDatabase()
     .prepare("SELECT value FROM workspace_settings WHERE key='directory'")
     .get() as { value: string } | undefined;
-  return row?.value ?? join(app.getPath('documents'), 'Dela');
+  return row?.value ?? defaultStorageDirectory();
+}
+
+// DTQD 新用户默认 文档/DTQD；已有上游 文档/Dela 的用户继续沿用旧目录，不迁移不删除。
+function defaultStorageDirectory() {
+  const legacy = join(app.getPath('documents'), 'Dela');
+  return existsSync(legacy) ? legacy : join(app.getPath('documents'), 'DTQD');
 }
 
 // A single path component, including Windows device names and trailing dots/spaces.

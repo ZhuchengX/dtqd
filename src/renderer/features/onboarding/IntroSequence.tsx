@@ -1,19 +1,13 @@
 import { useEffect, useState } from 'react';
 import { MotionConfig, motion, useReducedMotion } from 'framer-motion';
-import logo from '../../../../assets/Dela_Logo.png';
-import { HandwritingLine } from './intro-handwriting';
+import logo from '../../../../assets/DTQD_Logo.png';
 import { OnboardingWindowBar } from './onboarding-window-bar';
 import { cn } from '../../lib/utils';
 
 // 氛围视频（854×474、静音、9.5s）：铺满整窗裁切不拉伸；品牌层出现后用高斯模糊退为背景，
-// 不叠白色蒙版。
-const introVideos = import.meta.glob<{ default: string }>(
-  '../../../../assets/onboarding-video.webm',
-  {
-    eager: true,
-  },
-);
-const introVideoUrl = Object.values(introVideos)[0]?.default;
+// 不叠白色蒙版。DTQD：上游 assets/onboarding-video.webm 含 Dela 品牌，停用引用（文件保留），
+// 换成 DTQD 自有视频后在这里填 URL 即可恢复。
+const introVideoUrl: string | undefined = undefined;
 
 // 时间线（秒）：视频先播约两秒立住氛围，之后自上而下依次落笔，视线单方向移动。
 const videoFadeSeconds = 0.6;
@@ -25,13 +19,11 @@ const blurSeconds = 1.4;
 const blurStartPx = 6;
 const blurPx = 12;
 const nameAtSeconds = 4.2;
-const quoteAtSeconds = 5.2;
-const authorAtSeconds = 7.6;
-const ctaAtSeconds = 8.9;
+const ctaAtSeconds = 5.4;
 const ctaSeconds = 0.6;
 const leaveSeconds = 0.35;
 
-/** 首启引导的开场：全屏氛围视频之上，Logo 浮现，品牌名、Quote 与署名依次手写落笔。 */
+/** 首启引导的开场：全屏氛围视频之上，Logo 浮现，品牌名随后淡入。 */
 export function IntroSequence({ onStart }: { onStart: () => void }) {
   // 动画期间就提供「跳过」，CTA 出现前不响应点击（避免隐 form 中误触、无可见反馈）。
   const reduced = useReducedMotion() ?? false;
@@ -100,40 +92,23 @@ export function IntroSequence({ onStart }: { onStart: () => void }) {
 
           <div className="relative flex flex-col items-center">
             <motion.img
-              alt="Dela"
+              alt="DTQD"
               animate={{ opacity: 1, y: 0 }}
               className="size-[11.25rem] [@media(max-height:560px)]:size-[8.25rem]"
               initial={reduced ? false : { opacity: 0, y: 14 }}
               src={logo}
               transition={{ delay: logoAtSeconds, duration: logoSeconds, ease: 'easeOut' }}
             />
-            <HandwritingLine
-              charDelay={0.2}
-              className="mt-6 font-script text-6xl text-ink [@media(max-height:560px)]:mt-3 [@media(max-height:560px)]:text-5xl"
-              delay={nameAtSeconds}
-              duration={0.5}
-              instant={reduced}
-              line="name"
-            />
-            {/* Quote 与署名右对齐成签名式收尾；包裹块由外层列居中，与品牌名拉开一段距离。 */}
-            <div className="mt-10 flex flex-col items-end gap-1.5">
-              <HandwritingLine
-                charDelay={0.06}
-                className="font-script text-3xl text-ink"
-                delay={quoteAtSeconds}
-                duration={0.42}
-                instant={reduced}
-                line="quote"
-              />
-              <HandwritingLine
-                charDelay={0.09}
-                className="font-script text-2xl text-ink"
-                delay={authorAtSeconds}
-                duration={0.4}
-                instant={reduced}
-                line="author"
-              />
-            </div>
+            {/* DTQD：上游 name 行是预生成的「Dela」手写字形（字体子集无 T/Q），改为淡入的字标。 */}
+            <motion.h1
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 text-6xl font-semibold tracking-tight text-ink [@media(max-height:560px)]:mt-3 [@media(max-height:560px)]:text-5xl"
+              initial={reduced ? false : { opacity: 0, y: 10 }}
+              transition={{ delay: nameAtSeconds, duration: 0.5, ease: 'easeOut' }}
+            >
+              DTQD
+            </motion.h1>
+            {/* DTQD：上游 Quote 与原作者署名两行不再渲染（字形素材 intro-lettering.ts 保留）。 */}
           </div>
 
           <motion.button

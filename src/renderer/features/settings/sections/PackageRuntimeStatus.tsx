@@ -43,7 +43,7 @@ export function RuntimeStatus({ settings }: { settings: PackageSettings }) {
   if (runtime.status === 'ready')
     return (
       <span className="text-xs text-ink-3">
-        npm {runtime.version}（{runtime.origin === 'system' ? '本机' : 'Dela 下载'}）
+        npm {runtime.version}（{runtime.origin === 'system' ? '本机' : 'DTQD 下载'}）
       </span>
     );
   return (

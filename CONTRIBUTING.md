@@ -1,5 +1,7 @@
 # 贡献指南
 
+> **DTQD fork 说明（2026-10-31）**：本仓库是 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）的 DTQD 修改版。下文中的作者联系方式、Issues / Discussions 链接均指**上游 Dela 项目**，仅作上游引用保留；**DTQD 版的问题请勿报给上游作者**。DTQD 本 fork 的反馈与安全报告渠道：**待定**。
+
 欢迎参与 Dela 的开发与维护。Dela 是面向 SJTU 用户的本地优先 Agent 桌面应用：Electron 主进程与 React 渲染进程，Agent 内核为 Pi Coding Agent，领域能力通过 `dela` 命令与 Skills 外置。数据保存在本机 SQLite，凭据经 Electron `safeStorage` 加密，无服务端与账号系统。
 
 贡献形式包括代码、文档、测试、设计、问题反馈，以及向需要的用户介绍 Dela。开始之前，请先阅读 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。
@@ -90,7 +92,7 @@ pnpm test
 | 工作区、文档组件、PDF、水源 | `pnpm smoke:workspace` / `pnpm smoke:documents` / `pnpm smoke:pdf` / `pnpm smoke:shuiyuan` |
 | 远程项目真机回归            | `pnpm test:remote`，需要 `DELA_REMOTE_HOST`，可选 `DELA_REMOTE_KEY`                        |
 | 远程项目窗口冒烟            | `pnpm smoke:remote`，同样需要 `DELA_REMOTE_HOST`                                           |
-| 打包目录启动                | `pnpm package:dir` 后运行 `dist/win-unpacked/Dela.exe --smoke-test`                        |
+| 打包目录启动                | `pnpm package:dir` 后运行 `dist/win-unpacked/DTQD.exe --smoke-test`                        |
 
 - 修改 `src/main/remotes/`、`helper/` 或远端路径与上下文镜像时，必须通过 `pnpm test:remote` 在真机上执行回归；该套件在默认测试与 CI 中均会跳过。
 - 冒烟脚本使用独立测试目录与脱敏数据。除显式联网的 `agent-smoke`、`mingit-smoke` 与 `smoke:documents` 外，不应向真实服务发送请求。

@@ -1,5 +1,7 @@
 # 安全策略
 
+> **DTQD fork 说明（2026-10-31）**：本仓库是 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）的 DTQD 修改版。下文中的作者联系方式、Issues / Discussions 链接均指**上游 Dela 项目**，仅作上游引用保留；**DTQD 版的问题请勿报给上游作者**。DTQD 本 fork 的反馈与安全报告渠道：**待定**。
+
 Dela 是本地优先应用，用户数据、模型密钥与校园凭据都保存在本机。安全问题的修复会优先进入最新正式版本。
 
 ## 支持版本

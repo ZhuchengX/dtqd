@@ -15,7 +15,7 @@ const databaseFiles = new Set(['dela.db', 'dela.db-wal', 'dela.db-shm', 'dela.db
 function backupFolderName(now: Date) {
   const pad = (value: number) => String(value).padStart(2, '0');
   const date = [now.getFullYear(), pad(now.getMonth() + 1), pad(now.getDate())].join('-');
-  return `Dela 备份 ${date} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
+  return `DTQD 备份 ${date} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
 }
 
 /** child 是否就在 parent 里面（含它本身）；同级不算。 */
@@ -57,7 +57,7 @@ export async function exportUserData(window: BrowserWindow | null): Promise<Back
   // 目标落在源目录里面会让导出边写边读自己（复制到一半才发现，还会留下半个文件夹）。
   for (const source of [dataDirectory, workspace, skills]) {
     if (isInside(source, parent)) {
-      return { status: 'failed', reason: '不能保存到 Dela 的数据目录里，请另选一个位置' };
+      return { status: 'failed', reason: '不能保存到 DTQD 的数据目录里，请另选一个位置' };
     }
   }
 

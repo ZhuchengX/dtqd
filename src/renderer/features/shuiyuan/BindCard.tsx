@@ -68,7 +68,7 @@ export function BindCard() {
         <div className="grid gap-1">
           <h2 className="text-lg font-semibold tracking-tight">连接水源社区</h2>
           <p className="text-13 leading-relaxed text-ink-3">
-            授权 Dela 读取你的水源数据并支持回复、私信（读取 + 写入）。登录与授权在独立窗口完成。
+            授权 DTQD 读取你的水源数据并支持回复、私信（读取 + 写入）。登录与授权在独立窗口完成。
           </p>
         </div>
         <Button disabled={authBusy} onClick={() => void startAuth()}>

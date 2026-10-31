@@ -40,7 +40,7 @@ export function LlmStep({ onDone }: { onDone: () => void }) {
     return (
       <DesktopOnlyNotice
         description="模型服务的凭据不会暴露给浏览器。"
-        title="模型服务仅在 Dela 桌面端可用"
+        title="模型服务仅在 DTQD 桌面端可用"
       />
     );
   }

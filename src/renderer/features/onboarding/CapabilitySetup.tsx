@@ -248,7 +248,7 @@ function PackagesCard({ disabled }: { disabled: boolean }) {
       variant="neutral"
       icon={Package}
       title="Pi Packages"
-      description="安装 Pi 社区的扩展、Skills 与提示模板。扩展与 Dela 同权限运行。"
+      description="安装 Pi 社区的扩展、Skills 与提示模板。扩展与 DTQD 同权限运行。"
       className="w-full flex-wrap items-center gap-4 p-4"
       action={
         settings?.enabled ? (

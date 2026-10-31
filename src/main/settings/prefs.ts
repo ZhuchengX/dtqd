@@ -34,7 +34,8 @@ export function writeSetting(key: string, value: string): void {
   getDatabase().prepare('INSERT OR REPLACE INTO workspace_settings VALUES (?, ?)').run(key, value);
 }
 
-// 试验功能：总开关 + 子项，默认都开启；键缺失或值损坏都视为开启，只有显式写入 '0' 才关闭。
+// 试验功能：总开关 + 子项。总开关默认开启（键缺失或值损坏视为开启，只有显式写入 '0' 才关闭）；
+// DTQD：水源与课堂视频下载是交大专属上游功能，默认关闭，只有显式写入 '1' 才开启。
 // 子项只在总开关开启时生效，调用方用 experimentEnabled 取「实际是否可用」。
 const experimentKeys: Record<ExperimentKey, string> = {
   master: 'experimental-features',
@@ -44,10 +45,11 @@ const experimentKeys: Record<ExperimentKey, string> = {
 
 export function savedExperiments(): ExperimentState {
   const read = (key: ExperimentKey) => readSetting(experimentKeys[key]) !== '0';
+  const readOptIn = (key: ExperimentKey) => readSetting(experimentKeys[key]) === '1';
   return {
     master: read('master'),
-    shuiyuan: read('shuiyuan'),
-    videoDownload: read('videoDownload'),
+    shuiyuan: readOptIn('shuiyuan'),
+    videoDownload: readOptIn('videoDownload'),
   };
 }
 

@@ -2,7 +2,7 @@ import type { KeybindingOverrides } from './keybindings';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
-/** 应用图标底色：white 对应 Dela_white_bg.png，black 对应 Dela_black_bg.png。 */
+/** 应用图标底色：white 对应 DTQD_white_bg.png，black 对应 DTQD_black_bg.png。 */
 export type IconPreference = 'white' | 'black';
 
 /** 页面缩放档位（webContents zoom factor）：百分比阶梯与系统显示缩放一致。 */
@@ -20,7 +20,7 @@ export interface TaskNotificationPrefs {
   failed: boolean;
 }
 
-/** 试验功能：总开关 + 子项（水源、课堂视频下载）；子项只在总开关开启时生效，键缺失视为开启。 */
+/** 试验功能：总开关 + 子项（水源、课堂视频下载）；子项只在总开关开启时生效；总开关键缺失视为开启，DTQD 版两个子项键缺失视为关闭。 */
 export type ExperimentKey = 'master' | 'shuiyuan' | 'videoDownload';
 export type ExperimentState = Record<ExperimentKey, boolean>;
 

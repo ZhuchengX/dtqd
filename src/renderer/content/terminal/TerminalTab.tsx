@@ -422,7 +422,7 @@ export function TerminalTab({ tabId }: TabComponentProps) {
             <p className="text-13 text-ink">缺少终端运行时 Git Bash</p>
             <p className="text-xs text-ink-3">
               {
-                '内置终端与 Agent 的命令执行依赖 Git Bash。可一键安装 Dela 运行时（Git for Windows 官方 MinGit，约 40 MB，装入用户目录，无需管理员权限），或自行安装 Git for Windows。'
+                '内置终端与 Agent 的命令执行依赖 Git Bash。可一键安装 DTQD 运行时（Git for Windows 官方 MinGit，约 40 MB，装入用户目录，无需管理员权限），或自行安装 Git for Windows。'
               }
             </p>
             {installing ? (

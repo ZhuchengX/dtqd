@@ -10,8 +10,8 @@ import {
 } from '../../../../shared/api';
 import { cn } from '../../../lib/utils';
 import { StepperControl } from '../../../components/ui/stepper';
-import blackLogo from '../../../../../assets/Dela_black_bg.svg';
-import whiteLogo from '../../../../../assets/Dela_white_bg.svg';
+import blackLogo from '../../../../../assets/DTQD_black_bg.svg';
+import whiteLogo from '../../../../../assets/DTQD_white_bg.svg';
 import { SectionHeader } from '../SectionHeader';
 import { SettingRow } from '../SettingRow';
 import { SettingsGroup } from '../SettingsGroup';

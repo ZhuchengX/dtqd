@@ -45,7 +45,7 @@ export function CompletionOverlay({ onFinished }: { onFinished: () => void }) {
             initial={{ opacity: 0, y: 10 }}
             transition={{ delay: line1AtSeconds, duration: lineSeconds, ease: 'easeOut' }}
           >
-            The world keeps changing,
+            Courses, notices, coursework —
           </motion.span>
           <motion.span
             animate={{ opacity: 1, y: 0 }}
@@ -53,7 +53,7 @@ export function CompletionOverlay({ onFinished }: { onFinished: () => void }) {
             initial={{ opacity: 0, y: 10 }}
             transition={{ delay: line2AtSeconds, duration: lineSeconds, ease: 'easeOut' }}
           >
-            Dela always stays with you
+            all in one place.
           </motion.span>
         </h1>
       </motion.div>

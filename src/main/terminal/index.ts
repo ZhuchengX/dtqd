@@ -44,7 +44,7 @@ export function locateBash(): string {
     mingitBash() ??
     (() => {
       throw new Error(
-        '未找到 Git Bash：可在终端页一键安装 Dela 运行时，或安装 Git for Windows（https://git-scm.com/download/win）后重试',
+        '未找到 Git Bash：可在终端页一键安装 DTQD 运行时，或安装 Git for Windows（https://git-scm.com/download/win）后重试',
       );
     })()
   );

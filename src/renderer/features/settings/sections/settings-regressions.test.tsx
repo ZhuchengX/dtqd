@@ -35,7 +35,7 @@ afterEach(async () => {
 });
 
 it('登录项等待系统批准时保持关闭、说明原因，批准后可重试开启', async () => {
-  const message = '请在 macOS「系统设置 › 通用 › 登录项」中允许 Dela，然后返回重试。';
+  const message = '请在 macOS「系统设置 › 通用 › 登录项」中允许 DTQD，然后返回重试。';
   const setOpenAtLogin = vi.fn().mockRejectedValueOnce(new Error(message)).mockResolvedValue(true);
   window.dela = {
     platform: 'darwin',

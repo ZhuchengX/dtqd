@@ -53,10 +53,13 @@ const sponsorChannelMeta: Record<SponsorChannelKind, { dotClass: string; label: 
   wechat: { dotClass: 'bg-[#07C160]', label: '微信' },
 };
 
+// DTQD 官网与反馈渠道待定，暂不渲染链接；保留指向上游 Dela 的致谢链接（GPL-3.0）。
 const projectLinks: { icon: ReactNode; label: string; url: string }[] = [
-  { icon: <Globe />, label: '官网', url: 'https://dela.changyo.me' },
-  { icon: <GithubMark />, label: 'GitHub 仓库', url: 'https://github.com/Chang-Yo/Dela' },
+  { icon: <GithubMark />, label: '上游 Dela 仓库', url: 'https://github.com/Chang-Yo/Dela' },
 ];
+
+// 赞赏入口指向上游作者个人收款码，DTQD 版不展示；名单与素材保留。
+const upstreamSponsorVisible = false;
 
 function PersonLinks({ links }: { links: SocialLink[] }) {
   return (
@@ -164,7 +167,7 @@ function PersonActions({ person }: { person: CreditPerson }) {
   return (
     <div className="flex items-center gap-1.5">
       {person.links ? <PersonLinks links={person.links} /> : null}
-      {person.sponsor ? (
+      {upstreamSponsorVisible && person.sponsor ? (
         <SponsorDialog
           person={person}
           trigger={
@@ -202,9 +205,13 @@ export function AboutSection() {
       <SectionHeader title="关于" />
       <section className="grid justify-items-center gap-1.5 px-6 pb-10 pt-6 text-center">
         <DelaBrand className="h-48 w-48" />
-        <h2 className="text-4xl font-script tracking-tight">Dela</h2>
-        <p className="text-13 text-ink-3">The world keeps changing. Dela stays with you.</p>
+        <h2 className="text-4xl font-semibold tracking-tight">DTQD</h2>
+        <p className="text-13 text-ink-3">面向 DIICSU 学生的本地 AI 学习工作台</p>
+        <p className="text-xs text-ink-3">
+          基于开源项目 Dela（GPL-3.0）修改；DTQD 为第三方工具，与中南大学、邓迪大学无官方关系。
+        </p>
         <p className="mt-5 text-xs text-ink-3">版本 {window.dela?.version ?? '浏览器预览'}</p>
+        <p className="text-xs text-ink-3">官网与反馈渠道：待定</p>
         <div className="mt-1 flex items-center justify-center gap-1.5">
           {projectLinks.map(({ icon, label, url }) => (
             <Button asChild aria-label={label} key={url} size="icon-sm" variant="ghost">
@@ -215,6 +222,7 @@ export function AboutSection() {
           ))}
         </div>
       </section>
+      <h2 className="-mb-6 text-lg font-semibold">上游致谢 · Dela</h2>
       {authorSection ? <CreditSectionBlock section={authorSection} /> : null}
       {contributorsSection ? <CreditSectionBlock section={contributorsSection} /> : null}
       {sponsorsSection ? <CreditSectionBlock section={sponsorsSection} /> : null}

@@ -91,7 +91,7 @@ const TurnFileRow = memo(function TurnFileRow({
           className="grid h-full place-items-center rounded-l-control px-2.5 text-xs font-medium text-ink-2 transition-colors duration-150 hover:bg-hover hover:text-ink disabled:pointer-events-none disabled:opacity-50"
           disabled={deleted}
           onClick={openInDela}
-          title={deleted ? '文件已删除' : '在 Dela 中打开'}
+          title={deleted ? '文件已删除' : '在 DTQD 中打开'}
           type="button"
         >
           打开

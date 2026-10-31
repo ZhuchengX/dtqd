@@ -114,7 +114,7 @@ describe('useUpdateState', () => {
     store.getState().attach();
     expect(toast).toHaveBeenCalledExactlyOnceWith({
       variant: 'success',
-      title: '已更新至 Dela 1.0.2',
+      title: '已更新至 DTQD 1.0.2',
     });
   });
 

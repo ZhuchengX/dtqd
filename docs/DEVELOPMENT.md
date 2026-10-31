@@ -361,8 +361,8 @@ pnpm test
 pnpm build && pnpm smoke && pnpm smoke:runtime
 pnpm smoke:desktop && pnpm smoke:workspace
 CSC_IDENTITY_AUTO_DISCOVERY=false pnpm package:dist --mac --arm64 -c.electronDist=node_modules/electron/dist
-node scripts/verify-macos-package.ts dist/mac-arm64/Dela.app
-dist/mac-arm64/Dela.app/Contents/MacOS/Dela --smoke-test
+node scripts/verify-macos-package.ts dist/mac-arm64/DTQD.app
+dist/mac-arm64/DTQD.app/Contents/MacOS/DTQD --smoke-test
 ```
 
 冒烟也可以传入 `app.asar` 路径，用开发 Electron 加载包内代码与资源；实际 `.app` 另用 `--smoke-test` 检查。**这些检查不代表正式签名应用、全部账号业务或全部模型调用已验收。**

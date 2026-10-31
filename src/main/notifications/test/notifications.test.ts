@@ -74,6 +74,8 @@ describe('local notification inbox', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     db = createDb();
+    // DTQD 版水源默认关闭；这里验证用户开启后的水源通知流程。
+    db.prepare("INSERT INTO workspace_settings VALUES ('experimental-shuiyuan', '1')").run();
     vi.mocked(getDatabase).mockReturnValue(db);
     vi.mocked(loadShuiyuanCredential).mockReturnValue(null);
     vi.mocked(listShuiyuanNotifications).mockResolvedValue([]);

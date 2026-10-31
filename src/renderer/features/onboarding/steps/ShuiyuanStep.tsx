@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { DesktopOnlyNotice } from '../../../components/ui/desktop-only-notice';
 import { errorText } from '../../../workspace/store';
+import { useExperimentEnabled } from '../../settings/experimental';
 import { StepButton, StepTextarea, type StepButtonState } from './step-controls';
 import { StepGuide } from './step-guide';
 
@@ -11,12 +12,25 @@ export function ShuiyuanStep({ onDone }: { onDone: () => void }) {
   const [payload, setPayload] = useState('');
   const [state, setState] = useState<StepButtonState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const enabled = useExperimentEnabled('shuiyuan');
+
+  if (window.dela && !enabled) {
+    return (
+      <div className="grid w-full max-w-[28.75rem] gap-2">
+        <h2 className="text-lg font-semibold tracking-tight">水源社区默认关闭</h2>
+        <p className="text-13 leading-relaxed text-ink-3">
+          水源是上海交大的论坛，属于上游 Dela 的交大专属功能。DIICSU 同学可直接跳过；需要时可在 设置
+          › 通用 › 试验功能 中开启。
+        </p>
+      </div>
+    );
+  }
 
   if (!window.dela) {
     return (
       <DesktopOnlyNotice
         description="水源的授权会话不会暴露给浏览器。"
-        title="水源社区仅在 Dela 桌面端可用"
+        title="水源社区仅在 DTQD 桌面端可用"
       />
     );
   }

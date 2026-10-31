@@ -9,7 +9,7 @@ function prepareMacosIcons(outputDirectory: string) {
   mkdirSync(outputDirectory, { recursive: true });
   // 与系统图标的可见底板对齐：1024 画布中主体占 824，四周各留 100 透明像素。
   for (const name of ['white', 'black']) {
-    const filename = `Dela_${name}_bg.png`;
+    const filename = `DTQD_${name}_bg.png`;
     const destination = resolve(outputDirectory, filename);
     execFileSync(
       '/usr/bin/sips',
@@ -30,7 +30,7 @@ export default defineConfig({
       buildStart() {
         if (process.platform === 'darwin')
           for (const name of ['white', 'black'])
-            this.addWatchFile(resolve('assets', `Dela_${name}_bg.png`));
+            this.addWatchFile(resolve('assets', `DTQD_${name}_bg.png`));
       },
       writeBundle(output) {
         prepareMacosIcons(resolve(output.dir!, 'icons'));

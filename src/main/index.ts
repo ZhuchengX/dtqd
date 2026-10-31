@@ -152,7 +152,7 @@ app
     if (!hasSingleInstanceLock) return;
     // Windows 系统通知按 AppUserModelID 识别应用；与 electron-builder.yml 的 appId 一致，
     // 开发运行（未走安装器）也需要显式设置才能弹通知。
-    if (process.platform === 'win32') app.setAppUserModelId('io.dela.desktop');
+    if (process.platform === 'win32') app.setAppUserModelId('com.dtqd.desktop');
     if (process.platform === 'darwin') {
       const action = (value: TrayAction) => () => {
         if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -162,7 +162,7 @@ app
       Menu.setApplicationMenu(
         Menu.buildFromTemplate([
           {
-            label: 'Dela',
+            label: 'DTQD',
             submenu: [
               { role: 'about' },
               { label: '设置…', click: action('open-settings') },
@@ -209,7 +209,7 @@ app
     applyTheme(savedTheme());
     if (process.platform === 'darwin') {
       app.dock?.setIcon(
-        nativeImage.createFromPath(join(__dirname, 'icons', `Dela_${savedIcon()}_bg.png`)),
+        nativeImage.createFromPath(join(__dirname, 'icons', `DTQD_${savedIcon()}_bg.png`)),
       );
     }
     registerSettingsIpc();
@@ -265,11 +265,11 @@ app
     }
   })
   .catch((error: unknown) => {
-    // 数据库拒绝降级打开（「由更新版本的 Dela 创建」）就是从这里冒出来的：
+    // 数据库拒绝降级打开（「由更新版本的 DTQD 创建」）就是从这里冒出来的：
     // 没有这个 catch 只会留下未处理的 rejection，用户看到的是「窗口一直不出现、也没提示」。
     console.error(error);
     if (!smokeTest) {
-      dialog.showErrorBox('Dela 无法启动', error instanceof Error ? error.message : String(error));
+      dialog.showErrorBox('DTQD 无法启动', error instanceof Error ? error.message : String(error));
     }
     app.exit(1);
   });
@@ -302,7 +302,7 @@ async function createWindow(): Promise<void> {
     show: !smokeTest && !startHidden,
     backgroundColor: '#f7f7f8',
     icon: nativeImage.createFromPath(
-      join(app.getAppPath(), 'assets', `Dela_${savedIcon()}_bg.png`),
+      join(app.getAppPath(), 'assets', `DTQD_${savedIcon()}_bg.png`),
     ),
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     titleBarOverlay: process.platform === 'darwin',
@@ -347,7 +347,7 @@ async function createWindow(): Promise<void> {
       defaultId: 1,
       cancelId: 1,
       title: '仍有未保存的内容',
-      message: '有未保存的笔记或未发送的邮件，确定抛弃并退出 Dela 吗？',
+      message: '有未保存的笔记或未发送的邮件，确定抛弃并退出 DTQD 吗？',
     });
     if (choice === 0) {
       quitting = wasQuitting;
@@ -393,7 +393,7 @@ async function createWindow(): Promise<void> {
 
   if (smokeTest && !terminalSmokeTest) {
     for (const name of ['white', 'black']) {
-      const iconPath = join(app.getAppPath(), 'assets', `Dela_${name}_bg.png`);
+      const iconPath = join(app.getAppPath(), 'assets', `DTQD_${name}_bg.png`);
       if (nativeImage.createFromPath(iconPath).isEmpty()) {
         throw new Error(`Application icon failed to load: ${iconPath}`);
       }
@@ -450,10 +450,10 @@ function showMainWindow(window: BrowserWindow): void {
 function createTray(window: BrowserWindow): void {
   tray?.destroy();
   const icon = nativeImage
-    .createFromPath(join(app.getAppPath(), 'assets', `Dela_${savedIcon()}_bg.png`))
+    .createFromPath(join(app.getAppPath(), 'assets', `DTQD_${savedIcon()}_bg.png`))
     .resize({ width: 16, height: 16 });
   tray = new Tray(icon);
-  tray.setToolTip('Dela');
+  tray.setToolTip('DTQD');
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: '打开主窗口', click: () => showMainWindow(window) },
