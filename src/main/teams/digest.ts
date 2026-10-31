@@ -6,6 +6,7 @@ import {
   type RawTeamsConversation,
   type RawTeamsMessage,
   type TeamsConversationKind,
+  type TeamsMention,
 } from './extract';
 
 const MAX_MESSAGE_CHARS = 4000;
@@ -50,14 +51,18 @@ export function conversationNames(
 export function buildThreads(
   conversations: readonly RawTeamsConversation[],
   messages: readonly RawTeamsMessage[],
+  mentions: ReadonlyMap<string, TeamsMention> = new Map(),
 ): TeamsThread[] {
   const byId = new Map(conversations.map((c) => [c.id, c]));
   const names = conversationNames(conversations, messages);
   const threads = new Map<string, TeamsThread>();
   for (const message of messages) {
     if (!isUserMessage(message)) continue;
-    const text = htmlToText(message.content).slice(0, MAX_MESSAGE_CHARS);
-    if (!text) continue;
+    const body = htmlToText(message.content).slice(0, MAX_MESSAGE_CHARS);
+    if (!body) continue;
+    // @我、回复我 的消息在正文前打标，重要事项提取据此优先处理。
+    const mention = mentions.get(message.id);
+    const text = mention ? `【${mention}】${body}` : body;
     const conversation = byId.get(message.conversationId);
     const thread = threads.get(message.conversationId) ?? {
       conversationId: message.conversationId,

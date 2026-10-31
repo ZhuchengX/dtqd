@@ -1,5 +1,5 @@
 // 首页「今天 / 本周」：从课表与待办里挑出今天的课、已过期与 7 天内到期的事、未读的新事项。
-import type { TimetableLesson, TodoItem } from '../../../shared/api';
+import type { CalendarEvent, TimetableLesson, TodoItem } from '../../../shared/api';
 import { todoCompleted } from '../../../shared/todo';
 import {
   activeInWeek,
@@ -12,7 +12,7 @@ import {
 const OVERDUE_DAYS = 14;
 
 export interface DigestLesson {
-  readonly id: number;
+  readonly id: number | string;
   readonly title: string;
   readonly time: string;
   readonly place: string | null;
@@ -53,11 +53,33 @@ function byDue(a: TodoItem, b: TodoItem): number {
   return Date.parse(a.dueAt!) - Date.parse(b.dueAt!);
 }
 
+/** 今天的日历事件（自建与 Teams 日程）；由待办派生的不要，待办另有列表。 */
+export function todayEvents(events: readonly CalendarEvent[], now: Date): DigestLesson[] {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const end = start + dayMilliseconds;
+  const clock = (iso: string) => {
+    const date = new Date(iso);
+    return formatMinuteOfDay(date.getHours() * 60 + date.getMinutes());
+  };
+  return events
+    .filter(
+      (event) =>
+        !event.todoId && Date.parse(event.endAt) > start && Date.parse(event.startAt) < end,
+    )
+    .map((event) => ({
+      id: event.id,
+      title: event.title,
+      time: `${clock(event.startAt)}–${clock(event.endAt)}`,
+      place: event.location,
+    }));
+}
+
 export function homeDigest(
   items: readonly TodoItem[],
   lessons: readonly TimetableLesson[],
   semesterStart: string | null,
   now: Date,
+  events: readonly CalendarEvent[] = [],
   days = 7,
 ): HomeDigest {
   const open = items.filter((item) => !todoCompleted(item.status));
@@ -65,7 +87,9 @@ export function homeDigest(
   const time = now.getTime();
   const horizon = time + days * dayMilliseconds;
   return {
-    lessons: todayLessons(lessons, semesterStart, now),
+    lessons: [...todayLessons(lessons, semesterStart, now), ...todayEvents(events, now)].sort(
+      (a, b) => a.time.localeCompare(b.time),
+    ),
     // 过期太久的多半是上学期没同步掉的旧作业，只看最近两周。
     overdue: dated
       .filter((item) => {

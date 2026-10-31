@@ -3,6 +3,7 @@ import { buildThreads, digestMarkdown } from '../digest';
 import {
   conversationKind,
   htmlToText,
+  mentionIndex,
   type RawTeamsConversation,
   type RawTeamsMessage,
 } from '../extract';
@@ -127,5 +128,30 @@ describe('首次同步', () => {
     expect(md).toContain('fresh news');
     expect(md).not.toContain('old news');
     expect(md).toContain('首次同步');
+  });
+});
+
+describe('@我 / 回复我', () => {
+  it('动态里的 mention 与 reply 按消息 id 索引，@我 优先，点赞不要', () => {
+    const index = mentionIndex([
+      { type: 'reaction', conversationId: channel.id, messageId: '1', time: 1 },
+      { type: 'reply', conversationId: channel.id, messageId: '2', time: 1 },
+      { type: 'mention', conversationId: channel.id, messageId: '2', time: 1 },
+      { type: 'replyToReply', conversationId: channel.id, messageId: '3', time: 1 },
+      { type: 'mention', conversationId: channel.id, messageId: '', time: 1 },
+    ]);
+    expect([...index]).toEqual([
+      ['2', '@我'],
+      ['3', '回复我'],
+    ]);
+  });
+
+  it('被 @ 的消息正文前打标', () => {
+    const [thread] = buildThreads(
+      [team, channel],
+      [message({ id: '7', content: '<p>Please reply</p>' })],
+      new Map([['7', '@我']]),
+    );
+    expect(thread!.messages[0]!.text).toBe('【@我】Please reply');
   });
 });

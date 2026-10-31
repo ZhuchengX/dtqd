@@ -14,7 +14,14 @@ vi.mock('../engine', () => ({ formatTime: (time: number) => new Date(time).toISO
 import { getDatabase } from '../../database';
 import { listTodoCanvasCourses } from '../../canvas/api';
 import { defaultChatFileRoots, listChatFiles } from '../../chatfiles/scan';
-import { currentCourses, readMyDundee, readOutlook, readQq, readTeams } from '../sources';
+import {
+  currentCourses,
+  readMyDundee,
+  readOutlook,
+  readQq,
+  readTeams,
+  tagCourses,
+} from '../sources';
 
 const NOW = Date.parse('2026-10-31T12:00:00Z');
 let db: DatabaseSync;
@@ -112,5 +119,27 @@ describe('readQq / readTeams / currentCourses', () => {
     expect(await currentCourses()).toEqual(['DI12006 Statistics']);
     vi.mocked(listTodoCanvasCourses).mockRejectedValue(new Error('offline'));
     expect(await currentCourses()).toEqual([]);
+  });
+});
+
+describe('tagCourses', () => {
+  it('会话标题含课程代码或较长的课程名时标上课程，正文行不动', () => {
+    const digest = [
+      '## [频道] DIICSU Maths › MA22004',
+      'MA22004 in body',
+      '## [群聊] Engineering Mathematics study group',
+      '## [私聊] Alice',
+    ].join('\n');
+    expect(
+      tagCourses(digest, ['MA22004 Statistics', 'EG21003 Engineering Mathematics', 'X1 Art']),
+    ).toBe(
+      [
+        '## [频道] DIICSU Maths › MA22004（课程：MA22004 Statistics）',
+        'MA22004 in body',
+        '## [群聊] Engineering Mathematics study group（课程：EG21003 Engineering Mathematics）',
+        '## [私聊] Alice',
+      ].join('\n'),
+    );
+    expect(tagCourses(digest, [])).toBe(digest);
   });
 });

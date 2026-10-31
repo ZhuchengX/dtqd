@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TimetableLesson, TodoItem } from '../../../shared/api';
-import { digestIsEmpty, dueDistance, homeDigest, todayLessons } from './home-digest';
+import { digestIsEmpty, dueDistance, homeDigest, todayEvents, todayLessons } from './home-digest';
 
 // 2026-11-04 是周三；开学 2026-09-07（周一）→ 第 9 周。
 const NOW = new Date(2026, 10, 4, 10, 0);
@@ -89,5 +89,44 @@ describe('dueDistance', () => {
     expect(dueDistance(at(3 * 3600_000), NOW)).toBe('还剩 3 小时');
     expect(dueDistance(at(2 * 86_400_000), NOW)).toBe('还剩 2 天');
     expect(dueDistance(at(-86_400_000), NOW)).toBe('已过 1 天');
+  });
+});
+
+describe('todayEvents', () => {
+  it('只要今天的自建与 Teams 日程，待办派生的不要', () => {
+    const at = (h: number) => new Date(2026, 10, 4, h).toISOString();
+    const events = todayEvents(
+      [
+        {
+          id: 'teams:e1',
+          title: 'Tutorial',
+          startAt: at(14),
+          endAt: at(15),
+          location: 'Teams 会议',
+          color: 'blue',
+        },
+        {
+          id: 'todo:x',
+          todoId: 'x',
+          title: 'Due',
+          startAt: at(9),
+          endAt: at(9),
+          location: null,
+          color: null,
+        },
+        {
+          id: 3,
+          title: '明天',
+          startAt: new Date(2026, 10, 5, 9).toISOString(),
+          endAt: new Date(2026, 10, 5, 10).toISOString(),
+          location: null,
+          color: null,
+        },
+      ],
+      NOW,
+    );
+    expect(events).toEqual([
+      { id: 'teams:e1', title: 'Tutorial', time: '14:00–15:00', place: 'Teams 会议' },
+    ]);
   });
 });

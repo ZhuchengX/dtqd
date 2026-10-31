@@ -73,7 +73,7 @@ export async function readTeams(): Promise<SourceRead> {
     source: 'teams',
     status,
     newItems: result.newMessages,
-    text: result.newMessages > 0 ? (result.digest ?? '') : '',
+    text: result.newMessages > 0 ? tagCourses(result.digest ?? '', await currentCourses()) : '',
     detail,
   };
 }
@@ -221,4 +221,28 @@ export async function currentCourses(): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * 频道 / 群聊标题里出现课程代码或课程名时，在标题后标上课程，提取时据此填 course。
+ * courses 是「代码 名称」；名称太短（< 6 字符）容易误配，只按代码匹配。
+ */
+export function tagCourses(digest: string, courses: readonly string[]): string {
+  if (courses.length === 0) return digest;
+  const parsed = courses.map((course) => {
+    const [code = '', ...rest] = course.split(' ');
+    return { course, code: code.toLowerCase(), name: rest.join(' ').toLowerCase() };
+  });
+  return digest
+    .split('\n')
+    .map((line) => {
+      if (!line.startsWith('## [')) return line;
+      const lower = line.toLowerCase();
+      const match = parsed.find(
+        ({ code, name }) =>
+          (code.length >= 4 && lower.includes(code)) || (name.length >= 6 && lower.includes(name)),
+      );
+      return match ? `${line}（课程：${match.course}）` : line;
+    })
+    .join('\n');
 }

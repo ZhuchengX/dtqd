@@ -21,9 +21,32 @@ export interface RawTeamsMessage {
   content: string;
 }
 
+/** 「动态」里与我有关的一条（@我、回复我等）；只取类型与指向的消息，不取内容。 */
+export interface RawTeamsActivity {
+  type: string;
+  conversationId: string;
+  messageId: string;
+  time: number;
+}
+
+/** Teams 日历里的一个日程（课程会议、答疑、讲座等）。 */
+export interface RawTeamsEvent {
+  id: string;
+  subject: string;
+  start: string;
+  end: string;
+  location: string;
+  organizer: string;
+  online: boolean;
+  cancelled: boolean;
+}
+
 export interface RawTeamsSnapshot {
   conversations: RawTeamsConversation[];
   messages: RawTeamsMessage[];
+  /** 旧版脚本或页面里没有对应库时缺省。 */
+  activities?: RawTeamsActivity[];
+  events?: RawTeamsEvent[];
   /** 本次读到的最新送达时间，下次增量从这里开始。 */
   latest: number;
 }
@@ -95,7 +118,52 @@ export function extractScript(since: number): string {
       }
     });
     rdb.close();
-    return { conversations, messages, latest };
+
+    // 动态（@我、回复我）与日历是锦上添花：库不在或读失败都不影响消息同步。
+    const activities = [];
+    const events = [];
+    const iso = (value) => {
+      const date = value instanceof Date ? value : new Date(value);
+      return Number.isFinite(date.getTime()) ? date.toISOString() : '';
+    };
+    try {
+      const activityDb = pick('activity-manager');
+      if (activityDb) {
+        const adb = await open(activityDb);
+        await each(adb, 'feed-items', (a) => {
+          activities.push({
+            type: String(a.activityType || ''),
+            conversationId: String(a.sourceThreadId || ''),
+            messageId: String(a.sourceMessageId || a.messageId || ''),
+            time: Number(a.timestamp || 0),
+          });
+        });
+        adb.close();
+      }
+    } catch {}
+    try {
+      const calendarDb = pick('calendar');
+      if (calendarDb) {
+        const kdb = await open(calendarDb);
+        await each(kdb, 'calendar', (e) => {
+          const start = iso(e.startTime);
+          const end = iso(e.endTime);
+          if (!start || !end) return;
+          events.push({
+            id: String(e.objectId || e.iCalUID || start),
+            subject: String(e.subject || ''),
+            start,
+            end,
+            location: String(e.location || ''),
+            organizer: String(e.organizerName || ''),
+            online: Boolean(e.isOnlineMeeting),
+            cancelled: Boolean(e.isCancelled),
+          });
+        });
+        kdb.close();
+      }
+    } catch {}
+    return { conversations, messages, latest, activities, events };
   })()`;
 }
 
@@ -164,3 +232,17 @@ export const STATS_SCRIPT = String.raw`(async () => {
   db.close();
   return { chains, latest };
 })()`;
+
+export type TeamsMention = '@我' | '回复我';
+
+/** 动态里指向消息的「@我 / 回复我」，按消息 id 索引；点赞等其他动态不要。 */
+export function mentionIndex(activities: readonly RawTeamsActivity[]): Map<string, TeamsMention> {
+  const index = new Map<string, TeamsMention>();
+  for (const activity of activities) {
+    if (!activity.messageId) continue;
+    if (/mention/i.test(activity.type)) index.set(activity.messageId, '@我');
+    else if (/repl/i.test(activity.type) && !index.has(activity.messageId))
+      index.set(activity.messageId, '回复我');
+  }
+  return index;
+}

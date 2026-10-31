@@ -10,7 +10,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { availablePath, diskName, storageDirectory } from '../storage';
 import { buildThreads, digestMarkdown, threadMarkdown, type TeamsThread } from './digest';
 import type { TeamsSyncResult } from '../../shared/teams';
-import { extractScript, STATS_SCRIPT, type RawTeamsSnapshot } from './extract';
+import { extractScript, mentionIndex, STATS_SCRIPT, type RawTeamsSnapshot } from './extract';
+import { saveTeamsEvents } from './calendar';
 import { TEAMS_URL, teamsSession, visibleTeamsWindow } from './window';
 
 const POLL_MS = 5000;
@@ -128,7 +129,18 @@ export function syncTeams(): Promise<TeamsSyncOutcome> {
     const snapshot = (await contents.executeJavaScript(
       extractScript(state.since),
     )) as RawTeamsSnapshot;
-    const threads = buildThreads(snapshot.conversations, snapshot.messages);
+    const activities = snapshot.activities ?? [];
+    const threads = buildThreads(
+      snapshot.conversations,
+      snapshot.messages,
+      mentionIndex(activities),
+    );
+    if (snapshot.events) saveTeamsEvents(snapshot.events);
+    // 只记动态类型与条数（不含内容），便于确认 @我 的类型名。
+    const types = new Map<string, number>();
+    for (const activity of activities)
+      types.set(activity.type, (types.get(activity.type) ?? 0) + 1);
+    console.info('[teams] 动态', Object.fromEntries(types), '日程', snapshot.events?.length ?? 0);
     for (const thread of threads) await archiveThread(dir, state, thread);
     const now = Date.now();
     const digestPath = join(dir, '最近更新.md');

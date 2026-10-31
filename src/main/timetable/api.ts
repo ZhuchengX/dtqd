@@ -9,6 +9,7 @@ import {
 } from '../../shared/api';
 import { getDatabase } from '../database';
 import { lessonOccurrences } from '../../shared/schedule';
+import { teamsCalendarEvents } from '../teams/calendar';
 import {
   CampusAuthError,
   campusRequest,
@@ -537,7 +538,10 @@ export function listCalendarEvents(startValue: unknown, endValue: unknown) {
          WHERE end_at > ? AND start_at < ? ORDER BY start_at`,
       )
       .all(startAt, endAt) as CalendarEventRow[]
-  ).map(mapEvent);
+  )
+    .map(mapEvent)
+    .concat(teamsCalendarEvents(startAt, endAt))
+    .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
 }
 
 export function createCalendarEvent(input: unknown) {

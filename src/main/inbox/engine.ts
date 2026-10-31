@@ -47,7 +47,8 @@ export interface InboxTriageResult {
 }
 
 const SOURCE_HINTS: Record<InboxSource, string> = {
-  teams: '班级频道与聊天消息；@这名学生或私聊里直接问他的，归 reply。',
+  teams:
+    '班级频道与聊天消息；正文以【@我】或【回复我】开头的是直接冲着这名学生的，要提出来、importance 至少 medium，需要他回话的归 reply；私聊里直接问他的也归 reply。会话标题后的（课程：…）就是 course。',
   outlook: '邮件；群发通讯、营销、系统自动通知一般不要，老师或学院直接要求学生做的事要。',
   mydundee: '课程官方公告，截止时间以这里为准。',
   qq: '只有 QQ 收到的文件名与时间，没有正文；只有文件名明确是考试安排、作业要求、截止通知时才提出，title 写「查看 QQ 收到的《文件名》」。',

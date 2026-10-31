@@ -151,7 +151,8 @@ export function EventDetailDialog({
             )}
           </div>
           {/* 底部只保留破坏性操作的确认区；关闭走右上角 X，避免重复入口。 */}
-          {detail.kind === 'event' ? (
+          {/* 只有自建事件（数字 id）可删；Teams 日程等只读。 */}
+          {detail.kind === 'event' && typeof detail.event.id === 'number' ? (
             <div className="mt-5 flex items-center gap-1.5">
               {confirming ? (
                 <>

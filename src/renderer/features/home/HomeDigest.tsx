@@ -1,6 +1,6 @@
 // 首页「今天 / 本周」面板：今天的课、已过期、7 天内到期、新事项；全空时不显示，保持原首页样子。
 import { useEffect, useState } from 'react';
-import type { TimetableLesson, TodoItem } from '../../../shared/api';
+import type { CalendarEvent, TimetableLesson, TodoItem } from '../../../shared/api';
 import { useNavigationStore } from '../../navigation/view';
 import { cn } from '../../lib/utils';
 import { dualDueLabel } from '../../../shared/deadline';
@@ -12,10 +12,16 @@ interface Sources {
   items: readonly TodoItem[];
   lessons: readonly TimetableLesson[];
   semesterStart: string | null;
+  events: readonly CalendarEvent[];
 }
 
 function useDigestSources(): Sources {
-  const [sources, setSources] = useState<Sources>({ items: [], lessons: [], semesterStart: null });
+  const [sources, setSources] = useState<Sources>({
+    items: [],
+    lessons: [],
+    semesterStart: null,
+    events: [],
+  });
   useEffect(() => {
     const api = window.dela;
     // 浏览器预览或测试替身可能没有 todo / timetable 接口，首页照常显示。
@@ -30,6 +36,14 @@ function useDigestSources(): Sources {
       .then(([state, lessons]) => {
         if (active)
           setSources((current) => ({ ...current, lessons, semesterStart: state.semesterStart }));
+      })
+      .catch(() => undefined);
+    const today = new Date();
+    const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    void api.timetable
+      .listEvents(dayStart.toISOString(), new Date(dayStart.getTime() + 86_400_000).toISOString())
+      .then((events) => {
+        if (active) setSources((current) => ({ ...current, events }));
       })
       .catch(() => undefined);
     return () => {
@@ -74,9 +88,9 @@ function More({ count }: { count: number }) {
 }
 
 export function HomeDigest() {
-  const { items, lessons, semesterStart } = useDigestSources();
+  const { items, lessons, semesterStart, events } = useDigestSources();
   const now = new Date();
-  const digest = homeDigest(items, lessons, semesterStart, now);
+  const digest = homeDigest(items, lessons, semesterStart, now, events);
   if (digestIsEmpty(digest)) return null;
   const upcomingIds = new Set(digest.upcoming.map((item) => item.id));
   const overdueIds = new Set(digest.overdue.map((item) => item.id));
@@ -88,7 +102,7 @@ export function HomeDigest() {
   return (
     <div className="mx-auto mb-6 grid w-full max-w-2xl gap-4 rounded-xl border border-line bg-surface p-3">
       {digest.lessons.length > 0 && (
-        <Group title="今天的课">
+        <Group title="今天的课与日程">
           {digest.lessons.map((lesson) => (
             <li className="flex items-baseline gap-2 px-2 py-1 text-13" key={lesson.id}>
               <span className="shrink-0 tabular-nums text-ink-3">{lesson.time}</span>
