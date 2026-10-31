@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { compareCanvasTerms, groupCanvasCoursesByTerm, latestTermOf } from './canvas';
+import {
+  compareCanvasTerms,
+  groupCanvasCoursesByTerm,
+  isCurrentTerm,
+  latestTermOf,
+} from './canvas';
 
 describe('Canvas term ordering', () => {
   it('sorts prefixed and standard academic terms chronologically without renaming them', () => {
@@ -119,5 +124,16 @@ describe('邓迪模块学期键', () => {
       '未标注学期',
     ]);
     expect(latestTermOf(terms.map((term) => ({ term })))).toBe('2025-2026-2');
+  });
+});
+
+describe('isCurrentTerm', () => {
+  it('邓迪学期键按学年一起展示，其他格式只认最新学期', () => {
+    expect(isCurrentTerm('2025-2026 全学年', '2025-2026-2')).toBe(true);
+    expect(isCurrentTerm('2025-2026-1', '2025-2026-2')).toBe(true);
+    expect(isCurrentTerm('2024-2025-2', '2025-2026-2')).toBe(false);
+    expect(isCurrentTerm('未标注学期', '2025-2026-2')).toBe(false);
+    expect(isCurrentTerm('2026 春季', '2026 春季')).toBe(true);
+    expect(isCurrentTerm('2025 秋季', '2026 春季')).toBe(false);
   });
 });

@@ -133,9 +133,20 @@ describe('blackboardTerm', () => {
     expect(blackboardTerm('', { name: 'DI40001 - Honours Project ( SEM 1-2 25/26 )' })).toBe(
       '2025-2026 全学年',
     );
-    expect(blackboardTerm('2025-26', { name: 'Statistics' })).toBe('2025-2026 学年');
-    expect(blackboardTerm('', { name: 'Calculus 2 (2025/26)' })).toBe('2025-2026 学年');
-    expect(blackboardTerm('Open Term', { name: 'No year' })).toBe('Open Term');
-    expect(blackboardTerm('', { name: 'No year' })).toBe('未标注学期');
+    expect(blackboardTerm('', { name: 'DI22013 - Statistics II ( SEM 2 2023 )' })).toBe(
+      '2022-2023-2',
+    );
+    expect(blackboardTerm('', { name: 'DI11002 - English II ( SEM 12 22/23 )' })).toBe(
+      '2022-2023 全学年',
+    );
+    expect(blackboardTerm('2025-26', { name: 'DI99999 - Statistics' })).toBe('2025-2026 学年');
+    expect(blackboardTerm('Open Term', { name: 'DI99999 - No year' })).toBe('Open Term');
+  });
+
+  it('没有模块代码的学校站点不归学期', () => {
+    expect(
+      blackboardTerm('2026-27', { name: 'Information Security Awareness Training 2026/27' }),
+    ).toBe('未标注学期');
+    expect(blackboardTerm('', { name: 'Careers Service' })).toBe('未标注学期');
   });
 });

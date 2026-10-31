@@ -18,3 +18,12 @@ export async function connectBlackboard(): Promise<void> {
   await dela.canvas.loginBlackboard();
   useWorkspaceStore.getState().setCanvas(await dela.canvas.syncCourses());
 }
+
+/** 仅 macOS：从 Chrome / Edge 导入 myDundee 登录并同步课程列表；返回来源浏览器名。 */
+export async function importBlackboardFromBrowser(): Promise<string | undefined> {
+  const dela = window.dela;
+  if (!dela) return undefined;
+  const browser = await dela.canvas.importBlackboardFromBrowser();
+  useWorkspaceStore.getState().setCanvas(await dela.canvas.syncCourses());
+  return browser;
+}

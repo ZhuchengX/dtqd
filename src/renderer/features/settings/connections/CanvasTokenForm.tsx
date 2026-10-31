@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { connectBlackboard, connectCanvas } from './canvas-connect';
+import { connectBlackboard, connectCanvas, importBlackboardFromBrowser } from './canvas-connect';
 import { errorText } from '../../../workspace/store';
 
 type CanvasTokenFormProps = {
@@ -22,6 +22,19 @@ export function CanvasTokenForm({ onSuccess, actions }: CanvasTokenFormProps) {
     setError(null);
     try {
       await connectBlackboard();
+      onSuccess();
+    } catch (cause) {
+      setError(errorText(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const importFromBrowser = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await importBlackboardFromBrowser();
       onSuccess();
     } catch (cause) {
       setError(errorText(cause));
@@ -59,6 +72,22 @@ export function CanvasTokenForm({ onSuccess, actions }: CanvasTokenFormProps) {
         <p className="text-xs text-ink-3">
           在弹出的窗口里用 studentID@dundee.ac.uk 完成 Microsoft 登录；DTQD 不保存你的密码。
         </p>
+        {window.dela?.platform === 'darwin' && (
+          <>
+            <Button
+              disabled={busy}
+              onClick={() => void importFromBrowser()}
+              type="button"
+              variant="outline"
+            >
+              {busy ? '处理中…' : '从 Chrome / Edge 导入已登录的 myDundee'}
+            </Button>
+            <p className="text-xs text-ink-3">
+              浏览器里已登录 myDundee 时可用：只读取 dundee.ac.uk 的登录信息；macOS
+              会弹出钥匙串授权，请点「允许」。
+            </p>
+          </>
+        )}
       </div>
       <label className="grid gap-2 text-13">
         Canvas Access Token（上游交大功能，DIICSU 不需要）

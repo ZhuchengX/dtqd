@@ -61,6 +61,14 @@ export function latestTermOf(courses: { term: string }[]): string | undefined {
     .find((term) => term !== '未标注学期');
 }
 
+/** 是否与最新学期同属当前学年：邓迪学期键（2025-2026-1 / 全学年）整学年一起展示，其余只认最新学期本身。 */
+export function isCurrentTerm(term: string, latest: string | undefined): boolean {
+  if (!latest || term === '未标注学期') return false;
+  if (term === latest) return true;
+  const year = (value: string) => value.match(/^(\d{4}-\d{4})(?:-[12]| 全学年)$/)?.[1];
+  return year(term) !== undefined && year(term) === year(latest);
+}
+
 /** 课程按学期分组：学期按 compareCanvasTerms 降序，组内按课程名排序；供批量导出弹窗等展示用。 */
 export function groupCanvasCoursesByTerm(
   courses: CanvasCourse[],
@@ -98,6 +106,8 @@ export interface CanvasApi {
   configure(token: string): Promise<void>;
   /** 在登录窗内用 Dundee Microsoft 账号登录 myDundee（Blackboard）。 */
   loginBlackboard(): Promise<void>;
+  /** 仅 macOS：导入 Chrome / Edge 里已登录的 myDundee 会话，返回来源浏览器名。 */
+  importBlackboardFromBrowser(): Promise<string>;
   disconnect(): Promise<void>;
   syncCourses(): Promise<CanvasState>;
   syncCourse(id: number): Promise<CanvasState>;

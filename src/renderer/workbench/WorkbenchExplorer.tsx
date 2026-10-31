@@ -41,7 +41,7 @@ import { useRemoteActivity } from '../navigation/remote-activity';
 import { RemoteConnectionTip } from '../navigation/remote-connection-tip';
 import { useRemoteConnections } from '../navigation/remote-connections';
 import { SourcesTree } from '../navigation/SourcesTree';
-import { latestTermOf } from '../../shared/canvas';
+import { isCurrentTerm, latestTermOf } from '../../shared/canvas';
 import { ancestorChainOf, useNavigationStore as useTreeState } from '../navigation/store';
 import { useNavigationStore as useAppNavigation } from '../navigation/view';
 import {
@@ -274,7 +274,7 @@ export function WorkbenchExplorer({
         const courses = useWorkspaceStore.getState().canvas.courses;
         const latest = latestTermOf(courses);
         for (const course of courses)
-          if (course.term === latest && !course.archived)
+          if (isCurrentTerm(course.term, latest) && !course.archived)
             store.setCanvas(await window.dela!.canvas.syncCourse(course.id));
       } catch (cause) {
         showToast({ variant: 'error', title: '同步课程资料失败', description: errorText(cause) });

@@ -13,7 +13,7 @@ import {
 import { Explorer, type ExplorerItem } from '../components/ui/explorer';
 import { errorText, useWorkspaceStore } from '../workspace/store';
 import { showToast } from '../app/toasts';
-import { compareCanvasTerms, latestTermOf } from '../../shared/canvas';
+import { compareCanvasTerms, isCurrentTerm, latestTermOf } from '../../shared/canvas';
 import { dialogOverlay, dialogPanel } from '../components/ui/motion';
 import { cn } from '../lib/utils';
 import { fileManagerName } from '../lib/platform';
@@ -53,9 +53,7 @@ export function SourcesTree({
   if (bySource) nodes.push({ id: 'canvas', parentId: null, name: 'myDundee', container: true });
   const terms = [...new Set(canvas.courses.map((c) => c.term))].sort(compareCanvasTerms);
   const latestTerm = latestTermOf(canvas.courses);
-  const archivedTerms = new Set(
-    terms.filter((term) => term === '未标注学期' || term !== latestTerm),
-  );
+  const archivedTerms = new Set(terms.filter((term) => !isCurrentTerm(term, latestTerm)));
   const visibleTerms = terms.filter((term) => archivedTerms.has(term) === archived);
   for (const term of visibleTerms)
     nodes.push({

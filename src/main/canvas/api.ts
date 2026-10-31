@@ -7,7 +7,7 @@ import { pipeline } from 'node:stream/promises';
 import { z } from 'zod';
 import { getDatabase } from '../database';
 import { availablePath, diskName, storageDirectory } from '../storage';
-import { latestTermOf } from '../../shared/canvas';
+import { isCurrentTerm, latestTermOf } from '../../shared/canvas';
 import type { CachedCourseFile, CanvasExportResult } from '../../shared/canvas';
 import { pickCourseFiles, collectCourseFileEntries } from './course-files';
 import { officeExportPreviewInfo, readOfficeExportLink } from '../documents/links';
@@ -473,12 +473,12 @@ async function syncBlackboardCourse(course: CanvasCourse, externalId: string) {
   return getCanvasState();
 }
 
-// 后台目录同步与手动刷新同一口径：最新学期 + 未归档；顺序执行避免并发轰炸 Canvas。
+// 后台目录同步与手动刷新同一口径：当前学年（isCurrentTerm）+ 未归档；顺序执行避免并发轰炸 Canvas。
 export async function syncCanvasCourseTrees(): Promise<CanvasState> {
   const state = await syncCanvasCourses();
   const latest = latestTermOf(state.courses);
   for (const course of state.courses)
-    if (course.term === latest && !course.archived) await syncCanvasCourse(course.id);
+    if (isCurrentTerm(course.term, latest) && !course.archived) await syncCanvasCourse(course.id);
   return getCanvasState();
 }
 
@@ -749,7 +749,7 @@ export async function listTodoCanvasCourses() {
     const state = getCanvasState();
     const latest = latestTermOf(state.courses);
     return state.courses
-      .filter((c) => c.externalId && !c.archived && (!latest || c.term === latest))
+      .filter((c) => c.externalId && !c.archived && (!latest || isCurrentTerm(c.term, latest)))
       .map((c) => ({ id: c.id, name: c.name, code: c.code }));
   }
   const courses = await list('courses?enrollment_state=active&per_page=50');
@@ -782,7 +782,7 @@ export function cachedCourseFiles(): CachedCourseFile[] {
   if (!latest) return [];
   const coursesRoot = join(storageDirectory(), 'courses');
   const roots = state.courses
-    .filter((course) => course.term === latest && !course.archived)
+    .filter((course) => isCurrentTerm(course.term, latest) && !course.archived)
     // 按 id 排序让同名课程的 title 归属确定；空名兜底与 sourceDirectory 的目录命名保持一致。
     .sort((a, b) => a.id - b.id)
     .map((course) => ({

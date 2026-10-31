@@ -20,7 +20,12 @@ import {
   archiveCanvasCourse,
 } from './api';
 import type { CanvasState } from '../../shared/api';
-import { blackboardConnected, disconnectBlackboard, loginBlackboard } from './blackboard';
+import {
+  blackboardConnected,
+  disconnectBlackboard,
+  importBlackboardFromBrowser,
+  loginBlackboard,
+} from './blackboard';
 
 export function registerCanvasIpc() {
   const handle = (name: string, fn: (...args: unknown[]) => unknown) =>
@@ -37,14 +42,23 @@ export function registerCanvasIpc() {
       console.error('Canvas tree sync failed', error),
     );
   });
-  ipcMain.handle('canvas:login-blackboard', async (event) => {
-    checkWorkspaceSender(event);
-    await loginBlackboard(event.sender);
+  const afterBlackboardLogin = () => {
     broadcastTodos();
     void refreshTodos().catch((error: unknown) => console.error('TODO sync failed', error));
     void refreshCanvasTrees().catch((error: unknown) =>
       console.error('myDundee tree sync failed', error),
     );
+  };
+  ipcMain.handle('canvas:login-blackboard', async (event) => {
+    checkWorkspaceSender(event);
+    await loginBlackboard(event.sender);
+    afterBlackboardLogin();
+  });
+  ipcMain.handle('canvas:import-blackboard-browser', async (event) => {
+    checkWorkspaceSender(event);
+    const browser = await importBlackboardFromBrowser();
+    afterBlackboardLogin();
+    return browser;
   });
   handle('disconnect', async () => {
     clearCanvasToken();
