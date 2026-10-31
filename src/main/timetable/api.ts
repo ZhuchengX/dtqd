@@ -233,7 +233,7 @@ function mapRow(row: LessonRow): TimetableLesson {
   };
 }
 
-function csuBase(): string {
+export function csuBase(): string {
   const row = getDatabase()
     .prepare('SELECT value FROM workspace_settings WHERE key=?')
     .get(CSU_BASE_KEY) as { value: string } | undefined;

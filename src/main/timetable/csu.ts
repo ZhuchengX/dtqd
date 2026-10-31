@@ -72,7 +72,7 @@ const decode = (text: string) =>
     .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
     .replace(/&amp;/g, '&');
 
-const stripTags = (html: string) => decode(html.replace(/<[^>]+>/g, '')).trim();
+export const stripTags = (html: string) => decode(html.replace(/<[^>]+>/g, '')).trim();
 
 function fontByTitle(chunk: string, pattern: RegExp): string | undefined {
   for (const match of chunk.matchAll(/<font[^>]*title=['"]([^'"]*)['"][^>]*>([\s\S]*?)<\/font>/gi))

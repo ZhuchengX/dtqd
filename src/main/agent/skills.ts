@@ -26,6 +26,7 @@ import shuiyuanSkill from './skills/shuiyuan/SKILL.md?raw';
 import teamsSkill from './skills/teams/SKILL.md?raw';
 import todoSkill from './skills/todo/SKILL.md?raw';
 import chatfilesSkill from './skills/chatfiles/SKILL.md?raw';
+import csuSkill from './skills/csu/SKILL.md?raw';
 import diicsuPolicySkill from './skills/diicsu-policy/SKILL.md?raw';
 import diicsuProgrammesSkill from './skills/diicsu-programmes/SKILL.md?raw';
 import studyCoachSkill from './skills/study-coach/SKILL.md?raw';
@@ -70,6 +71,7 @@ const BUILTIN_SKILLS: Readonly<Record<string, { path: string; content: string }[
   teams: [{ path: SKILL_ENTRY_FILE, content: teamsSkill }],
   todo: [{ path: SKILL_ENTRY_FILE, content: todoSkill }],
   chatfiles: [{ path: SKILL_ENTRY_FILE, content: chatfilesSkill }],
+  csu: [{ path: SKILL_ENTRY_FILE, content: csuSkill }],
   curriculum: [{ path: SKILL_ENTRY_FILE, content: curriculumSkill }],
   'diicsu-policy': [{ path: SKILL_ENTRY_FILE, content: diicsuPolicySkill }],
   'diicsu-programmes': [{ path: SKILL_ENTRY_FILE, content: diicsuProgrammesSkill }],

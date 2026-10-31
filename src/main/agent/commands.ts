@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { canvasTools } from './domain/canvas';
 import { chatfilesTools } from './domain/chatfiles';
+import { csuTools } from './domain/csu';
 import { classroomTools } from './domain/classroom';
 import { mailTools } from './domain/mail';
 import { shuiyuanTools } from './domain/shuiyuan';
@@ -26,6 +27,11 @@ const commandDomains = [
     commands: chatfilesTools,
   },
   { name: 'classroom', description: '读取与下载课堂视频语音文稿', commands: classroomTools },
+  {
+    name: 'csu',
+    description: '只读查询中南教务成绩、培养方案、考试安排',
+    commands: csuTools,
+  },
   { name: 'mail', description: '检索邮件、读取附件与准备邮件草稿', commands: mailTools },
   { name: 'shuiyuan', description: '查看水源分类、话题、搜索与帖子内容', commands: shuiyuanTools },
   {
