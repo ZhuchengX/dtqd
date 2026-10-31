@@ -128,5 +128,6 @@ describe('semesterOptions', () => {
     expect(options).toContain('2023-2024-1');
     expect(options).toEqual([...options].sort().reverse());
     expect(new Set(options).size).toBe(options.length);
+    expect(options.some((option) => option.endsWith('-3'))).toBe(false);
   });
 });

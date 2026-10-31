@@ -4,10 +4,11 @@ import {
   csuLoginReached,
   csuTimetableUrl,
   looksLikeCsuLoginPage,
+  parseCsuSemesterStart,
   parseCsuSemesters,
   parseCsuTimetable,
 } from '../csu';
-import { parseWeekNumbers } from '../api';
+import { currentSemester, parseWeekNumbers } from '../api';
 
 // 按强智 jsxsd「学期理论课表」结构手写的样例；真实页面待登录后实测核对。
 const html = `
@@ -101,5 +102,24 @@ describe('parseCsuSemesters', () => {
       "<option value='2026-2027-1' selected>2026-2027-1</option>" +
       '<option value="2025-2026-2">2025-2026-2</option><option value="">请选择</option></select>';
     expect(parseCsuSemesters(html)).toEqual(['2026-2027-1', '2025-2026-2', '2024-2025-1']);
+  });
+});
+
+describe('currentSemester（中南两学期）', () => {
+  it('8–12 月与 1 月为秋季学期，2–7 月为春季学期', () => {
+    expect(currentSemester(new Date(2026, 9, 31))).toBe('2026-2027-1');
+    expect(currentSemester(new Date(2027, 0, 10))).toBe('2026-2027-1');
+    expect(currentSemester(new Date(2027, 2, 2))).toBe('2026-2027-2');
+    expect(currentSemester(new Date(2027, 7, 1))).toBe('2027-2028-1');
+  });
+});
+
+describe('parseCsuSemesterStart', () => {
+  it('从教学周历首行取周一为开学日期', () => {
+    const html =
+      '<table id="kbtable"><tr><td>1</td><td title="2026年09月06">09月06日</td>' +
+      '<td title="2026年09月07">07</td><td title="2026年09月08">08</td></tr></table>';
+    expect(parseCsuSemesterStart(html)).toBe('2026-09-07');
+    expect(parseCsuSemesterStart('<table></table>')).toBeNull();
   });
 });

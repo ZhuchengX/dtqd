@@ -135,7 +135,7 @@ export function semesterLabel(semester: string): string {
 }
 
 /**
- * 学期下拉：从最新学期往前 6 个，再并上已同步和当前选中的学期，新到旧排列。
+ * 学期下拉：从最新学期往前 8 个（4 学年），再并上已同步和当前选中的学期，新到旧排列。
  * 以最新学期而非选中学期为上端，选了旧学期后仍能切回最新学期。
  */
 export function semesterOptions(latest: string, extra: readonly string[] = []): string[] {
@@ -150,10 +150,11 @@ function recentSemesters(current: string): string[] {
   const options = [current];
   let year = start;
   let semester = term;
-  while (options.length < 6) {
+  // 中南一学年只有秋（-1）、春（-2）两个学期。
+  while (options.length < 8) {
     semester -= 1;
     if (semester === 0) {
-      semester = 3;
+      semester = 2;
       year -= 1;
     }
     options.push(`${year}-${year + 1}-${semester}`);

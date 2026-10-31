@@ -22,6 +22,24 @@ export function csuLoginReached(url: string): boolean {
   return csuJsxsdBase(url) !== null && /\/jsxsd\/framework\//.test(new URL(url).pathname);
 }
 
+/** 教学周历（我的桌面）地址：POST xnxq01id 取任一学期。 */
+export function csuCalendarUrl(base: string): string {
+  return `${base}jxzl/jxzl_query`;
+}
+
+/**
+ * 教学周历每格 title 为「2026年09月07」，首行即第 1 周（周日起排）。
+ * 取前 7 格中的周一作为开学日期，找不到返回 null。
+ */
+export function parseCsuSemesterStart(html: string): string | null {
+  const dates = [...html.matchAll(/title=['"](\d{4})年(\d{2})月(\d{2})/g)].slice(0, 7);
+  for (const [, year, month, day] of dates) {
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    if (date.getUTCDay() === 1) return `${year}-${month}-${day}`;
+  }
+  return null;
+}
+
 /** DTQD 学期键 `2026-2027-1` 即强智的 xnxq01id，原样使用。 */
 export function csuTimetableUrl(base: string, semester: string): string {
   return `${base}xskb/xskb_list.do?xnxq01id=${encodeURIComponent(semester)}`;

@@ -22,7 +22,9 @@ import {
   csuJsxsdBase,
   csuLoginReached,
   csuTimetableUrl,
+  csuCalendarUrl,
   looksLikeCsuLoginPage,
+  parseCsuSemesterStart,
   parseCsuSemesters,
   parseCsuTimetable,
 } from './csu';
@@ -142,6 +144,11 @@ export function parseSemesterStart(values: readonly unknown[] | undefined): stri
 export function currentSemester(now = new Date()): string {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
+  if (TIMETABLE_PROVIDER === 'csu') {
+    // 中南一学年两个学期：8 月起算下一学年秋季（-1），1 月仍属秋季，2–7 月为春季（-2）。
+    if (month >= 8) return `${year}-${year + 1}-1`;
+    return month === 1 ? `${year - 1}-${year}-1` : `${year - 1}-${year}-2`;
+  }
   if (month >= 9) return `${year}-${year + 1}-1`;
   if (month <= 2) return `${year - 1}-${year}-1`;
   if (month <= 7) return `${year - 1}-${year}-2`;
@@ -284,8 +291,26 @@ async function dumpCsuPage(semester: string, html: string) {
   }
 }
 
-async function fetchCsuTimetable(semester: string) {
-  return csuPayload(semester, await fetchCsuHtml(semester));
+/** 教学周历给出第 1 周日期；取不到不影响课表，返回 null 让用户手动设。 */
+async function fetchCsuSemesterStart(semester: string): Promise<string | null> {
+  try {
+    const html = await campusRequest(await getCampusSession(), csuCalendarUrl(csuBase()), {
+      service: '中南教学周历',
+      loginError: '中南教务登录已失效，请重新登录',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: new URLSearchParams({ xnxq01id: semester }).toString(),
+    });
+    return parseCsuSemesterStart(html);
+  } catch (error) {
+    console.warn('[timetable] 读取中南教学周历失败', error);
+    return null;
+  }
+}
+
+async function fetchCsuTimetable(semester: string, html?: string) {
+  const payload = csuPayload(semester, html ?? (await fetchCsuHtml(semester)));
+  return { ...payload, semesterStart: await fetchCsuSemesterStart(semester) };
 }
 
 /** 连续这么多个学期没课（且之前已有课）就认为到了入学前，停止往前拉。 */
@@ -314,7 +339,7 @@ async function syncAllCsuSemesters(requested: string): Promise<TimetableResult> 
   let emptyStreak = 0;
   for (const semester of semesters) {
     const outcome = await storeSemester(semester, async () =>
-      csuPayload(semester, semester === latest ? first : await fetchCsuHtml(semester)),
+      fetchCsuTimetable(semester, semester === latest ? first : undefined),
     );
     if (!outcome.result.ok) {
       if (outcome.result.reason === 'auth' || semester === requested) result = outcome.result;
@@ -393,7 +418,8 @@ async function storeSemester(
     const data = await fetchData();
     await flushCampusSession();
 
-    const semesterStart = parseSemesterStart(data.rqazcList);
+    const semesterStart =
+      ('semesterStart' in data ? data.semesterStart : null) ?? parseSemesterStart(data.rqazcList);
     const lessons = data.kbList.flatMap((raw, index) => {
       const courseName = raw.kcmc?.trim();
       const weekday = Number(raw.xqj);

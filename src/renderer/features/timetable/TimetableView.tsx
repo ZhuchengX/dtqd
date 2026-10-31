@@ -81,11 +81,16 @@ function DesktopTimetableView({ onOpenTodo }: { onOpenTodo?: (todoId: string) =>
       setState(nextState);
       setSemester(nextState.semester);
       setLessons([...nextLessons]);
-      // 学期未变时保留用户选中的教学周：同步/改开学日期不应把用户拉回本周。
-      if (loadedSemesterRef.current === nextState.semester) return;
-      loadedSemesterRef.current = nextState.semester;
+      // 学期未变时保留用户选中的教学周：同步/改开学日期不应把用户拉回本周；
+      // 但开学日期首次出现（如同步自动读到教学周历）时归位到本周。
+      const loadedKey = `${nextState.semester}|${nextState.semesterStart ? 'dated' : ''}`;
+      const previous = loadedSemesterRef.current;
+      if (previous === loadedKey || previous === `${nextState.semester}|dated`) return;
+      loadedSemesterRef.current = loadedKey;
+      // 今天不在该学期（选了往届学期）时回到第 1 周，避免停在学期外的空白周。
       const currentWeek = weekForDate(nextState.semesterStart, new Date());
-      setSelectedWeek(currentWeek && currentWeek > 0 ? currentWeek : 1);
+      const lastWeek = Math.max(18, ...nextLessons.flatMap((lesson) => lesson.weekNumbers));
+      setSelectedWeek(currentWeek && currentWeek > 0 && currentWeek <= lastWeek ? currentWeek : 1);
     },
     [timetable],
   );
