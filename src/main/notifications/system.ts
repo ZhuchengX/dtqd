@@ -88,10 +88,12 @@ export function systemNotifyToast(title: string, body: string): void {
 /**
  * 截止提醒：受启动基线、暂停与校园提醒开关约束，但窗口在前台也弹——
  * 截止前 3 小时这种事没有铃铛红点替代，漏看代价大。点击打开对应待办。
+ * 返回是否真的弹出；没弹（启动未就绪、暂停、开关关闭）时调用方下次再试。
  */
-export function systemNotifyReminder(title: string, body: string, todoId: string): void {
-  if (!armed || !Notification.isSupported() || snoozed() || !campusNotificationsEnabled()) return;
-  if (!workspaceWindow()) return;
+export function systemNotifyReminder(title: string, body: string, todoId: string): boolean {
+  if (!armed || !Notification.isSupported() || snoozed() || !campusNotificationsEnabled())
+    return false;
+  if (!workspaceWindow()) return false;
   showToast(title, body, () => {
     workspaceWindow()?.webContents.send('notifications:open', {
       id: `reminder:${todoId}`,
@@ -103,4 +105,5 @@ export function systemNotifyReminder(title: string, body: string, todoId: string
       href: { kind: 'todo', todoId },
     } satisfies NotificationItem);
   });
+  return true;
 }

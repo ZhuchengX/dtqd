@@ -34,7 +34,7 @@ beforeEach(() => settings.clear());
 
 describe('checkReminders', () => {
   it('每档只弹一次，标题带剩余时间，正文带双时区与课程', () => {
-    const notify = vi.fn();
+    const notify = vi.fn(() => true);
     expect(checkReminders([todo()], due - 20 * 3600_000, notify)).toBe(1);
     expect(notify).toHaveBeenCalledWith(
       '还剩 1 天：Coursework 1',
@@ -46,7 +46,7 @@ describe('checkReminders', () => {
   });
 
   it('已提交的不提醒，记录随之清掉', () => {
-    const notify = vi.fn();
+    const notify = vi.fn(() => true);
     checkReminders([todo()], due - 20 * 3600_000, notify);
     checkReminders([todo({ status: 'submitted' })], due - 2 * 3600_000, notify);
     expect(notify).toHaveBeenCalledTimes(1);
@@ -55,6 +55,25 @@ describe('checkReminders', () => {
 
   it('设置里存的记录损坏时当作没有', () => {
     settings.set('todo-reminders-fired', '{坏');
-    expect(checkReminders([todo()], due - 20 * 3600_000, vi.fn())).toBe(1);
+    expect(
+      checkReminders(
+        [todo()],
+        due - 20 * 3600_000,
+        vi.fn(() => true),
+      ),
+    ).toBe(1);
+  });
+
+  it('没弹出来（暂停提醒、启动未就绪）不记为已提醒，下次再弹', () => {
+    expect(
+      checkReminders(
+        [todo()],
+        due - 2 * 3600_000,
+        vi.fn(() => false),
+      ),
+    ).toBe(0);
+    expect(settings.get('todo-reminders-fired')).toBe('[]');
+    const notify = vi.fn(() => true);
+    expect(checkReminders([todo()], due - 2 * 3600_000, notify)).toBe(1);
   });
 });

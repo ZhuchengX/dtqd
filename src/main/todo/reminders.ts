@@ -26,22 +26,31 @@ function openDated(items: readonly TodoItem[]): TodoItem[] {
   return items.filter((item) => item.dueAt && !todoCompleted(item.status));
 }
 
-/** 扫一遍并弹该弹的提醒；返回弹出的条数。已过期或已完成的待办的记录顺手清掉。 */
+/** 扫一遍并弹该弹的提醒；返回弹出的条数。真弹出了才记为已提醒；已过期或已完成的待办的记录顺手清掉。 */
 export function checkReminders(
   items: readonly TodoItem[],
   now: number,
-  notify: (title: string, body: string, todoId: string) => void,
+  notify: (title: string, body: string, todoId: string) => boolean,
 ): number {
   const fired = firedKeys();
   const kept = new Set<string>();
   let shown = 0;
   for (const item of openDated(items)) {
     const { tier, crossed } = dueReminder(item, now, fired);
+    if (tier) {
+      const course = item.courseName ? ` · ${item.courseName}` : '';
+      // 没弹出来（启动未就绪、暂停提醒）就不记，5 分钟后再试。
+      if (
+        !notify(
+          `${tier.label}：${item.title}`,
+          `截止 ${dualDueLabel(item.dueAt!)}${course}`,
+          item.id,
+        )
+      )
+        continue;
+      shown += 1;
+    }
     for (const key of crossed) kept.add(key);
-    if (!tier) continue;
-    const course = item.courseName ? ` · ${item.courseName}` : '';
-    notify(`${tier.label}：${item.title}`, `截止 ${dualDueLabel(item.dueAt!)}${course}`, item.id);
-    shown += 1;
   }
   writeSetting(FIRED_KEY, JSON.stringify([...kept]));
   return shown;
