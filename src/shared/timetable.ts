@@ -21,6 +21,10 @@ export interface TimetableState {
   readonly semester: string;
   readonly lastSyncedAt: string | null;
   readonly semesterStart: string | null;
+  /** 按今天日期推算的最新学期，学期下拉以它为上端，选旧学期后仍能切回。 */
+  readonly latestSemester: string;
+  /** 本地已有课程的学期。 */
+  readonly syncedSemesters: readonly string[];
 }
 
 // 日历事件候选色 key，与 renderer 的 --cal-* 设计 token 一一对应。

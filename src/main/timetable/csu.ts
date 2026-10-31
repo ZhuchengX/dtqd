@@ -27,6 +27,14 @@ export function csuTimetableUrl(base: string, semester: string): string {
   return `${base}xskb/xskb_list.do?xnxq01id=${encodeURIComponent(semester)}`;
 }
 
+/** 课表页学期下拉（select#xnxq01id）列出的学期，新到旧排列。 */
+export function parseCsuSemesters(html: string): string[] {
+  const found = new Set<string>();
+  for (const [, value] of html.matchAll(/<option[^>]*value=['"](\d{4}-\d{4}-[123])['"]/gi))
+    found.add(value!);
+  return [...found].sort().reverse();
+}
+
 export interface CsuRawLesson {
   kcmc: string;
   xm?: string;
@@ -59,36 +67,48 @@ export function looksLikeCsuLoginPage(html: string): boolean {
   return !/kbcontent/i.test(html) && /(Logon\.do|用户登录|frmlogin)/i.test(html);
 }
 
+/** 行首「1－2」即该大节的小节范围；没有数字时按第 k 个大节推成 2k-1～2k 节。 */
+function rowPeriods(row: string, index: number): string {
+  const header = stripTags(row.match(/<th[^>]*>([\s\S]*?)<\/th>/i)?.[1] ?? '');
+  const range = header.match(/(\d+)\D+(\d+)/);
+  return range ? `${range[1]}-${range[2]}` : `${index * 2 + 1}-${index * 2 + 2}`;
+}
+
 /**
- * 每个 `div.kbcontent` 是一个「星期 × 大节」格子，id 形如 `<hash>-<星期>-<大节>`；
- * 同格多门课用一串短横线分隔。节次优先取「周次(节次)」里的 [01-02节]。
+ * 课表每行一个大节，行内每个 `div.kbcontent` 是一个星期格子，id 形如 `<行哈希>-<星期>-<1|2>`；
+ * 同格多门课用一串短横线分隔。节次优先取「周次(节次)」里的 [01-02节]，否则用行首范围。
  */
 export function parseCsuTimetable(html: string): CsuRawLesson[] {
   const lessons: CsuRawLesson[] = [];
-  for (const [, attributes, body] of html.matchAll(/<div([^>]*)>([\s\S]*?)<\/div>/gi)) {
-    const className = attributes!.match(/class=['"]([^'"]*)['"]/i)?.[1] ?? '';
-    if (!className.split(/\s+/).includes('kbcontent')) continue;
-    const id = attributes!.match(/id=['"]([^'"]*)['"]/i)?.[1] ?? '';
-    const weekday = Number(id.split('-').at(-2));
-    if (!Number.isInteger(weekday) || weekday < 1 || weekday > 7) continue;
-    for (const chunk of body!.split(/-{5,}/)) {
-      const lines = chunk
-        .split(/<br\s*\/?>/i)
-        .map(stripTags)
-        .filter(Boolean);
-      const courseName = lines[0];
-      if (!courseName) continue;
-      const weeksAndPeriods = fontByTitle(chunk, /周次/);
-      const periods = weeksAndPeriods?.match(/\[([\d\-,，]+)节\]/)?.[1];
-      lessons.push({
-        kcmc: courseName,
-        xm: fontByTitle(chunk, /老师|教师/),
-        zcd: weeksAndPeriods?.replace(/\[[^\]]*\]/, '').trim() || undefined,
-        jcs: periods,
-        jc: periods ? `${periods}节` : undefined,
-        cdmc: fontByTitle(chunk, /教室|地点/),
-        xqj: String(weekday),
-      });
+  let rowIndex = 0;
+  for (const [, row] of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    if (!/kbcontent/i.test(row!)) continue;
+    const fallbackPeriods = rowPeriods(row!, rowIndex++);
+    for (const [, attributes, body] of row!.matchAll(/<div([^>]*)>([\s\S]*?)<\/div>/gi)) {
+      const className = attributes!.match(/class=['"]([^'"]*)['"]/i)?.[1] ?? '';
+      if (!className.split(/\s+/).includes('kbcontent')) continue;
+      const id = attributes!.match(/id=['"]([^'"]*)['"]/i)?.[1] ?? '';
+      const weekday = Number(id.split('-').at(-2));
+      if (!Number.isInteger(weekday) || weekday < 1 || weekday > 7) continue;
+      for (const chunk of body!.split(/-{5,}/)) {
+        const lines = chunk
+          .split(/<br\s*\/?>/i)
+          .map(stripTags)
+          .filter(Boolean);
+        const courseName = lines[0];
+        if (!courseName) continue;
+        const weeksAndPeriods = fontByTitle(chunk, /周次/);
+        const periods = weeksAndPeriods?.match(/\[([\d\-,，]+)节\]/)?.[1] ?? fallbackPeriods;
+        lessons.push({
+          kcmc: courseName,
+          xm: fontByTitle(chunk, /老师|教师/),
+          zcd: weeksAndPeriods?.replace(/\[[^\]]*\]/, '').trim() || undefined,
+          jcs: periods,
+          jc: `${periods}节`,
+          cdmc: fontByTitle(chunk, /教室|地点/),
+          xqj: String(weekday),
+        });
+      }
     }
   }
   return lessons;

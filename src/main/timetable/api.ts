@@ -23,6 +23,7 @@ import {
   csuLoginReached,
   csuTimetableUrl,
   looksLikeCsuLoginPage,
+  parseCsuSemesters,
   parseCsuTimetable,
 } from './csu';
 
@@ -252,14 +253,81 @@ function openCsuLoginWindow(sender: WebContents): Promise<TimetableResult> {
   });
 }
 
-async function fetchCsuTimetable(semester: string) {
+async function fetchCsuHtml(semester: string): Promise<string> {
   semesterParams(semester);
   const html = await campusRequest(await getCampusSession(), csuTimetableUrl(csuBase(), semester), {
     service: '中南教务课表',
     loginError: '中南教务登录已失效，请重新登录',
   });
   if (looksLikeCsuLoginPage(html)) throw new CampusAuthError('中南教务登录已失效，请重新登录');
-  return { kbList: z.array(rawLessonSchema).parse(parseCsuTimetable(html)), rqazcList: undefined };
+  return html;
+}
+
+function csuPayload(semester: string, html: string) {
+  const kbList = z.array(rawLessonSchema).parse(parseCsuTimetable(html));
+  if (kbList.length === 0) void dumpCsuPage(semester, html);
+  return { kbList, rqazcList: undefined };
+}
+
+/** 开发版解析出 0 门课时留下原始页面（仅本机），便于对照真实 HTML 修解析器。 */
+async function dumpCsuPage(semester: string, html: string) {
+  try {
+    const { app } = await import('electron');
+    if (app.isPackaged) return;
+    const { mkdir, writeFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const dir = join(app.getPath('userData'), 'csu-debug');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, `${semester}.html`), html);
+  } catch (error) {
+    console.warn('[timetable] 保存中南课表调试页面失败', error);
+  }
+}
+
+async function fetchCsuTimetable(semester: string) {
+  return csuPayload(semester, await fetchCsuHtml(semester));
+}
+
+/** 连续这么多个学期没课（且之前已有课）就认为到了入学前，停止往前拉。 */
+const CSU_EMPTY_STREAK_LIMIT = 2;
+const CSU_MAX_SEMESTERS = 16;
+
+/**
+ * 强智课表页自带全部学期下拉：先拉最新学期，再按下拉从新到旧逐个同步，
+ * 直到入学前（连续空学期）或达到上限。返回最新学期的结果，其余学期失败不阻断。
+ */
+async function syncAllCsuSemesters(requested: string): Promise<TimetableResult> {
+  const latest = currentSemester();
+  let first: string;
+  try {
+    first = await fetchCsuHtml(latest);
+  } catch (error) {
+    return syncFailure(error);
+  }
+  const listed = parseCsuSemesters(first).filter((semester) => semester <= latest);
+  const semesters = [...new Set([latest, requested, ...listed])]
+    .sort()
+    .reverse()
+    .slice(0, CSU_MAX_SEMESTERS);
+  let result: TimetableResult = { ok: true };
+  let seenLessons = false;
+  let emptyStreak = 0;
+  for (const semester of semesters) {
+    const outcome = await storeSemester(semester, async () =>
+      csuPayload(semester, semester === latest ? first : await fetchCsuHtml(semester)),
+    );
+    if (!outcome.result.ok) {
+      if (outcome.result.reason === 'auth' || semester === requested) result = outcome.result;
+      if (outcome.result.reason === 'auth') break;
+      continue;
+    }
+    if (outcome.count > 0) {
+      seenLessons = true;
+      emptyStreak = 0;
+    } else if (seenLessons && semester !== requested && ++emptyStreak >= CSU_EMPTY_STREAK_LIMIT)
+      break;
+  }
+  return result;
 }
 
 export function openLoginWindow(sender: WebContents): Promise<TimetableResult> {
@@ -305,8 +373,24 @@ async function fetchTimetable(semester: string) {
 }
 
 export async function syncTimetable(semester: string): Promise<TimetableResult> {
+  if (TIMETABLE_PROVIDER === 'csu') return syncAllCsuSemesters(semester);
+  return (await storeSemester(semester, () => fetchTimetable(semester))).result;
+}
+
+function syncFailure(error: unknown): TimetableResult {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : String(error),
+    ...(error instanceof CampusAuthError ? { reason: 'auth' as const } : {}),
+  };
+}
+
+async function storeSemester(
+  semester: string,
+  fetchData: () => ReturnType<typeof fetchTimetable>,
+): Promise<{ result: TimetableResult; count: number }> {
   try {
-    const data = await fetchTimetable(semester);
+    const data = await fetchData();
     await flushCampusSession();
 
     const semesterStart = parseSemesterStart(data.rqazcList);
@@ -359,13 +443,9 @@ export async function syncTimetable(semester: string): Promise<TimetableResult> 
            semester_start = COALESCE(excluded.semester_start, timetable_sync.semester_start)`,
       ).run(semester, syncedAt, semesterStart);
     })();
-    return { ok: true };
+    return { result: { ok: true }, count: lessons.length };
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : String(error),
-      ...(error instanceof CampusAuthError ? { reason: 'auth' as const } : {}),
-    };
+    return { result: syncFailure(error), count: 0 };
   }
 }
 
@@ -483,6 +563,12 @@ export function getTimetableState(requested?: unknown): TimetableState {
     semester,
     lastSyncedAt: row?.last_synced_at || null,
     semesterStart: row?.semester_start ?? null,
+    latestSemester: currentSemester(),
+    syncedSemesters: (
+      getDatabase()
+        .prepare('SELECT DISTINCT semester FROM timetable_lessons ORDER BY semester DESC')
+        .all() as { semester: string }[]
+    ).map((entry) => entry.semester),
   };
 }
 

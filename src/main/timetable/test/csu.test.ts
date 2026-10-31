@@ -4,6 +4,7 @@ import {
   csuLoginReached,
   csuTimetableUrl,
   looksLikeCsuLoginPage,
+  parseCsuSemesters,
   parseCsuTimetable,
 } from '../csu';
 import { parseWeekNumbers } from '../api';
@@ -64,5 +65,41 @@ describe('中南强智课表', () => {
     expect(csuTimetableUrl('http://202.197.71.123/jsxsd/', '2026-2027-1')).toBe(
       'http://202.197.71.123/jsxsd/xskb/xskb_list.do?xnxq01id=2026-2027-1',
     );
+  });
+});
+
+// 按真实页面（2026-10 熊祝成账号）结构：行首「1－2」，详情格 id 以 -2 结尾、周次里不带节次。
+const realShapeHtml = `
+<table id="kbtable">
+<tr><th width="70" height="28" align="center">1－2&nbsp;</th>
+<td><div id="19C8-1-1" class="kbcontent1">&nbsp;</div><div id="19C8-1-2" class="kbcontent">&nbsp;</div></td></tr>
+<tr><th width="70" height="28" align="center">5－6&nbsp;</th>
+<td><div id="7D2E-3-1" class="kbcontent1">最优控制</div>
+<div id="7D2E-3-2" style="display: none;" class="kbcontent">最优控制<br/><font title='老师'>何智敏[教授]</font><br/><font title='周次(节次)'>1-12(周)</font><br/><font title='教室'>A座117</font><br/></div></td></tr>
+</table>`;
+
+describe('中南强智课表（真实页面结构）', () => {
+  it('周次不带节次时用行首的小节范围', () => {
+    expect(parseCsuTimetable(realShapeHtml)).toEqual([
+      {
+        kcmc: '最优控制',
+        xm: '何智敏[教授]',
+        zcd: '1-12(周)',
+        jcs: '5-6',
+        jc: '5-6节',
+        cdmc: 'A座117',
+        xqj: '3',
+      },
+    ]);
+  });
+});
+
+describe('parseCsuSemesters', () => {
+  it('读出学期下拉的全部学期并新到旧排列', () => {
+    const html =
+      '<select id="xnxq01id"><option value="2024-2025-1">2024-2025-1</option>' +
+      "<option value='2026-2027-1' selected>2026-2027-1</option>" +
+      '<option value="2025-2026-2">2025-2026-2</option><option value="">请选择</option></select>';
+    expect(parseCsuSemesters(html)).toEqual(['2026-2027-1', '2025-2026-2', '2024-2025-1']);
   });
 });

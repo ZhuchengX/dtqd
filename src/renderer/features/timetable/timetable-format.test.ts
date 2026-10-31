@@ -5,6 +5,7 @@ import {
   eventStyle,
   layoutDayColumns,
   minutesToRem,
+  semesterOptions,
   timelineStart,
 } from './timetable-format';
 
@@ -117,5 +118,15 @@ describe('eventStyle', () => {
   it('55 分钟的课时正好落在显示第二行的阈值上', () => {
     expect(minutesToRem(55)).toBe(blockHeights.twoRows);
     expect(minutesToRem(75)).toBe(blockHeights.threeRows);
+  });
+});
+
+describe('semesterOptions', () => {
+  it('以最新学期为上端，选旧学期后仍保留最新学期，并补上已同步的更早学期', () => {
+    const options = semesterOptions('2026-2027-1', ['2023-2024-1', '2024-2025-2']);
+    expect(options[0]).toBe('2026-2027-1');
+    expect(options).toContain('2023-2024-1');
+    expect(options).toEqual([...options].sort().reverse());
+    expect(new Set(options).size).toBe(options.length);
   });
 });

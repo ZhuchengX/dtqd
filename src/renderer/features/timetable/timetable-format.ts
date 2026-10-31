@@ -134,7 +134,15 @@ export function semesterLabel(semester: string): string {
   return `${start}-${end} ${names[term ?? ''] ?? `第 ${term} 学期`}`;
 }
 
-export function semesterOptions(current: string): string[] {
+/**
+ * 学期下拉：从最新学期往前 6 个，再并上已同步和当前选中的学期，新到旧排列。
+ * 以最新学期而非选中学期为上端，选了旧学期后仍能切回最新学期。
+ */
+export function semesterOptions(latest: string, extra: readonly string[] = []): string[] {
+  return [...new Set([...recentSemesters(latest), ...extra])].sort().reverse();
+}
+
+function recentSemesters(current: string): string[] {
   const [startText, , termText] = current.split('-');
   const start = Number(startText);
   const term = Number(termText);

@@ -336,11 +336,13 @@ function DesktopTimetableView({ onOpenTodo }: { onOpenTodo?: (todoId: string) =>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {semesterOptions(semester).map((option) => (
-                <SelectItem key={option} value={option}>
-                  {semesterLabel(option)}
-                </SelectItem>
-              ))}
+              {semesterOptions(state.latestSemester, [...state.syncedSemesters, semester]).map(
+                (option) => (
+                  <SelectItem key={option} value={option}>
+                    {semesterLabel(option)}
+                  </SelectItem>
+                ),
+              )}
             </SelectContent>
           </Select>
           {mode === 'week' ? (
