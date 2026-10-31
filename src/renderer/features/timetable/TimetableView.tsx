@@ -44,8 +44,8 @@ export function TimetableView({ onOpenTodo }: { onOpenTodo?: (todoId: string) =>
   if (!window.dela) {
     return (
       <DesktopOnlyNotice
-        description="教学信息服务网的登录会话和本地课表缓存不会暴露给浏览器。"
-        title="课表仅在 Dela 桌面端可用"
+        description="中南大学教务系统的登录会话和本地课表缓存不会暴露给浏览器。"
+        title="课表仅在 DTQD 桌面端可用"
       />
     );
   }

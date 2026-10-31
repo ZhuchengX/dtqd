@@ -17,6 +17,18 @@ import {
   openCampusLoginWindow,
 } from '../campus';
 
+import {
+  CSU_LOGIN_URL,
+  csuJsxsdBase,
+  csuLoginReached,
+  csuTimetableUrl,
+  looksLikeCsuLoginPage,
+  parseCsuTimetable,
+} from './csu';
+
+// DTQD 默认接中南强智教务；设 DTQD_TIMETABLE=sjtu 时沿用上游交大教学信息网。
+const TIMETABLE_PROVIDER = process.env.DTQD_TIMETABLE === 'sjtu' ? 'sjtu' : 'csu';
+const CSU_BASE_KEY = 'csu-jsxsd-base';
 const CAMPUS_ORIGIN = 'https://i.sjtu.edu.cn';
 const LOGIN_URL = `${CAMPUS_ORIGIN}/jaccountlogin`;
 const TIMETABLE_URL = `${CAMPUS_ORIGIN}/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151`;
@@ -213,7 +225,45 @@ function mapRow(row: LessonRow): TimetableLesson {
   };
 }
 
+function csuBase(): string {
+  const row = getDatabase()
+    .prepare('SELECT value FROM workspace_settings WHERE key=?')
+    .get(CSU_BASE_KEY) as { value: string } | undefined;
+  if (!row) throw new CampusAuthError('请先登录中南大学教务系统');
+  return row.value;
+}
+
+function openCsuLoginWindow(sender: WebContents): Promise<TimetableResult> {
+  return openCampusLoginWindow({
+    sender,
+    title: '登录中南大学教务系统',
+    url: CSU_LOGIN_URL,
+    reached: (url) => {
+      if (!csuLoginReached(url)) return false;
+      getDatabase()
+        .prepare('INSERT OR REPLACE INTO workspace_settings VALUES (?, ?)')
+        .run(CSU_BASE_KEY, csuJsxsdBase(url));
+      return true;
+    },
+    probe: async () => {
+      await fetchCsuTimetable(currentSemester());
+      await flushCampusSession();
+    },
+  });
+}
+
+async function fetchCsuTimetable(semester: string) {
+  semesterParams(semester);
+  const html = await campusRequest(await getCampusSession(), csuTimetableUrl(csuBase(), semester), {
+    service: '中南教务课表',
+    loginError: '中南教务登录已失效，请重新登录',
+  });
+  if (looksLikeCsuLoginPage(html)) throw new CampusAuthError('中南教务登录已失效，请重新登录');
+  return { kbList: z.array(rawLessonSchema).parse(parseCsuTimetable(html)), rqazcList: undefined };
+}
+
 export function openLoginWindow(sender: WebContents): Promise<TimetableResult> {
+  if (TIMETABLE_PROVIDER === 'csu') return openCsuLoginWindow(sender);
   return openCampusLoginWindow({
     sender,
     title: '登录教学信息服务网',
@@ -229,6 +279,7 @@ export function openLoginWindow(sender: WebContents): Promise<TimetableResult> {
 }
 
 async function fetchTimetable(semester: string) {
+  if (TIMETABLE_PROVIDER === 'csu') return fetchCsuTimetable(semester);
   const { xnm, xqm } = semesterParams(semester);
   const body = new URLSearchParams({ xnm, xqm, kzlx: 'ck', xsdm: '' });
   const text = await campusRequest(await getCampusSession(), TIMETABLE_URL, {

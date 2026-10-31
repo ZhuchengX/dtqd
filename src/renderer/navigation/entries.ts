@@ -26,7 +26,8 @@ export const useNavEntryPrefs = create<{
 }>()(
   persist(
     (set) => ({
-      hidden: [],
+      // DTQD：课表已改接中南教务；课堂视频仍是交大上游入口，默认隐藏，可在设置 › 通用 › 导航入口重新显示。
+      hidden: ['classroom'],
       setVisible: (id, visible) =>
         set((state) => ({
           hidden: visible

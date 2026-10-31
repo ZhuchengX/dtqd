@@ -3,7 +3,7 @@ import { DesktopOnlyNotice } from '../../../components/ui/desktop-only-notice';
 import { connectAndSyncTimetable } from '../../timetable/timetable-connect';
 import { StepButton, type StepButtonState } from './step-controls';
 
-/** 向导 · 教学信息服务网步骤：独立窗口完成登录并同步课表，按钮转为「下一步」。 */
+/** 向导 · 中南大学教务系统步骤：独立窗口完成登录并同步课表，按钮转为「下一步」。 */
 export function CampusStep({ onDone }: { onDone: () => void }) {
   const [state, setState] = useState<StepButtonState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -11,8 +11,8 @@ export function CampusStep({ onDone }: { onDone: () => void }) {
   if (!window.dela) {
     return (
       <DesktopOnlyNotice
-        description="教学信息服务网的登录会话和本地课表缓存不会暴露给浏览器。"
-        title="课表仅在 Dela 桌面端可用"
+        description="中南大学教务系统的登录会话和本地课表缓存不会暴露给浏览器。"
+        title="课表仅在 DTQD 桌面端可用"
       />
     );
   }
@@ -34,9 +34,9 @@ export function CampusStep({ onDone }: { onDone: () => void }) {
   return (
     <div className="grid gap-7">
       <header className="grid gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">连接教学信息服务网</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">连接中南大学教务系统</h2>
         <p className="text-13 leading-relaxed text-ink-3">
-          登录在独立窗口完成，Dela 只读取你的个人课表。
+          登录在独立窗口完成，DTQD 只读取你的个人课表。
         </p>
       </header>
       {error && (

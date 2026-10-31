@@ -149,7 +149,7 @@ export const settingsSearchItems: SettingsSearchItem[] = [
   {
     id: 'timetable',
     section: 'connections',
-    title: '教学信息服务网',
+    title: '中南大学教务系统',
     keywords: ['连接', '教务', '课表', 'timetable', '课程表'],
   },
   {

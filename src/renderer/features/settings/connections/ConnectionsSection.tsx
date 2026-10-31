@@ -174,7 +174,7 @@ export function ConnectionsSection({
     },
     {
       itemId: 'timetable',
-      name: '教学信息服务网',
+      name: '中南大学教务系统',
       icon: CalendarDays,
       state: timetableSyncedAt ? '已同步' : '未同步',
       connected: Boolean(timetableSyncedAt),
