@@ -8,10 +8,14 @@ vi.mock('electron', () => ({
 vi.mock('../../database', () => ({ getDatabase: vi.fn() }));
 vi.mock('../../credentials', () => ({ loadCanvasToken: vi.fn(() => 'test-token') }));
 vi.mock('../../ipc', () => ({ checkWorkspaceSender: vi.fn() }));
-vi.mock('../../canvas/api', () => ({
-  listTodoCanvasCourses: vi.fn(),
-  listTodoCanvasAssignments: vi.fn(),
-}));
+vi.mock('../../canvas/api', async () => {
+  const { loadCanvasToken } = await import('../../credentials');
+  return {
+    canvasIdentity: vi.fn(() => loadCanvasToken()),
+    listTodoCanvasCourses: vi.fn(),
+    listTodoCanvasAssignments: vi.fn(),
+  };
+});
 import { getDatabase } from '../../database';
 import { loadCanvasToken } from '../../credentials';
 import { listTodoCanvasAssignments, listTodoCanvasCourses } from '../../canvas/api';

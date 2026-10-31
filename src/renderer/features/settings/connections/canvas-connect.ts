@@ -10,3 +10,11 @@ export async function connectCanvas(token: string): Promise<void> {
   await dela.canvas.configure(token);
   useWorkspaceStore.getState().setCanvas(await dela.canvas.syncCourses());
 }
+
+/** 登录 myDundee（Blackboard）并同步课程列表；登录窗由主进程打开，学生自行完成 Microsoft SSO。 */
+export async function connectBlackboard(): Promise<void> {
+  const dela = window.dela;
+  if (!dela) return;
+  await dela.canvas.loginBlackboard();
+  useWorkspaceStore.getState().setCanvas(await dela.canvas.syncCourses());
+}

@@ -23,7 +23,12 @@ function snapshotPath(): string {
 
 function campusCookie(cookie: Cookie): boolean {
   const domain = cookie.domain?.replace(/^\./, '') ?? '';
-  return domain === 'sjtu.edu.cn' || domain.endsWith('.sjtu.edu.cn');
+  return (
+    /^202\.197\.71\.\d{1,3}$/.test(domain) ||
+    ['sjtu.edu.cn', 'csu.edu.cn', 'dundee.ac.uk', 'login.microsoftonline.com'].some(
+      (root) => domain === root || domain.endsWith(`.${root}`),
+    )
+  );
 }
 
 function cookieKey(cookie: Cookie): string {

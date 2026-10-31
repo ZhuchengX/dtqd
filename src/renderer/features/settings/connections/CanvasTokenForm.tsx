@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { connectCanvas } from './canvas-connect';
+import { connectBlackboard, connectCanvas } from './canvas-connect';
 import { errorText } from '../../../workspace/store';
 
 type CanvasTokenFormProps = {
@@ -16,6 +16,19 @@ export function CanvasTokenForm({ onSuccess, actions }: CanvasTokenFormProps) {
   const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const login = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await connectBlackboard();
+      onSuccess();
+    } catch (cause) {
+      setError(errorText(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const configure = async () => {
     setBusy(true);
@@ -39,13 +52,19 @@ export function CanvasTokenForm({ onSuccess, actions }: CanvasTokenFormProps) {
         void configure();
       }}
     >
+      <div className="grid gap-2 text-13">
+        <Button disabled={busy} onClick={() => void login()} type="button">
+          {busy ? '处理中…' : '用 Dundee 账号登录 myDundee'}
+        </Button>
+        <p className="text-xs text-ink-3">
+          在弹出的窗口里用 studentID@dundee.ac.uk 完成 Microsoft 登录；DTQD 不保存你的密码。
+        </p>
+      </div>
       <label className="grid gap-2 text-13">
-        Access Token
+        Canvas Access Token（上游交大功能，DIICSU 不需要）
         <Input
           autoComplete="off"
-          autoFocus
           onChange={(event) => setKey(event.target.value)}
-          required
           type="password"
           value={key}
         />

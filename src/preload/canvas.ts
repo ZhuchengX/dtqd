@@ -4,6 +4,7 @@ import { invoke, on } from './lib';
 export const canvas = {
   getState: () => invoke('canvas:get-state'),
   configure: (token: string) => invoke('canvas:configure', token),
+  loginBlackboard: () => invoke('canvas:login-blackboard'),
   disconnect: () => invoke('canvas:disconnect'),
   syncCourses: () => invoke('canvas:sync-courses'),
   syncCourse: (id: number) => invoke('canvas:sync-course', id),

@@ -14,6 +14,14 @@ import { officeExportPreviewInfo, readOfficeExportLink } from '../documents/link
 import { classifyOfficeFile, officeZipMime } from '../documents/parse';
 import { loadCanvasToken, saveCanvasToken } from '../credentials';
 import type { CanvasCourse, CanvasState, DocumentContent, SourceItem } from '../../shared/api';
+import {
+  blackboardConnected,
+  blackboardUser,
+  downloadBlackboardFile,
+  listBlackboardCourses,
+  listBlackboardTodoAssignments,
+  syncBlackboardCourseTree,
+} from './blackboard';
 
 const origin = 'https://oc.sjtu.edu.cn';
 const apiRoot = `${origin}/api/v1/`;
@@ -83,7 +91,7 @@ export function getCanvasState(): CanvasState {
     .prepare("SELECT value FROM workspace_settings WHERE key = 'canvas-sync'")
     .get() as { value: string } | undefined;
   return {
-    connected: Boolean(loadCanvasToken()),
+    connected: Boolean(loadCanvasToken()) || blackboardConnected(),
     syncedAt: synced?.value ?? null,
     courses: rows.map((r) => JSON.parse(r.data)),
     items: rows.flatMap((r) => JSON.parse(r.items)),
@@ -116,7 +124,39 @@ export async function classroomLoginUrl(): Promise<string> {
   throw new Error('Canvas 课程中没有找到课堂视频入口');
 }
 
+/** TODO 等模块区分账号的身份：Canvas 用令牌，myDundee 用 Blackboard 用户主键。 */
+export function canvasIdentity(): string | null {
+  if (blackboardConnected()) return `blackboard:${blackboardUser() ?? ''}`;
+  return loadCanvasToken();
+}
+
+async function syncBlackboardCourses(): Promise<CanvasState> {
+  const courses = await listBlackboardCourses();
+  const db = getDatabase();
+  const old = new Map(getCanvasState().courses.map((c) => [c.id, c]));
+  db.transaction(() => {
+    const insert = db.prepare(
+      'INSERT INTO canvas_courses(id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
+    );
+    for (const course of courses) {
+      const previous = old.get(course.id);
+      const data: CanvasCourse = {
+        ...course,
+        syncedAt: previous?.syncedAt ?? null,
+        error: previous?.error ?? null,
+        archived: previous?.archived ?? false,
+      };
+      insert.run(course.id, JSON.stringify(data));
+    }
+    db.prepare("INSERT OR REPLACE INTO workspace_settings VALUES ('canvas-sync', ?)").run(
+      new Date().toISOString(),
+    );
+  })();
+  return getCanvasState();
+}
+
 export async function syncCanvasCourses(): Promise<CanvasState> {
+  if (blackboardConnected()) return syncBlackboardCourses();
   const courses = await list('courses?include[]=term&per_page=50');
   const db = getDatabase();
   const old = new Map(getCanvasState().courses.map((c) => [c.id, c]));
@@ -155,6 +195,8 @@ export interface StoredSource {
   html?: string;
   url?: string;
   fileId?: number;
+  /** myDundee 文件的站内下载地址（需登录会话）；Canvas 文件用 fileId。 */
+  downloadUrl?: string;
   mime?: string;
   size?: number;
   dueAt?: string | null;
@@ -174,6 +216,7 @@ export function syncCanvasCourse(id: number): Promise<CanvasState> {
 async function syncCourse(id: number): Promise<CanvasState> {
   const course = getCanvasState().courses.find((c) => c.id === id);
   if (!course) throw new Error('课程不存在，请刷新课程列表');
+  if (course.externalId) return syncBlackboardCourse(course, course.externalId);
   const items: SourceItem[] = [];
   const sources = new Map<string, StoredSource>();
   const errors: string[] = [];
@@ -407,6 +450,29 @@ async function syncCourse(id: number): Promise<CanvasState> {
   return getCanvasState();
 }
 
+async function syncBlackboardCourse(course: CanvasCourse, externalId: string) {
+  const tree = await syncBlackboardCourseTree(course.id, externalId);
+  const oldItems = getCanvasState().items.filter((i) => i.courseId === course.id);
+  // 只拿到空根节点且有错误时保留旧缓存，失败的同步不变成删除。
+  const items = tree.errors.length && tree.items.length <= 1 ? oldItems : tree.items;
+  const db = getDatabase();
+  const updated: CanvasCourse = {
+    ...course,
+    syncedAt: new Date().toISOString(),
+    error: tree.errors.length ? tree.errors.join('\n') : null,
+  };
+  db.transaction(() => {
+    db.prepare('UPDATE canvas_courses SET data=?, items=? WHERE id=?').run(
+      JSON.stringify(updated),
+      JSON.stringify(items),
+      course.id,
+    );
+    const insert = db.prepare('INSERT OR REPLACE INTO canvas_sources VALUES (?, ?, ?)');
+    for (const source of tree.sources) insert.run(source.id, course.id, JSON.stringify(source));
+  })();
+  return getCanvasState();
+}
+
 // 后台目录同步与手动刷新同一口径：最新学期 + 未归档；顺序执行避免并发轰炸 Canvas。
 export async function syncCanvasCourseTrees(): Promise<CanvasState> {
   const state = await syncCanvasCourses();
@@ -500,9 +566,9 @@ function sourceDirectory(source: StoredSource): string {
 }
 
 async function downloadFile(source: StoredSource): Promise<{ path: string; mime: string }> {
-  if (!source.fileId) throw new Error('文件不可用');
+  if (!source.fileId && !source.downloadUrl) throw new Error('文件不可用');
   const key = createHash('sha256')
-    .update(`${source.fileId}:${source.updatedAt ?? ''}`)
+    .update(`${source.fileId ?? source.id}:${source.updatedAt ?? ''}`)
     .digest('hex');
   const db = getDatabase();
   const cacheKey = `canvas-file:${key}`;
@@ -524,6 +590,7 @@ async function downloadFile(source: StoredSource): Promise<{ path: string; mime:
     return { path: cached.value, mime: source.mime || 'application/octet-stream' };
   }
   mkdirSync(dir, { recursive: true });
+  if (source.downloadUrl) return downloadBlackboardSource(source, dir, cacheKey);
   const metadata = row(await (await request(`files/${source.fileId}`)).json());
   const downloadUrl = new URL(str(metadata.url), origin);
   if (downloadUrl.origin !== origin) throw new Error('Canvas 下载地址无效');
@@ -568,6 +635,27 @@ async function downloadFile(source: StoredSource): Promise<{ path: string; mime:
   }
   db.prepare('INSERT OR REPLACE INTO workspace_settings VALUES (?, ?)').run(cacheKey, path);
   source.mime = str(metadata['content-type']) || 'application/octet-stream';
+  db.prepare('UPDATE canvas_sources SET data=? WHERE id=?').run(JSON.stringify(source), source.id);
+  return { path, mime: source.mime };
+}
+
+async function downloadBlackboardSource(
+  source: StoredSource,
+  dir: string,
+  cacheKey: string,
+): Promise<{ path: string; mime: string }> {
+  const path = availablePath(dir, source.title);
+  const temporary = `${path}.${randomUUID()}.part`;
+  const { mime } = await downloadBlackboardFile(source.downloadUrl!, temporary);
+  try {
+    await rename(temporary, path);
+  } catch (error) {
+    await rm(temporary, { force: true });
+    throw error;
+  }
+  const db = getDatabase();
+  db.prepare('INSERT OR REPLACE INTO workspace_settings VALUES (?, ?)').run(cacheKey, path);
+  source.mime = source.mime || mime || 'application/octet-stream';
   db.prepare('UPDATE canvas_sources SET data=? WHERE id=?').run(JSON.stringify(source), source.id);
   return { path, mime: source.mime };
 }
@@ -657,6 +745,13 @@ export async function readCanvasPage(id: string) {
 
 // TODO 独立刷新作业，避免定时轮询触发文件、模块和页面的全量同步。
 export async function listTodoCanvasCourses() {
+  if (blackboardConnected()) {
+    const state = getCanvasState();
+    const latest = latestTermOf(state.courses);
+    return state.courses
+      .filter((c) => c.externalId && !c.archived && (!latest || c.term === latest))
+      .map((c) => ({ id: c.id, name: c.name, code: c.code }));
+  }
   const courses = await list('courses?enrollment_state=active&per_page=50');
   const archived = new Set(
     getCanvasState()
@@ -674,6 +769,8 @@ export async function listTodoCanvasCourses() {
 }
 
 export function listTodoCanvasAssignments(courseId: number) {
+  const externalId = getCanvasState().courses.find((c) => c.id === courseId)?.externalId;
+  if (externalId) return listBlackboardTodoAssignments(externalId);
   return list(`courses/${courseId}/assignments?include[]=submission&per_page=50`);
 }
 

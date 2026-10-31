@@ -2,9 +2,8 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { getDatabase } from '../database';
-import { loadCanvasToken } from '../credentials';
 import { checkWorkspaceSender } from '../ipc';
-import { listTodoCanvasAssignments, listTodoCanvasCourses } from '../canvas/api';
+import { canvasIdentity, listTodoCanvasAssignments, listTodoCanvasCourses } from '../canvas/api';
 import { canvasTodoStatus } from '../../shared/todo';
 import { calendarEventColors } from '../../shared/api';
 import type { NotificationItem, TodoItem, TodoState } from '../../shared/api';
@@ -33,7 +32,7 @@ type SyncState = { syncedAt: string | null; error: string | null; courses: numbe
 let activeRefresh: Promise<TodoState> | null = null;
 
 function canvasOwner(): string | null {
-  const token = loadCanvasToken();
+  const token = canvasIdentity();
   return token ? createHash('sha256').update(token).digest('hex') : null;
 }
 

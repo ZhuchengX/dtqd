@@ -20,6 +20,7 @@ import {
   archiveCanvasCourse,
 } from './api';
 import type { CanvasState } from '../../shared/api';
+import { blackboardConnected, disconnectBlackboard, loginBlackboard } from './blackboard';
 
 export function registerCanvasIpc() {
   const handle = (name: string, fn: (...args: unknown[]) => unknown) =>
@@ -36,8 +37,18 @@ export function registerCanvasIpc() {
       console.error('Canvas tree sync failed', error),
     );
   });
-  handle('disconnect', () => {
+  ipcMain.handle('canvas:login-blackboard', async (event) => {
+    checkWorkspaceSender(event);
+    await loginBlackboard(event.sender);
+    broadcastTodos();
+    void refreshTodos().catch((error: unknown) => console.error('TODO sync failed', error));
+    void refreshCanvasTrees().catch((error: unknown) =>
+      console.error('myDundee tree sync failed', error),
+    );
+  });
+  handle('disconnect', async () => {
     clearCanvasToken();
+    await disconnectBlackboard();
     broadcastTodos();
   });
   handle('sync-courses', syncCanvasCourses);
@@ -91,7 +102,7 @@ let activeTreeSync: Promise<CanvasState> | null = null;
 
 /** 后台目录同步入口（每小时定时器与配置令牌后共用）：未连接时静默跳过，进行中时复用同一任务。 */
 export function refreshCanvasTrees(): Promise<CanvasState> {
-  if (!loadCanvasToken()) return Promise.resolve(getCanvasState());
+  if (!loadCanvasToken() && !blackboardConnected()) return Promise.resolve(getCanvasState());
   if (activeTreeSync) return activeTreeSync;
   activeTreeSync = syncCanvasCourseTrees()
     .then((state) => {

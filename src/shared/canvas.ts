@@ -9,6 +9,8 @@ export interface CanvasCourse {
   error: string | null;
   /** 已归档课程不再自动同步、不再提示同步错误，仅保留本地数据。 */
   archived?: boolean;
+  /** 非 Canvas 平台（myDundee Blackboard）的原始课程主键，如 `_12345_1`。 */
+  externalId?: string;
 }
 
 export interface SourceItem {
@@ -87,6 +89,8 @@ export interface CanvasExportResult {
 export interface CanvasApi {
   getState(): Promise<CanvasState>;
   configure(token: string): Promise<void>;
+  /** 在登录窗内用 Dundee Microsoft 账号登录 myDundee（Blackboard）。 */
+  loginBlackboard(): Promise<void>;
   disconnect(): Promise<void>;
   syncCourses(): Promise<CanvasState>;
   syncCourse(id: number): Promise<CanvasState>;
