@@ -7,6 +7,8 @@ description: 课表与日程：查询课程安排、创建与管理日历事件
 
 课表读取本地缓存（由用户在课表页面同步，agent 不联网），日程存本地日历。
 
+> 注：DTQD 课表同步源为**中南大学教务系统**（强智 jsxsd），学生在课表页自行登录后同步；邓迪侧作业截止与考试信息在 myDundee（canvas Skill / TODO），不在课表里。
+
 ## 命令（Bash 内 dela）
 
 - `dela query_schedule`：按周/日期查课表与日程（只读本地缓存）

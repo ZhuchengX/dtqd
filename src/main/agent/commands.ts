@@ -2,9 +2,11 @@ import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { canvasTools } from './domain/canvas';
+import { chatfilesTools } from './domain/chatfiles';
 import { classroomTools } from './domain/classroom';
 import { mailTools } from './domain/mail';
 import { shuiyuanTools } from './domain/shuiyuan';
+import { teamsTools } from './domain/teams';
 import { timetableTools } from './domain/timetable';
 import { todoTools } from './domain/todo';
 import { workspaceTools } from './domain/workspace';
@@ -18,9 +20,19 @@ import { assertShuiyuanEnabled, experimentEnabled } from '../settings/prefs';
 // 这些是 shell 的业务命令，不常驻模型工具表；复用应用已有的缓存、登录与操作边界。
 const commandDomains = [
   { name: 'canvas', description: '查询、同步 Canvas 课程与资料', commands: canvasTools },
+  {
+    name: 'chatfiles',
+    description: '列出 QQ / 微信收到的文件（课件、通知），只读文件列表',
+    commands: chatfilesTools,
+  },
   { name: 'classroom', description: '读取与下载课堂视频语音文稿', commands: classroomTools },
   { name: 'mail', description: '检索邮件、读取附件与准备邮件草稿', commands: mailTools },
   { name: 'shuiyuan', description: '查看水源分类、话题、搜索与帖子内容', commands: shuiyuanTools },
+  {
+    name: 'teams',
+    description: '只读查看 Microsoft Teams 聊天与频道消息（Dundee Microsoft 365）',
+    commands: teamsTools,
+  },
   {
     name: 'timetable',
     description: '查询课表与日程，同步课表、创建或删除日程',

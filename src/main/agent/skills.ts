@@ -23,7 +23,13 @@ import classroomSkill from './skills/classroom/SKILL.md?raw';
 import curriculumSkill from './skills/curriculum/SKILL.md?raw';
 import mailSkill from './skills/mail/SKILL.md?raw';
 import shuiyuanSkill from './skills/shuiyuan/SKILL.md?raw';
+import teamsSkill from './skills/teams/SKILL.md?raw';
 import todoSkill from './skills/todo/SKILL.md?raw';
+import chatfilesSkill from './skills/chatfiles/SKILL.md?raw';
+import diicsuPolicySkill from './skills/diicsu-policy/SKILL.md?raw';
+import diicsuProgrammesSkill from './skills/diicsu-programmes/SKILL.md?raw';
+import studyCoachSkill from './skills/study-coach/SKILL.md?raw';
+import researchStarterSkill from './skills/research-starter/SKILL.md?raw';
 
 const SKILL_ENTRY_FILE = 'SKILL.md';
 const CAPABILITY_SETUP_KEY = 'capabilities-onboarding-completed';
@@ -61,8 +67,14 @@ const BUILTIN_SKILLS: Readonly<Record<string, { path: string; content: string }[
   canvas: [{ path: SKILL_ENTRY_FILE, content: canvasSkill }],
   classroom: [{ path: SKILL_ENTRY_FILE, content: classroomSkill }],
   mail: [{ path: SKILL_ENTRY_FILE, content: mailSkill }],
+  teams: [{ path: SKILL_ENTRY_FILE, content: teamsSkill }],
   todo: [{ path: SKILL_ENTRY_FILE, content: todoSkill }],
+  chatfiles: [{ path: SKILL_ENTRY_FILE, content: chatfilesSkill }],
   curriculum: [{ path: SKILL_ENTRY_FILE, content: curriculumSkill }],
+  'diicsu-policy': [{ path: SKILL_ENTRY_FILE, content: diicsuPolicySkill }],
+  'diicsu-programmes': [{ path: SKILL_ENTRY_FILE, content: diicsuProgrammesSkill }],
+  'study-coach': [{ path: SKILL_ENTRY_FILE, content: studyCoachSkill }],
+  'research-starter': [{ path: SKILL_ENTRY_FILE, content: researchStarterSkill }],
 };
 
 let builtinEnsured = false;
