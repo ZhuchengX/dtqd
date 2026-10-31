@@ -15,7 +15,7 @@ vi.mock('../engine', () => ({}));
 vi.mock('../../notifications/system', () => ({ isWorkspaceWindow: () => true }));
 vi.mock('../../ipc', () => ({ checkWorkspaceSender: vi.fn() }));
 import { inboxPrefs, setInboxPrefs } from '../prefs';
-import { mergePending } from '..';
+import { addUsage, mergePending } from '..';
 
 beforeEach(() => store.clear());
 
@@ -66,5 +66,25 @@ describe('mergePending', () => {
     );
     expect(merged!.text.length).toBe(120000);
     expect(merged!.text.endsWith('END')).toBe(true);
+  });
+});
+
+describe('addUsage', () => {
+  it('同月累加，跨月清零', () => {
+    const october = addUsage(null, { input: 100, output: 20, cost: 0.01 }, new Date(2026, 9, 31));
+    expect(addUsage(october, { input: 50, output: 5, cost: 0 }, new Date(2026, 9, 31))).toEqual({
+      month: '2026-10',
+      runs: 2,
+      input: 150,
+      output: 25,
+      cost: 0.01,
+    });
+    expect(addUsage(october, { input: 1, output: 1, cost: 0 }, new Date(2026, 10, 1))).toEqual({
+      month: '2026-11',
+      runs: 1,
+      input: 1,
+      output: 1,
+      cost: 0,
+    });
   });
 });

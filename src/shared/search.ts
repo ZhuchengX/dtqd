@@ -16,6 +16,7 @@ export type GlobalSearchResult = {
   | { kind: 'mail'; id: number; target: { page: 'mail'; messageId: number } }
   | { kind: 'todo'; id: string; target: { page: 'todo'; todoId: string } }
   | { kind: 'course-file'; id: string; target: { page: 'sources'; sourceId: string } }
+  | { kind: 'teams'; id: string; target: { page: 'teams-archive'; path: string } }
   | {
       kind: 'setting';
       id: SettingsSectionId;
@@ -25,4 +26,6 @@ export type GlobalSearchResult = {
 
 export interface SearchApi {
   query(query: string): Promise<GlobalSearchResult[]>;
+  /** 用系统默认程序打开 Teams 存档里的会话文件。 */
+  openTeamsArchive(path: string): Promise<void>;
 }

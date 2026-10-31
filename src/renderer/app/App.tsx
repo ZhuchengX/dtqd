@@ -261,6 +261,10 @@ export default function App() {
     else if (target.page === 'mail') navigation.openMail(target.messageId);
     else if (target.page === 'sources') navigation.openDocument(`source:${target.sourceId}`);
     else if (target.page === 'todo') navigation.openTodo(target.todoId);
+    else if (target.page === 'teams-archive')
+      void window.dela?.search.openTeamsArchive(target.path).catch((error: unknown) => {
+        showToast({ variant: 'error', title: '打开失败', description: errorText(error) });
+      });
     else navigation.openSettings(target.section);
   };
 

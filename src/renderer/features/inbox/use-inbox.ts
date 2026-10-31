@@ -1,6 +1,11 @@
 // 重要事项状态：读一次主进程状态并订阅 inbox:state 广播；浏览器预览没有 preload 时为 null。
 import { useEffect, useState } from 'react';
-import type { InboxRunStatus, InboxSourceStatusKind, InboxState } from '../../../shared/api';
+import type {
+  InboxRunStatus,
+  InboxSourceStatusKind,
+  InboxState,
+  InboxUsage,
+} from '../../../shared/api';
 
 export function useInboxState(): InboxState | null {
   const [state, setState] = useState<InboxState | null>(null);
@@ -47,4 +52,13 @@ export function relativeTime(iso: string | null, now = Date.now()): string {
   const date = new Date(iso);
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** 「本月提取 12 次 · 约 3.4 万 token · 约 $0.02」；花费为 0（自定义模型没有价目）时不写。 */
+export function usageLabel(usage: InboxUsage | null): string {
+  if (!usage || usage.runs === 0) return '本月还没有调用模型';
+  const tokens = usage.input + usage.output;
+  const amount = tokens >= 10_000 ? `${(tokens / 10_000).toFixed(1)} 万` : String(tokens);
+  const cost = usage.cost > 0 ? ` · 约 $${usage.cost.toFixed(usage.cost < 0.1 ? 3 : 2)}` : '';
+  return `本月提取 ${usage.runs} 次 · 约 ${amount} token${cost}`;
 }

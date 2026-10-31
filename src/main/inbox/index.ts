@@ -4,7 +4,13 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { readFile, rename, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { InboxRun, InboxSource, InboxSourceStatus, InboxState } from '../../shared/inbox';
+import type {
+  InboxRun,
+  InboxSource,
+  InboxSourceStatus,
+  InboxState,
+  InboxUsage,
+} from '../../shared/inbox';
 import { checkWorkspaceSender } from '../ipc';
 import { readSetting, writeSetting } from '../settings/prefs';
 import { storageDirectory } from '../storage';
@@ -30,6 +36,7 @@ const SOURCE_ORDER: InboxSource[] = ['teams', 'outlook', 'mydundee', 'qq'];
 interface StoredState {
   sources: InboxSourceStatus[];
   lastRun: InboxRun | null;
+  usage?: InboxUsage | null;
 }
 
 let running: Promise<InboxState> | null = null;
@@ -42,10 +49,36 @@ export function inboxDirectory(): string {
 function storedState(): StoredState {
   try {
     const parsed = JSON.parse(readSetting('inbox-state') ?? '{}') as Partial<StoredState>;
-    return { sources: parsed.sources ?? [], lastRun: parsed.lastRun ?? null };
+    return {
+      sources: parsed.sources ?? [],
+      lastRun: parsed.lastRun ?? null,
+      usage: parsed.usage ?? null,
+    };
   } catch {
-    return { sources: [], lastRun: null };
+    return { sources: [], lastRun: null, usage: null };
   }
+}
+
+export function monthOf(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** 累加当月用量；跨月从零开始。 */
+export function addUsage(
+  current: InboxUsage | null,
+  usage: { input: number; output: number; cost: number },
+  now: Date,
+): InboxUsage {
+  const month = monthOf(now);
+  const base =
+    current?.month === month ? current : { month, runs: 0, input: 0, output: 0, cost: 0 };
+  return {
+    month,
+    runs: base.runs + 1,
+    input: base.input + usage.input,
+    output: base.output + usage.output,
+    cost: base.cost + usage.cost,
+  };
 }
 
 export function getInboxState(): InboxState {
@@ -65,6 +98,8 @@ export function getInboxState(): InboxState {
     sources,
     running: running !== null,
     lastRun: stored.lastRun,
+    usage: stored.usage?.month === monthOf(new Date()) ? stored.usage : null,
+    model: configuredTriageModel(),
     nextRunAt,
   };
 }
@@ -187,7 +222,9 @@ async function runOnce(): Promise<InboxState> {
         items: result.items.length,
         todos: result.todos,
         model: result.model,
+        ...(result.usage && { tokens: result.usage.input + result.usage.output }),
       };
+      if (result.usage) previous.usage = addUsage(previous.usage ?? null, result.usage, new Date());
     } catch (error) {
       console.warn('[inbox] 提取失败', error instanceof Error ? error.message : error);
       await writePending(dir, inputs);

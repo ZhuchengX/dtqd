@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   Mail,
   MessageSquare,
+  MessagesSquare,
   Search,
   Settings,
   X,
@@ -31,6 +32,7 @@ const resultGroups: ReadonlyArray<{
   { kind: 'mail', label: '邮件', icon: Mail, note: '最多 10 条' },
   { kind: 'course-file', label: '课程资料', icon: FileText, note: '最多 10 条' },
   { kind: 'todo', label: 'TODO / 作业', icon: CircleCheckBig, note: '最多 10 条' },
+  { kind: 'teams', label: 'Teams 存档', icon: MessagesSquare, note: '最多 10 个会话' },
   { kind: 'setting', label: '设置', icon: Settings },
 ];
 

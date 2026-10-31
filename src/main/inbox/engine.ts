@@ -39,11 +39,18 @@ const itemSchema = z.object({
 });
 export type InboxItem = Omit<z.infer<typeof itemSchema>, 'dueAt'> & { dueAt: string | null };
 
+export interface ModelUsage {
+  input: number;
+  output: number;
+  cost: number;
+}
+
 export interface InboxTriageResult {
   status: 'ok' | 'no-model' | 'failed';
   items: InboxItem[];
   todos: number;
   model: string | null;
+  usage?: ModelUsage;
 }
 
 const SOURCE_HINTS: Record<InboxSource, string> = {
@@ -231,7 +238,9 @@ export function configuredTriageModel(): string | null {
 }
 
 /** 用第一个可用提供商发一次无工具请求。 */
-async function complete(prompt: string): Promise<{ text: string; model: string } | null> {
+async function complete(
+  prompt: string,
+): Promise<{ text: string; model: string; usage: ModelUsage } | null> {
   const provider = usableLlmProviders()[0];
   const modelId = provider && triageModel(provider.models);
   if (!provider || !modelId) return null;
@@ -250,7 +259,12 @@ async function complete(prompt: string): Promise<{ text: string; model: string }
     : reply.content.map((block) => (block.type === 'thinking' ? block.thinking : '')).join('');
   // 只记长度与结束原因，不记正文（含学生消息）。
   console.info('[inbox] 模型回复', modelId, reply.stopReason, answer.length);
-  return { text: answer, model: modelId };
+  const usage = {
+    input: reply.usage?.input ?? 0,
+    output: reply.usage?.output ?? 0,
+    cost: reply.usage?.cost?.total ?? 0,
+  };
+  return { text: answer, model: modelId, usage };
 }
 
 /** 提取各来源新内容里的重要事项：写 dir/待办提取.md，新事项建成带通知的待办。 */
@@ -263,7 +277,8 @@ export async function triageInbox(
   const reply = await complete(inboxPrompt(inputs, profile, formatTime(now)));
   if (reply === null) return { status: 'no-model', items: [], todos: 0, model: null };
   const parsed = parseInboxItems(reply.text);
-  if (!parsed) return { status: 'failed', items: [], todos: 0, model: reply.model };
+  if (!parsed)
+    return { status: 'failed', items: [], todos: 0, model: reply.model, usage: reply.usage };
   const important = dedupeItems(parsed.filter((item) => isImportant(item, now)));
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, '待办提取.md'), inboxMarkdown(important, now));
@@ -284,5 +299,11 @@ export async function triageInbox(
     added.push(key);
   }
   if (added.length) await writeKeys(dir, [...keys, ...added]);
-  return { status: 'ok', items: important, todos: added.length, model: reply.model };
+  return {
+    status: 'ok',
+    items: important,
+    todos: added.length,
+    model: reply.model,
+    usage: reply.usage,
+  };
 }

@@ -41,6 +41,17 @@ export interface InboxRun {
   /** 新建的待办数（已建过的不重复）。 */
   todos: number;
   model: string | null;
+  /** 本次提取用掉的 token（输入 + 输出）；没调模型时缺省。 */
+  tokens?: number;
+}
+
+/** 当月后台提取的模型用量；花费按模型目录价估算，自定义模型没有价目时为 0。 */
+export interface InboxUsage {
+  month: string;
+  runs: number;
+  input: number;
+  output: number;
+  cost: number;
 }
 
 export interface InboxState {
@@ -48,6 +59,9 @@ export interface InboxState {
   sources: InboxSourceStatus[];
   running: boolean;
   lastRun: InboxRun | null;
+  usage: InboxUsage | null;
+  /** 后台提取会用的模型；没配好可用的模型供应商时为 null。 */
+  model: string | null;
   /** 下次自动同步时间。 */
   nextRunAt: string | null;
 }

@@ -5,6 +5,8 @@ import { getTodoState } from '../todo';
 import { todoStatusLabels } from '../../shared/todo';
 import { getDatabase } from '../database';
 import { checkWorkspaceSender } from '../ipc';
+import { teamsDirectory } from '../teams/sync';
+import { openTeamsArchiveFile, searchTeamsArchive } from './teams-archive';
 
 const querySchema = z.string().trim().max(200);
 const perKindLimit = GLOBAL_SEARCH_PER_KIND_LIMIT;
@@ -35,6 +37,15 @@ type CanvasFileRow = { id: string; title: string; courseName: string | null };
  * Searches only data already stored in Dela's SQLite database. In particular,
  * Canvas files are matched by their cached title and never downloaded here.
  */
+/** Teams 存档搜不了（目录不在、存储位置读不到）时只是少一类结果，不影响其他搜索。 */
+function teamsArchiveHits(query: string) {
+  try {
+    return searchTeamsArchive(teamsDirectory(), query, perKindLimit);
+  } catch {
+    return [];
+  }
+}
+
 export function queryGlobalSearch(query: string): GlobalSearchResult[] {
   const db = getDatabase();
   const pattern = likePattern(query);
@@ -135,6 +146,13 @@ export function queryGlobalSearch(query: string): GlobalSearchResult[] {
       subtitle: row.courseName,
       target: { page: 'sources' as const, sourceId: row.id },
     })),
+    ...teamsArchiveHits(query).map((hit) => ({
+      kind: 'teams' as const,
+      id: hit.path,
+      title: hit.title,
+      subtitle: hit.snippet || null,
+      target: { page: 'teams-archive' as const, path: hit.path },
+    })),
   ];
 }
 
@@ -142,5 +160,9 @@ export function registerSearchIpc(): void {
   ipcMain.handle('search:query', (event, query: unknown) => {
     checkWorkspaceSender(event);
     return queryGlobalSearch(querySchema.parse(query));
+  });
+  ipcMain.handle('search:open-teams-archive', (event, path: unknown) => {
+    checkWorkspaceSender(event);
+    return openTeamsArchiveFile(teamsDirectory(), z.string().max(4096).parse(path));
   });
 }

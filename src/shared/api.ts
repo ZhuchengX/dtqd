@@ -225,6 +225,7 @@ export type {
   InboxSourceStatus,
   InboxSourceStatusKind,
   InboxState,
+  InboxUsage,
 } from './inbox';
 export { inboxInterestOptions, inboxSourceLabels } from './inbox';
 

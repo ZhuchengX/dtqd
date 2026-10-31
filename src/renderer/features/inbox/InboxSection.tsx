@@ -7,10 +7,17 @@ import { Switch } from '@/components/ui/beautifului/atoms/Switch';
 import { showToast } from '../../app/toasts';
 import { errorText } from '../../workspace/store';
 import { cn } from '../../lib/utils';
+import { useNavigationStore } from '../../navigation/view';
 import { SettingRow } from '../settings/SettingRow';
 import { SettingsGroup } from '../settings/SettingsGroup';
 import { SectionHeader } from '../settings/SectionHeader';
-import { relativeTime, runStatusLabels, sourceStatusLabels, useInboxState } from './use-inbox';
+import {
+  relativeTime,
+  runStatusLabels,
+  sourceStatusLabels,
+  usageLabel,
+  useInboxState,
+} from './use-inbox';
 
 export function InboxSection() {
   const state = useInboxState();
@@ -60,7 +67,11 @@ export function InboxSection() {
         title="AI 提取"
       >
         <SettingRow
-          description={run?.model ? `当前使用：${run.model}` : '优先使用名字里带 flash 的快速模型'}
+          description={
+            state?.model
+              ? `当前使用：${state.model}（优先选名字带 flash 的快速模型）· ${usageLabel(state.usage)}`
+              : '还没有可用的模型：先在「模型供应商」里配置一个'
+          }
           settingId="inbox-ai-extract"
           title="用模型从新消息里挑出重要的事"
         >
@@ -122,6 +133,23 @@ export function InboxSection() {
         settingId="inbox-sources"
         title="来源"
       >
+        <SettingRow
+          description={state?.model ?? '没有可用模型时只同步存档，不提取'}
+          settingId="inbox-source-model"
+          title="提取用的模型"
+        >
+          {state?.model ? (
+            <span className="text-13 text-ink-2">正常</span>
+          ) : (
+            <Button
+              onClick={() => useNavigationStore.getState().openSettings('providers')}
+              size="sm"
+              variant="outline"
+            >
+              去配置
+            </Button>
+          )}
+        </SettingRow>
         {(state?.sources ?? []).map((source) => (
           <SettingRow
             description={source.detail ?? `上次同步：${relativeTime(source.lastSyncAt)}`}
