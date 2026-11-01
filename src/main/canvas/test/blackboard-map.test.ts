@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SourceItem } from '../../../shared/api';
 import {
+  announcementSource,
   blackboardNextPage,
   blackboardNumericId,
   blackboardSubmission,
@@ -9,6 +10,7 @@ import {
   embeddedFiles,
   gradeColumnAssignments,
   mapContent,
+  schoolSites,
   type BlackboardSource,
 } from '../blackboard-map';
 import { canvasTodoStatus } from '../../../shared/todo';
@@ -148,5 +150,31 @@ describe('blackboardTerm', () => {
       blackboardTerm('2026-27', { name: 'Information Security Awareness Training 2026/27' }),
     ).toBe('未标注学期');
     expect(blackboardTerm('', { name: 'Careers Service' })).toBe('未标注学期');
+  });
+});
+
+describe('学校站点公告', () => {
+  it('只挑未标注学期、未归档、有外部 id 的站点', () => {
+    const site = { id: 1, term: '未标注学期', externalId: '_1_1', archived: false };
+    const module = { id: 2, term: '2025-2026', externalId: '_2_1', archived: false };
+    const hidden = { id: 3, term: '未标注学期', externalId: '_3_1', archived: true };
+    const local = { id: 4, term: '未标注学期', archived: false };
+    expect(schoolSites([site, module, hidden, local])).toEqual([site]);
+  });
+
+  it('公告转成 bbann: 开头的资料，重要事项靠这个前缀读取', () => {
+    const source = announcementSource(66821, '_66821_1', {
+      id: '_9_1',
+      title: 'Careers fair',
+      body: '<p>hi</p>',
+      created: '2026-10-20T00:00:00Z',
+    });
+    expect(source).toMatchObject({
+      id: 'bbann:_66821_1:_9_1',
+      courseId: 66821,
+      title: 'Careers fair',
+      kind: 'discussion',
+      updatedAt: '2026-10-20T00:00:00Z',
+    });
   });
 });

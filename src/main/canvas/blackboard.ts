@@ -9,6 +9,7 @@ import { getDatabase } from '../database';
 import { importDundeeCookies } from './chrome-cookies';
 import type { CanvasCourse, SourceItem } from '../../shared/api';
 import {
+  announcementSource,
   BLACKBOARD_API,
   BLACKBOARD_ORIGIN,
   blackboardNextPage,
@@ -16,7 +17,6 @@ import {
   blackboardSubmission,
   blackboardTerm,
   contentKind,
-  courseOutlineUrl,
   gradeColumnAssignments,
   mapContent,
   type BlackboardSource,
@@ -243,6 +243,12 @@ export async function listBlackboardCourses(): Promise<BlackboardCourse[]> {
   return courses;
 }
 
+/** 只读一门课或学校站点的公告（不碰课件和作业）；无权限或没有公告时返回空。 */
+export async function listBlackboardAnnouncements(courseId: number, courseBbId: string) {
+  const rows = await optionalList(`courses/${courseBbId}/announcements?limit=100`);
+  return rows.map((announcement) => announcementSource(courseId, courseBbId, announcement));
+}
+
 export interface BlackboardCourseTree {
   items: SourceItem[];
   sources: BlackboardSource[];
@@ -327,16 +333,9 @@ export async function syncBlackboardCourseTree(
     if (announcements.length) {
       const rootId = group('discussions', '课程公告');
       for (const announcement of announcements) {
-        const sourceId = `bbann:${courseBbId}:${str(announcement.id)}`;
-        sources.set(sourceId, {
-          id: sourceId,
-          courseId,
-          title: str(announcement.title) || '课程公告',
-          kind: 'discussion',
-          html: str(announcement.body),
-          url: courseOutlineUrl(courseBbId),
-          updatedAt: str(announcement.modified) || str(announcement.created) || null,
-        });
+        const source = announcementSource(courseId, courseBbId, announcement);
+        const sourceId = source.id;
+        sources.set(sourceId, source);
         items.push({
           id: sourceId,
           parentId: rootId,

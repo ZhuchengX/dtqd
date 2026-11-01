@@ -19,6 +19,7 @@ import { configuredTriageModel, triageInbox, type InboxInput } from './engine';
 import { inboxPrefs, setInboxPrefs } from './prefs';
 import {
   currentCourses,
+  readCampusWeb,
   readCursors,
   readMyDundee,
   readOutlook,
@@ -31,7 +32,7 @@ import {
 export const INBOX_INTERVAL_MS = 30 * 60_000;
 const STARTUP_DELAY_MS = 20_000;
 const MAX_PENDING_CHARS = 120_000;
-const SOURCE_ORDER: InboxSource[] = ['teams', 'outlook', 'mydundee', 'qq'];
+const SOURCE_ORDER: InboxSource[] = ['teams', 'outlook', 'mydundee', 'campus', 'qq'];
 
 interface StoredState {
   sources: InboxSourceStatus[];
@@ -155,6 +156,7 @@ async function readSource(
     if (source === 'teams') return await readTeams();
     if (source === 'outlook') return readOutlook(cursor, now);
     if (source === 'mydundee') return readMyDundee(cursor, now);
+    if (source === 'campus') return await readCampusWeb(cursor, now);
     return await readQq(cursor, now);
   } catch (error) {
     return {

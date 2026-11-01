@@ -220,3 +220,23 @@ export function blackboardTerm(termName: string, course: Row): string {
   const yearEnd = match[2]!.length === 2 ? `20${match[2]}` : match[2]!;
   return `${match[1]}-${yearEnd} 学年`;
 }
+
+/** 一条 Blackboard 公告转成本地资料；sourceId 以 bbann: 开头，重要事项按这个前缀读。 */
+export function announcementSource(courseId: number, courseBbId: string, announcement: Row) {
+  return {
+    id: `bbann:${courseBbId}:${str(announcement.id)}`,
+    courseId,
+    title: str(announcement.title) || '课程公告',
+    kind: 'discussion' as const,
+    html: str(announcement.body),
+    url: courseOutlineUrl(courseBbId),
+    updatedAt: str(announcement.modified) || str(announcement.created) || null,
+  };
+}
+
+/** Careers、学院站点这类不属于具体课程的学校站点：不同步课件，只读公告。 */
+export function schoolSites<T extends { term: string; externalId?: string; archived?: boolean }>(
+  courses: readonly T[],
+): T[] {
+  return courses.filter((c) => c.term === '未标注学期' && c.externalId && !c.archived);
+}

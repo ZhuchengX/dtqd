@@ -3,6 +3,7 @@
 import type { InboxSource, InboxSourceStatusKind } from '../../shared/inbox';
 import { listTodoCanvasCourses } from '../canvas/api';
 import { defaultChatFileRoots, listChatFiles } from '../chatfiles/scan';
+import { readCampusWebSites } from './campus-web';
 import { getDatabase } from '../database';
 import { readSetting, writeSetting } from '../settings/prefs';
 import { htmlToText } from '../teams/extract';
@@ -127,6 +128,31 @@ export function readMyDundee(cursor: string | undefined, now: number): SourceRea
     text,
     detail: null,
     cursor: latest ?? cursor ?? new Date(since).toISOString(),
+  };
+}
+
+const MAX_SEEN_NOTICES = 500;
+const NOTICE_RECHECK_DAYS = 30;
+
+/** 游标是读过的通知链接（列表页日期只到天，只比日期会漏掉同一天后发的）；首次只往回看 14 天。 */
+export async function readCampusWeb(cursor: string | undefined, now: number): Promise<SourceRead> {
+  const seen: string[] = cursor ? (JSON.parse(cursor) as string[]) : [];
+  const days = cursor ? NOTICE_RECHECK_DAYS : FIRST_LOOKBACK_DAYS;
+  const since = new Date(now - days * 86_400_000).toISOString().slice(0, 10);
+  const { items, failedSites } = await readCampusWebSites(new Set(seen), since);
+  const allFailed = items.length === 0 && failedSites.length > 0;
+  return {
+    source: 'campus',
+    status: allFailed ? 'error' : 'ok',
+    newItems: items.length,
+    text: items
+      .map(
+        ({ site, notice, body }) =>
+          `### ${site} · ${notice.title} · ${notice.date}\n\n${clip(body || '（正文未读取，只有标题）')}\n\n来源：${notice.url}\n`,
+      )
+      .join('\n'),
+    detail: failedSites.length > 0 ? `打不开：${failedSites.join('、')}，下次重试` : null,
+    cursor: JSON.stringify([...seen, ...items.map((i) => i.notice.url)].slice(-MAX_SEEN_NOTICES)),
   };
 }
 

@@ -18,10 +18,13 @@ import {
   blackboardConnected,
   blackboardUser,
   downloadBlackboardFile,
+  listBlackboardAnnouncements,
   listBlackboardCourses,
   listBlackboardTodoAssignments,
   syncBlackboardCourseTree,
 } from './blackboard';
+import { schoolSites } from './blackboard-map';
+import { CampusAuthError } from '../campus';
 
 const origin = 'https://oc.sjtu.edu.cn';
 const apiRoot = `${origin}/api/v1/`;
@@ -479,7 +482,27 @@ export async function syncCanvasCourseTrees(): Promise<CanvasState> {
   const latest = latestTermOf(state.courses);
   for (const course of state.courses)
     if (isCurrentTerm(course.term, latest) && !course.archived) await syncCanvasCourse(course.id);
+  await syncSchoolSiteAnnouncements(state.courses);
   return getCanvasState();
+}
+
+/** 学校站点只存公告供重要事项读取；单个站点失败只记日志，不影响课程同步。登录失效就不再试后面的站点。 */
+async function syncSchoolSiteAnnouncements(courses: readonly CanvasCourse[]): Promise<void> {
+  if (!blackboardConnected()) return;
+  const insert = getDatabase().prepare('INSERT OR REPLACE INTO canvas_sources VALUES (?, ?, ?)');
+  for (const site of schoolSites(courses)) {
+    try {
+      for (const source of await listBlackboardAnnouncements(site.id, site.externalId!))
+        insert.run(source.id, site.id, JSON.stringify(source));
+    } catch (error) {
+      console.error(
+        '[canvas] 学校站点公告同步失败',
+        site.id,
+        error instanceof Error ? error.message : '',
+      );
+      if (error instanceof CampusAuthError) return;
+    }
+  }
 }
 
 /** 归档后不参与自动同步，仅保留本地已同步数据。 */

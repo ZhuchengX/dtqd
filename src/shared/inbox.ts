@@ -1,10 +1,11 @@
 /** DTQD「重要事项」：把 Teams、Outlook、myDundee 公告与 QQ 收到的文件汇总，用模型挑出对学生本人重要的事进待办。 */
-export type InboxSource = 'teams' | 'outlook' | 'mydundee' | 'qq';
+export type InboxSource = 'teams' | 'outlook' | 'mydundee' | 'campus' | 'qq';
 
 export const inboxSourceLabels: Record<InboxSource, string> = {
   teams: 'Teams',
   outlook: 'Outlook',
   mydundee: 'myDundee 公告',
+  campus: '学校网站通知',
   qq: 'QQ 接收文件',
 };
 
