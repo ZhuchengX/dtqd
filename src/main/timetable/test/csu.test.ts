@@ -69,7 +69,7 @@ describe('中南强智课表', () => {
   });
 });
 
-// 按真实页面（2026-10 熊祝成账号）结构：行首「1－2」，详情格 id 以 -2 结尾、周次里不带节次。
+// 按真实页面（2026-10 实测账号）结构：行首「1－2」，详情格 id 以 -2 结尾、周次里不带节次。
 const realShapeHtml = `
 <table id="kbtable">
 <tr><th width="70" height="28" align="center">1－2&nbsp;</th>

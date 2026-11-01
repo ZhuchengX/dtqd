@@ -105,7 +105,7 @@ export const MICROSOFT_MAIL_SERVER: MailServerConfig = {
 /** Dundee 学生账号形如 studentID@dundee.ac.uk。 */
 export const DUNDEE_MAIL_DOMAIN = 'dundee.ac.uk';
 
-/** Microsoft 365 登录参数：clientId 是熊祝成在 Azure 注册的应用 ID，不内置任何第三方应用的 ID。 */
+/** Microsoft 365 登录参数：clientId 是维护者在 Azure 注册的应用 ID，不内置任何第三方应用的 ID。 */
 export interface MicrosoftLoginInput {
   readonly clientId: string;
   /** 默认 organizations（任意工作/学校账号）；也可填 dundee.ac.uk 或租户 GUID。 */

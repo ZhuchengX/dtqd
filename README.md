@@ -10,61 +10,61 @@
 
 <div align="center">
 
-**DTQD · 面向 DIICSU 学生的本地 AI 学习工作台**
+**An Agent Harness designed for DIICSUer**
 
 </div>
 
 ---
 
 > [!IMPORTANT]
-> **本项目基于 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）修改，修改日期 2026-10-31。** 修改摘要与源码获取方式见 [NOTICE.md](NOTICE.md)。
+> 下载、安装或使用 DTQD，即视为你已阅读并同意本项目的[使用条款](docs/terms.md)与[隐私条款](docs/privacy.md)（DTQD 版补充内容目前为草稿）。
+> 如果你不同意其中部分内容，可以跳过对应服务的配置、不提供该项凭据，从而仅使用其余功能；如果你不同意全部条款，请停止使用并卸载本软件。
 >
-> **DTQD 为第三方工具，与中南大学、邓迪大学（University of Dundee）及中南大学邓迪国际学院（DIICSU）无官方关系**，不代表任何学校或学院立场。DTQD 只是学习辅助工具，不承诺任何成绩或结果。
+> **DTQD 是第三方工具，与中南大学、邓迪大学（University of Dundee）及中南大学邓迪国际学院（DIICSU）无官方关系**，不代表任何学校或学院立场，也不承诺任何成绩或结果。
 >
-> 下载、安装或使用 DTQD，即视为你已阅读并同意本项目的[使用条款](docs/terms.md)与[隐私条款](docs/privacy.md)（DTQD 版条款目前为草稿）。如果你不同意其中部分内容，可以跳过对应服务的配置、不提供该项凭据，从而仅使用其余功能；如果你不同意全部条款，请停止使用并卸载本软件。
+> 本项目基于 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）修改，修改说明见 [NOTICE.md](NOTICE.md)。
 
-DTQD 是邓途启迪基于开源项目 Dela 改造的本地 AI 学习工作台，面向中南大学邓迪国际学院（DIICSU）学生。
+DTQD 是一款专门面向 DIICSU 学生的 Agent 产品。
 
-DTQD 的 Agent 内核沿用 Dela 的 Pi 架构。凭据经系统钥匙串加密后保存在本机，其余数据保存在本地，不上传 DTQD 服务器（DTQD 没有服务器）；联网只发生在你主动配置的服务之间：myDundee / Blackboard（University of Dundee）、Microsoft（Outlook / Teams），以及你自己配置的大模型服务。
+DTQD 的内核基于 Pi 构建。凭据经系统钥匙串加密后保存在本机，其余数据保存在本地；DTQD 没有存放用户数据的服务器。聊天内容和用于提取重要事项的内容会发给你自己配置的大模型服务；只有你主动提交反馈时，反馈内容才会发给 DTQD 团队。
 
 ## 功能概览
 
-**所有侧栏功能入口可在 “设置 > 通用 > 导航入口” 中显示或隐藏；试验功能可在 “设置 > 通用 > 试验功能” 中开关。**
+**所有侧栏功能入口可在 “设置 > 通用 > 导航入口” 中隐藏；试验功能可在 “设置 > 通用 > 试验功能” 中开关。**
 
-### 校园信息服务（DIICSU）
+### 校园信息服务
 
-- **myDundee（Blackboard）课件**：同步课程资料，快捷预览与切换课件，可批量下载、添加到本地项目
-- **Outlook 邮箱**：收信、写信与本地草稿；同时保留任意 IMAP/SMTP 邮箱的支持
-- **Teams**（规划中）：课程群消息与文件的查看与归档
-- **微信 / QQ 接收文件归档**（规划中）：把聊天里收到的课件、作业文件按课程整理进本地项目
-- **全局搜索**：跨项目、会话、邮件、课程资料和设置搜索
-- **TODO**：作业与待办提醒，支持月历与列表两种视图
-
-### 学习辅导与科研
-
-- **学习辅导 skills**：课程知识点讲解、作业思路引导、复习规划（引导你自己完成，不代写作业）
-- **科研 skills**：文献检索与阅读、研究入门指引
-- **DIICSU 资料 skills**：专业培养方案、学院政策等公开资料的检索与解读（以学院官方发布为准）
-
-### 上游功能（DIICSU 暂无对应，默认隐藏）
-
-以下是上游 Dela 面向上海交大的专属功能，DTQD 保留代码但**默认隐藏**，可在设置中重新打开：
-
-- **课堂视频回看与下载**（交大课堂视频平台）：导航入口「课堂视频」默认隐藏；视频下载属于试验功能，默认关闭
-- **水源社区**（交大论坛）：试验功能，默认关闭
-- **交大课表**（教学信息网）：导航入口「课表」默认隐藏
+- **首页今天 / 本周**：把各处的截止时间和重要事项汇总到一页
+- **重要事项提取**：定期查看 Teams、Outlook、myDundee 和 QQ 接收文件，用你配置的 AI 挑出对你重要的事项（可关闭）
+- **myDundee（Blackboard）**：查看课件、作业截止和公告，可批量下载或添加到本地项目
+- **Dundee 邮箱**：通过 Outlook 网页版一键连接，也支持第三方 IMAP/SMTP 邮箱
+- **Teams**：在独立窗口中使用 Teams，并把 @我 的消息和日历纳入提醒与课表
+- **课表**：从中南大学教务系统读取个人课表，并按教学周显示
+- **校内通知问答**：可在聊天中查询保研、考研、竞赛、就业和实习通知，回答附发布日期和原文链接
+- **TODO 与截止提醒**：截止前 3 天、1 天、3 小时提醒，同时显示北京和英国时间，可导出 `.ics`
+- **全局搜索**：搜索内容跨项目、会话、邮件、课程资料、Teams 存档和设置
 
 ### Agent 功能
 
-DTQD 沿用 Dela 的 Agent 能力：支持导入第三方 skills 和接入 MCPs；提供自定义的 `web_search` 工具接入（如 DeepSeek、Brave、Google，默认关闭，需自备 API KEY）与免费的 `web_fetch` 工具（默认开启）；兼容大部分 Pi Packages 生态（扩展、skills、提示模板，来源支持 npm、git 与本地目录；扩展与 DTQD 同权限运行，安装前请确认来源可信）。
+DTQD 默认推荐 DeepSeek Flash，需自备 API Key，也可以配置其他模型服务。
 
-**remote project** 可以把远端服务器目录登记为项目：通过 SSH 建立连接后，上传 helper runtime 维持本机与服务器之间的稳定通道，Agent 的读写与命令直接在服务器上执行，远端目录变化实时同步到文件树。
+DTQD 支持导入第三方 skills 和接入 MCPs，并通过**内置的校园 skills** 读取你的课程、作业、邮件和课表。内置学习 skills 包括写作反馈、给老师写邮件、术语表、成绩规划、备考和 MC（Mitigating Circumstances）申请辅导；它们只辅导，不代写作业。
+
+DTQD 提供自定义的 `web_search` 工具接入（默认关闭，需自备 API Key）和免费的 `web_fetch` 工具（默认开启），并兼容大部分 Pi Packages 生态。扩展与 DTQD 同权限运行，安装前请确认来源可信。
 
 ### 工作台功能
 
-- **Markdown 笔记编辑**：支持对 `.md` 文件即时渲染编辑，支持数学公式与 mermaid 流程图
-- **文件编辑**：任意文本文件都能打开编辑，按内容而不是扩展名识别；1 MB 以上只读预览
-- **内置终端**：在应用内直接打开终端（Windows 为 Git Bash），remote project 默认为 ssh
+- **Markdown 笔记编辑**：支持即时渲染编辑、数学公式与 mermaid 流程图
+- **文件编辑**：任意文本文件都能打开编辑；1 MB 以上只读预览
+- **内置终端**：在应用内直接打开终端
+
+### 上游保留功能
+
+以下是 Dela 面向上海交大的功能，DIICSU 暂无对应服务。DTQD 保留代码，可在设置中开关：
+
+- **课堂视频回看**：导航入口默认隐藏；中南 netclass 录播尚未接入
+- **水源社区**：试验功能
+- **remote project**：通过 SSH 把远端服务器目录登记为项目
 
 ## 技术栈
 
@@ -78,13 +78,20 @@ DTQD 沿用 Dela 的 Agent 能力：支持导入第三方 skills 和接入 MCPs�
 
 ## 下载安装
 
-DTQD 安装包的分发渠道：**待定**。分发安装包时会同时提供对应源码（GPL-3.0 要求）。
+从 [GitHub Releases](https://github.com/ZhuchengX/dtqd/releases/latest) 下载安装包。
 
-DTQD 版**默认关闭应用内更新**（上游 Dela 的更新源已停用，避免被“更新”回 Dela）；DTQD 自有更新渠道确定后再开启。
+| 平台                | 状态   |
+| ------------------- | ------ |
+| macOS（Apple 芯片） | 测试中 |
+| Windows             | 适配中 |
+
+当前 macOS 安装包没有 Apple 签名。首次打开被系统拦截时，前往 “系统设置 > 隐私与安全性”，选择 “仍要打开”。
+
+DTQD 暂不支持应用内更新，新版本需要重新下载安装。
 
 ## 本地开发
 
-推荐使用 [`.node-version`](.node-version) 指定的 Node.js 与 [`package.json`](package.json) 的 `packageManager` 指定的 pnpm，兼容范围见 `engines`（本机可用 `. ./scripts/use-local-tools.ps1` 启用仓库内固定版本）：
+推荐使用 [`.node-version`](.node-version) 指定的 Node.js 与 [`package.json`](package.json) 的 `packageManager` 指定的 pnpm，兼容范围见 `engines`：
 
 ```sh
 pnpm install
@@ -97,9 +104,9 @@ pnpm dev
 | `pnpm build`        | 类型检查与 main/preload/renderer 三入口生产构建       |
 | `pnpm test`         | Vitest 单元测试                                       |
 | `pnpm smoke`        | Electron 内 SQLite、React 渲染与 preload 隔离冒烟检查 |
-| `pnpm package:dist` | 生成 Windows 安装包                                   |
+| `pnpm package:dist` | 生成当前平台的安装包                                  |
 
-环境搭建细节、冒烟测试与代码组织约定见 [开发文档](docs/DEVELOPMENT.md)；版本与发布流程同样在其中。
+环境搭建细节、冒烟测试与代码组织约定见 [开发文档](docs/DEVELOPMENT.md)。
 
 ## 文档
 
@@ -112,24 +119,24 @@ pnpm dev
 | [贡献指南](CONTRIBUTING.md)        | 环境准备、提交规范与协作方式       | 贡献者         |
 | [功能边界](docs/what-we-not-do.md) | 明确不做与需先讨论的功能           | 贡献者         |
 | [安全策略](SECURITY.md)            | 漏洞报告渠道、支持范围与安全边界   | 使用者、贡献者 |
-| [校园接口资料](docs/sjtu-apis.md)  | Canvas 实测数据结构与交大接口索引  | 贡献者         |
-| [NOTICE](NOTICE.md)                | 上游项目、许可证与本 fork 修改摘要 | 使用者、贡献者 |
+| [校园接口资料](docs/sjtu-apis.md)  | 上游 Canvas 与交大接口索引         | 贡献者         |
+| [NOTICE](NOTICE.md)                | 上游项目、许可证与修改摘要         | 使用者、贡献者 |
 
-## 许可
+## 贡献者
 
-本项目以 GNU General Public License v3.0（GPL-3.0-or-later）发布，全文见 [LICENSE](LICENSE)。DTQD 是 Dela 的修改版，修改说明见 [NOTICE.md](NOTICE.md)。
-
-Dela 的名称与 logo 等素材版权归原作者所有，不在 GPL 授权范围内，DTQD 已替换为自有名称与字标；上游代码版权归 Dela 原作者与贡献者所有。
-
-## 上游致谢
-
-DTQD 站在 Dela 的肩膀上。感谢原作者 **[ChangYo](https://github.com/Chang-Yo)** 与所有 [Dela 贡献者](https://github.com/Chang-Yo/Dela/graphs/contributors) 的开源工作。
+感谢上游 Dela 的原作者 **[ChangYo](https://github.com/Chang-Yo)** 与所有贡献者。
 
 ![Contributors](https://contrib.rocks/image?repo=Chang-Yo/Dela 'Dela Contributors')
 
-### 上游赞助鸣谢
+## 许可
 
-以下是上游 Dela 项目的赞助鸣谢，原样保留：
+本项目以 GNU General Public License v3.0（GPL-3.0-or-later）发布，全文见 [LICENSE](LICENSE)。
+
+上游代码版权归 Dela 原作者与贡献者所有。Dela 的名称与 logo 等素材版权归原作者所有，不在 GPL 授权范围内，DTQD 已替换为自有名称与字标。
+
+## 赞助鸣谢
+
+以下是上游 Dela 项目的赞助鸣谢，原样保留。如果想支持 Dela 作者，请前往 [Dela 仓库](https://github.com/Chang-Yo/Dela)。
 
 <table>
   <tr>
@@ -145,5 +152,3 @@ DTQD 站在 Dela 的肩膀上。感谢原作者 **[ChangYo](https://github.com/C
     </td>
   </tr>
 </table>
-
-如果想支持上游 Dela 作者，请前往 [Dela 仓库](https://github.com/Chang-Yo/Dela)。
