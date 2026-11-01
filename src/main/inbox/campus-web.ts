@@ -1,8 +1,9 @@
 // 学校网站通知：中南大学、邓迪国际学院的公开通知栏（博达 CMS 列表页），加上登录后的校内办公网通知列表。
-// 办公网只调用列表查询接口，不打开正文 PDF，也不碰点击计数和置顶接口。
+// 办公网只调用列表查询和正文 PDF 接口，不碰点击计数和置顶接口。
 import { net } from 'electron';
 import { getCampusSession } from '../campus';
 import { htmlToText } from '../teams/extract';
+import { officePdfUrl, officeTitleWorthReading, pdfText } from './notice-pdf';
 
 export const CAMPUS_OFFICE_URL = 'https://oa.csu.edu.cn/con/ggtz';
 
@@ -37,6 +38,7 @@ const NOTICE_LINK =
   /<a\b[^>]*?href="([^"]*(?:info\/\d+\/\d+\.htm|\/con\/PDFPage\?[^"]*|\/(?:news|campus)\/view\/[^"]*))"[^>]*>/gi;
 const OFFICE_LIST_URL = 'https://oa.csu.edu.cn/con/xnbg/contentList';
 const OFFICE_PAGE_ROWS = 100;
+const MAX_OFFICE_BODIES = 20;
 const MAX_DETAILS_PER_SITE = 10;
 const MAX_BODY_HTML = 20_000;
 const FETCH_TIMEOUT_MS = 15_000;
@@ -125,6 +127,23 @@ async function fetchOfficeNotices(): Promise<CampusNotice[] | null> {
   return text.trimStart().startsWith('{') ? parseOfficeNotices(text) : null;
 }
 
+/** 读不到正文（登录刚过期、扫描版）就只留标题，不影响这一轮。 */
+async function officeBody(noticeUrl: string): Promise<string> {
+  const pdf = officePdfUrl(noticeUrl);
+  if (!pdf) return '';
+  try {
+    const campus = await getCampusSession();
+    const response = await campus.fetch(pdf, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    const data = new Uint8Array(await response.arrayBuffer());
+    if (!response.ok || new TextDecoder('latin1').decode(data.subarray(0, 5)) !== '%PDF-')
+      return '';
+    return await pdfText(data);
+  } catch (error) {
+    console.error('[inbox] 办公网正文读取失败', error instanceof Error ? error.message : '');
+    return '';
+  }
+}
+
 export interface CampusWebRead {
   items: { site: string; notice: CampusNotice; body: string }[];
   failedSites: string[];
@@ -141,10 +160,19 @@ export async function readCampusWebSites(
   try {
     const office = await fetchOfficeNotices();
     if (office === null) read.officeLoginExpired = true;
+    let bodies = 0;
+    let chars = 0;
+    let cjk = 0;
     for (const notice of newNotices(office ?? [], known, since)) {
       known.add(notice.url);
-      read.items.push({ site: '中南大学校内办公网', notice, body: '' });
+      const readBody = bodies < MAX_OFFICE_BODIES && officeTitleWorthReading(notice.title);
+      if (readBody) bodies += 1;
+      const body = readBody ? await officeBody(notice.url) : '';
+      chars += body.length;
+      cjk += body.match(/\p{Script=Han}/gu)?.length ?? 0;
+      read.items.push({ site: '中南大学校内办公网', notice, body });
     }
+    if (bodies > 0) console.log('[inbox] 办公网正文', bodies, '份', chars, '字，其中汉字', cjk);
   } catch (error) {
     console.error('[inbox] 校内办公网读取失败', error instanceof Error ? error.message : '');
     read.failedSites.push('校内办公网');

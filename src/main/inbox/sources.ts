@@ -132,6 +132,8 @@ export function readMyDundee(cursor: string | undefined, now: number): SourceRea
 }
 
 const MAX_SEEN_NOTICES = 500;
+/** 通知的报名截止常写在后半段，比普通消息多留一些。 */
+const MAX_NOTICE_CHARS = 3000;
 const NOTICE_RECHECK_DAYS = 30;
 
 /** 游标是读过的通知链接（列表页日期只到天，只比日期会漏掉同一天后发的）；首次只往回看 14 天。 */
@@ -148,7 +150,7 @@ export async function readCampusWeb(cursor: string | undefined, now: number): Pr
     text: items
       .map(
         ({ site, notice, body }) =>
-          `### ${site} · ${notice.title} · ${notice.date}\n\n${clip(body || '（正文未读取，只有标题）')}\n\n来源：${notice.url}\n`,
+          `### ${site} · ${notice.title} · ${notice.date}\n\n${(body || '（正文未读取，只有标题）').slice(0, MAX_NOTICE_CHARS)}\n\n来源：${notice.url}\n`,
       )
       .join('\n'),
     detail:
