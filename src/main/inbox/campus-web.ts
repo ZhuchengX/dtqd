@@ -1,6 +1,7 @@
-// 学校网站通知：中南大学、邓迪国际学院的公开通知栏（博达 CMS 列表页）。只读公开页面，不用登录会话；
-// 办公网 oa.csu.edu.cn 的正文要统一身份认证，这里只取本科生院列表上公开的标题。
+// 学校网站通知：中南大学、邓迪国际学院的公开通知栏（博达 CMS 列表页），加上登录后的校内办公网通知列表。
+// 办公网只调用列表查询接口，不打开正文 PDF，也不碰点击计数和置顶接口。
 import { net } from 'electron';
+import { getCampusSession } from '../campus';
 import { htmlToText } from '../teams/extract';
 
 export const CAMPUS_OFFICE_URL = 'https://oa.csu.edu.cn/con/ggtz';
@@ -34,6 +35,8 @@ export interface CampusNotice {
 
 const NOTICE_LINK =
   /<a\b[^>]*?href="([^"]*(?:info\/\d+\/\d+\.htm|\/con\/PDFPage\?[^"]*|\/(?:news|campus)\/view\/[^"]*))"[^>]*>/gi;
+const OFFICE_LIST_URL = 'https://oa.csu.edu.cn/con/xnbg/contentList';
+const OFFICE_PAGE_ROWS = 100;
 const MAX_DETAILS_PER_SITE = 10;
 const MAX_BODY_HTML = 20_000;
 const FETCH_TIMEOUT_MS = 15_000;
@@ -84,9 +87,48 @@ async function fetchPage(url: string): Promise<string> {
   return response.text();
 }
 
+/** 办公网列表一行转成通知；链接和本科生院列表上的同一份通知相同，读过一次就不会重复。 */
+export function parseOfficeNotices(json: string): CampusNotice[] {
+  const rows = (JSON.parse(json) as { data?: Record<string, unknown>[] }).data ?? [];
+  return rows.flatMap((row) => {
+    const { WJBT: title, DJSJ: date, QCBMMC: department, YWMC: type, JLNM: id } = row;
+    if (typeof title !== 'string' || typeof date !== 'string' || !type || !id) return [];
+    const query = new URLSearchParams({ YWMC: String(type), JLNM: String(id) });
+    return [
+      {
+        title: department ? `【${String(department)}】${title}` : title,
+        url: `https://oa.csu.edu.cn/con/PDFPage?${query}`,
+        date: date.slice(0, 10),
+      },
+    ];
+  });
+}
+
+/** 登录过期时办公网把请求转到统一身份认证页，返回的不是 JSON，这里返回 null。 */
+async function fetchOfficeNotices(): Promise<CampusNotice[] | null> {
+  const campus = await getCampusSession();
+  const response = await campus.fetch(OFFICE_LIST_URL, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-requested-with': 'XMLHttpRequest',
+    },
+    body: new URLSearchParams({
+      params: JSON.stringify({ tableName: 'ZNDX_ZHBG_GGTZ', tjnr: '' }),
+      pageSize: '1',
+      pageNo: String(OFFICE_PAGE_ROWS),
+    }).toString(),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const text = await response.text();
+  return text.trimStart().startsWith('{') ? parseOfficeNotices(text) : null;
+}
+
 export interface CampusWebRead {
   items: { site: string; notice: CampusNotice; body: string }[];
   failedSites: string[];
+  officeLoginExpired: boolean;
 }
 
 /** 逐站读取；一个站点打不开不影响其他站点，它的通知下次还算新的。 */
@@ -94,11 +136,24 @@ export async function readCampusWebSites(
   seen: ReadonlySet<string>,
   since: string,
 ): Promise<CampusWebRead> {
-  const read: CampusWebRead = { items: [], failedSites: [] };
+  const read: CampusWebRead = { items: [], failedSites: [], officeLoginExpired: false };
+  const known = new Set(seen);
+  try {
+    const office = await fetchOfficeNotices();
+    if (office === null) read.officeLoginExpired = true;
+    for (const notice of newNotices(office ?? [], known, since)) {
+      known.add(notice.url);
+      read.items.push({ site: '中南大学校内办公网', notice, body: '' });
+    }
+  } catch (error) {
+    console.error('[inbox] 校内办公网读取失败', error instanceof Error ? error.message : '');
+    read.failedSites.push('校内办公网');
+  }
   for (const site of CAMPUS_WEB_SITES) {
     try {
-      const fresh = newNotices(parseNoticeList(await fetchPage(site.url), site.url), seen, since);
+      const fresh = newNotices(parseNoticeList(await fetchPage(site.url), site.url), known, since);
       for (const [index, notice] of fresh.entries()) {
+        known.add(notice.url);
         const readable = index < MAX_DETAILS_PER_SITE && !notice.url.includes('/con/PDFPage');
         const body = readable ? noticeBody(await fetchPage(notice.url).catch(() => '')) : '';
         read.items.push({ site: site.name, notice, body });

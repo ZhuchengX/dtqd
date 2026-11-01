@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('electron', () => ({ net: { fetch: vi.fn() } }));
+vi.mock('../../campus', () => ({ getCampusSession: vi.fn() }));
 vi.mock('../../teams/extract', () => ({
   htmlToText: (html: string) => html.replace(/<[^>]+>/g, ''),
 }));
-import { newNotices, noticeBody, parseNoticeList } from '../campus-web';
+import { newNotices, noticeBody, parseNoticeList, parseOfficeNotices } from '../campus-web';
 
 describe('parseNoticeList', () => {
   it('学院卡片式：日和年月分开写', () => {
@@ -42,6 +43,24 @@ describe('就业信息网', () => {
         title: '招聘汇总',
         url: 'https://career.csu.edu.cn/campus/view/id/573694',
         date: '2026-10-31',
+      },
+    ]);
+  });
+});
+
+describe('parseOfficeNotices', () => {
+  it('带部门名，链接与本科生院列表一致，缺字段的跳过', () => {
+    const json = JSON.stringify({
+      data: [
+        { WJBT: '运动会通知', DJSJ: '2026-10-23', QCBMMC: '体育教研部', YWMC: 'GGTZ', JLNM: 'A1' },
+        { WJBT: '坏行', DJSJ: '2026-10-23' },
+      ],
+    });
+    expect(parseOfficeNotices(json)).toEqual([
+      {
+        title: '【体育教研部】运动会通知',
+        url: 'https://oa.csu.edu.cn/con/PDFPage?YWMC=GGTZ&JLNM=A1',
+        date: '2026-10-23',
       },
     ]);
   });

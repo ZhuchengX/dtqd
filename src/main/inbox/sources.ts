@@ -139,7 +139,7 @@ export async function readCampusWeb(cursor: string | undefined, now: number): Pr
   const seen: string[] = cursor ? (JSON.parse(cursor) as string[]) : [];
   const days = cursor ? NOTICE_RECHECK_DAYS : FIRST_LOOKBACK_DAYS;
   const since = new Date(now - days * 86_400_000).toISOString().slice(0, 10);
-  const { items, failedSites } = await readCampusWebSites(new Set(seen), since);
+  const { items, failedSites, officeLoginExpired } = await readCampusWebSites(new Set(seen), since);
   const allFailed = items.length === 0 && failedSites.length > 0;
   return {
     source: 'campus',
@@ -151,7 +151,13 @@ export async function readCampusWeb(cursor: string | undefined, now: number): Pr
           `### ${site} · ${notice.title} · ${notice.date}\n\n${clip(body || '（正文未读取，只有标题）')}\n\n来源：${notice.url}\n`,
       )
       .join('\n'),
-    detail: failedSites.length > 0 ? `打不开：${failedSites.join('、')}，下次重试` : null,
+    detail:
+      [
+        officeLoginExpired ? '校内办公网登录已过期，点右侧按钮重新登录' : '',
+        failedSites.length > 0 ? `打不开：${failedSites.join('、')}，下次重试` : '',
+      ]
+        .filter(Boolean)
+        .join('；') || null,
     cursor: JSON.stringify([...seen, ...items.map((i) => i.notice.url)].slice(-MAX_SEEN_NOTICES)),
   };
 }
