@@ -206,6 +206,8 @@ export function WeekCalendar({
 
 // 事件参与布局与渲染的是同一区间：裁剪到时间轴范围内。
 function eventSpan(event: CalendarEvent): { start: number; end: number } {
+  // 全天日程只占时间轴顶部一小条，不把当天的课挤窄。
+  if (event.allDay) return { start: timelineStart, end: timelineStart + 30 };
   return {
     start: Math.max(timelineStart, minuteOfDay(new Date(event.startAt))),
     end: Math.min(timelineEnd, minuteOfDay(new Date(event.endAt))),
@@ -441,7 +443,9 @@ function MobileEvent({
       style={eventTone(event.color)}
       tabIndex={0}
     >
-      <div className="border-r pr-3 text-xs font-medium tabular-nums">{formatTime(start)}</div>
+      <div className="border-r pr-3 text-xs font-medium tabular-nums">
+        {event.allDay ? '全天' : formatTime(start)}
+      </div>
       <div className="min-w-0 pl-3">
         <strong className="block break-words">{event.title}</strong>
         {event.location ? (

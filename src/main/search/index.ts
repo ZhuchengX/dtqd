@@ -5,6 +5,7 @@ import { getTodoState } from '../todo';
 import { todoStatusLabels } from '../../shared/todo';
 import { getDatabase } from '../database';
 import { checkWorkspaceSender } from '../ipc';
+import { dualDueLabel } from '../../shared/deadline';
 import { teamsDirectory } from '../teams/sync';
 import { openTeamsArchiveFile, searchTeamsArchive } from './teams-archive';
 
@@ -89,16 +90,17 @@ export function queryGlobalSearch(query: string): GlobalSearchResult[] {
           )
           .all(perKindLimit)
   ) as MailRow[];
+  // 同一课程里同名文件（同一份课件嵌在多个页面）只留一条，否则占满名额。
   const files = (
     query
       ? db
           .prepare(
-            "SELECT canvas_sources.id, json_extract(canvas_sources.data, '$.title') AS title, json_extract(canvas_courses.data, '$.name') AS courseName FROM canvas_sources LEFT JOIN canvas_courses ON canvas_courses.id=canvas_sources.course_id WHERE json_extract(canvas_sources.data, '$.kind')='file' AND json_extract(canvas_sources.data, '$.title') LIKE ? ESCAPE '!' ORDER BY canvas_sources.id LIMIT ?",
+            "SELECT MIN(canvas_sources.id) AS id, json_extract(canvas_sources.data, '$.title') AS title, json_extract(canvas_courses.data, '$.name') AS courseName FROM canvas_sources LEFT JOIN canvas_courses ON canvas_courses.id=canvas_sources.course_id WHERE json_extract(canvas_sources.data, '$.kind')='file' AND json_extract(canvas_sources.data, '$.title') LIKE ? ESCAPE '!' GROUP BY canvas_sources.course_id, title ORDER BY id LIMIT ?",
           )
           .all(pattern, perKindLimit)
       : db
           .prepare(
-            "SELECT canvas_sources.id, json_extract(canvas_sources.data, '$.title') AS title, json_extract(canvas_courses.data, '$.name') AS courseName FROM canvas_sources LEFT JOIN canvas_courses ON canvas_courses.id=canvas_sources.course_id WHERE json_extract(canvas_sources.data, '$.kind')='file' ORDER BY canvas_sources.id LIMIT ?",
+            "SELECT MIN(canvas_sources.id) AS id, json_extract(canvas_sources.data, '$.title') AS title, json_extract(canvas_courses.data, '$.name') AS courseName FROM canvas_sources LEFT JOIN canvas_courses ON canvas_courses.id=canvas_sources.course_id WHERE json_extract(canvas_sources.data, '$.kind')='file' GROUP BY canvas_sources.course_id, title ORDER BY id LIMIT ?",
           )
           .all(perKindLimit)
   ) as CanvasFileRow[];
@@ -115,7 +117,7 @@ export function queryGlobalSearch(query: string): GlobalSearchResult[] {
       kind: 'todo' as const,
       id: item.id,
       title: item.title,
-      subtitle: `${item.courseName ?? '个人待办'} · ${todoStatusLabels[item.status]}${item.dueAt ? ` · ${item.dueAt}` : ''}`,
+      subtitle: `${item.courseName ?? '个人待办'} · ${todoStatusLabels[item.status]}${item.dueAt ? ` · ${dualDueLabel(item.dueAt)}` : ''}`,
       target: { page: 'todo' as const, todoId: item.id },
     })),
     ...projects.map((row) => ({

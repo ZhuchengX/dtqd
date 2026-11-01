@@ -46,3 +46,38 @@ describe('Teams 日程', () => {
     expect(teamsCalendarEvents('2026-11-04T00:00:00Z', '2026-11-05T00:00:00Z')).toEqual([]);
   });
 });
+
+describe('Teams 全天日程', () => {
+  it('整天时长的日程按本地日期算全天，普通日程不动', () => {
+    saveTeamsEvents([
+      {
+        id: 'day',
+        subject: '全天',
+        start: '2026-10-26T00:00:00.000Z',
+        end: '2026-10-27T00:00:00.000Z',
+        location: '',
+        organizer: '',
+        online: false,
+        cancelled: false,
+      },
+      {
+        id: 'meet',
+        subject: '会议',
+        start: '2026-10-26T12:00:00.000Z',
+        end: '2026-10-26T12:20:00.000Z',
+        location: '',
+        organizer: '',
+        online: false,
+        cancelled: false,
+      },
+    ]);
+    const [day, meet] = teamsCalendarEvents('2026-10-25T00:00:00Z', '2026-11-01T00:00:00Z');
+    expect(day).toMatchObject({
+      allDay: true,
+      startAt: new Date(2026, 9, 26).toISOString(),
+      endAt: new Date(2026, 9, 27).toISOString(),
+    });
+    expect(meet).toMatchObject({ startAt: '2026-10-26T12:00:00.000Z' });
+    expect(meet?.allDay).toBeUndefined();
+  });
+});

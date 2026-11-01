@@ -192,6 +192,8 @@ export function GlobalSearchDialog({
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             inputRef.current?.focus();
+            // 上次的词还在：选中后直接打字就是新搜索，不会接在旧词后面。
+            inputRef.current?.select();
           }}
         >
           <div className="flex items-center gap-2.5 border-b px-4 py-2.5">

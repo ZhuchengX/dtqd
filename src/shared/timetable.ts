@@ -51,6 +51,8 @@ export interface CalendarEvent {
   readonly color: CalendarEventColor | null;
   /** 非空表示这条事件由个人待办派生，值为待办 id；删除须走待办而非日历。 */
   readonly todoId?: string;
+  /** 全天日程：startAt / endAt 是本地午夜，界面写「全天」，不当作具体时刻。 */
+  readonly allDay?: boolean;
 }
 
 export interface CalendarEventInput {

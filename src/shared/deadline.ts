@@ -11,9 +11,10 @@ export const reminderTiers = [
 ] as const;
 export type ReminderTierKey = (typeof reminderTiers)[number]['key'];
 
-function zoned(iso: string, timeZone: string): string {
+function zoned(iso: string, timeZone: string, withYear = false): string {
   return new Intl.DateTimeFormat('zh-CN', {
     timeZone,
+    ...(withYear ? { year: 'numeric' as const } : {}),
     month: 'numeric',
     day: 'numeric',
     hour: '2-digit',
@@ -22,9 +23,10 @@ function zoned(iso: string, timeZone: string): string {
   }).format(new Date(iso));
 }
 
-/** 「11/24 09:40（英国 11/24 01:40）」；英国与北京同日同时（不会发生）时也照常写两段。 */
-export function dualDueLabel(iso: string): string {
-  return `${zoned(iso, 'Asia/Shanghai')}（英国 ${zoned(iso, 'Europe/London')}）`;
+/** 「11/24 09:40（英国 11/24 01:40）」；不是今年的前面带年份，免得去年的看着像今年的。 */
+export function dualDueLabel(iso: string, now: Date = new Date()): string {
+  const otherYear = new Date(iso).getFullYear() !== now.getFullYear();
+  return `${zoned(iso, 'Asia/Shanghai', otherYear)}（英国 ${zoned(iso, 'Europe/London')}）`;
 }
 
 export function reminderKey(item: Pick<TodoItem, 'id' | 'dueAt'>, tier: ReminderTierKey): string {

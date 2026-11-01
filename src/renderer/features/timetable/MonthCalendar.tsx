@@ -101,8 +101,9 @@ export function MonthCalendar({
             ...dayEvents.map((event) => ({
               id: `event-${event.id}`,
               title: event.title,
-              time:
-                dateKey(new Date(event.startAt)) === dateKey(date)
+              time: event.allDay
+                ? '全天'
+                : dateKey(new Date(event.startAt)) === dateKey(date)
                   ? // 待办块止于截止时刻，pill 上显示的是截止时间而非合成的开始时间。
                     formatTime(new Date(event.todoId ? event.endAt : event.startAt))
                   : null,

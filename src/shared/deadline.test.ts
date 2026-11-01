@@ -22,7 +22,11 @@ function todo(overrides: Partial<TodoItem> = {}): TodoItem {
 
 describe('dualDueLabel', () => {
   it('北京与英国时间都写（11 月英国为 GMT，差 8 小时）', () => {
-    expect(dualDueLabel(DUE)).toBe('11/24 20:00（英国 11/24 12:00）');
+    expect(dualDueLabel(DUE, new Date(2026, 0, 1))).toBe('11/24 20:00（英国 11/24 12:00）');
+  });
+
+  it('不是今年的带年份', () => {
+    expect(dualDueLabel(DUE, new Date(2027, 0, 1))).toBe('2026/11/24 20:00（英国 11/24 12:00）');
   });
 
   it('夏令时期间差 7 小时', () => {

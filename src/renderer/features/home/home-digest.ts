@@ -69,7 +69,7 @@ export function todayEvents(events: readonly CalendarEvent[], now: Date): Digest
     .map((event) => ({
       id: event.id,
       title: event.title,
-      time: `${clock(event.startAt)}–${clock(event.endAt)}`,
+      time: event.allDay ? '全天' : `${clock(event.startAt)}–${clock(event.endAt)}`,
       place: event.location,
     }));
 }

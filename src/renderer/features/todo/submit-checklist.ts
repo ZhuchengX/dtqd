@@ -12,11 +12,12 @@ export const submitChecklist = [
 ] as const;
 
 const SUBMIT_WORDS =
-  /作业|提交|报告|论文|assignment|coursework|essay|report|submission|submit|lab|project|portfolio/i;
+  /作业|提交|报告|论文|assignment|coursework|\bcw\s*\d|essay|report|submission|submit|\blab\b|project|portfolio|dissertation/i;
 
 export function needsSubmitChecklist(item: TodoItem): boolean {
   if (todoCompleted(item.status) || !item.dueAt) return false;
-  return item.source === 'canvas' || SUBMIT_WORDS.test(item.title);
+  // 只看标题：平台上的随堂测、安全培训也是 canvas 来源，但用不上这份写作类清单。
+  return SUBMIT_WORDS.test(item.title);
 }
 
 const storageKey = (id: string) => `dtqd-submit-checklist:${id}`;

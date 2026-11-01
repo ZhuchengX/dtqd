@@ -104,9 +104,18 @@ export function formatMinuteOfDay(minute: number): string {
 }
 
 // 事件的完整起止时间：同日只写一个日期，跨日两端各带日期与星期。
-export function formatEventRange(event: Pick<CalendarEvent, 'startAt' | 'endAt'>): string {
+export function formatEventRange(
+  event: Pick<CalendarEvent, 'startAt' | 'endAt' | 'allDay'>,
+): string {
   const start = new Date(event.startAt);
   const end = new Date(event.endAt);
+  if (event.allDay) {
+    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1);
+    const first = `${formatMonthDay(start)}（${weekdayName(start)}）`;
+    return dateKey(start) === dateKey(last)
+      ? `${first}全天`
+      : `${first} – ${formatMonthDay(last)}（${weekdayName(last)}）全天`;
+  }
   const startText = `${formatMonthDay(start)}（${weekdayName(start)}）${formatTime(start)}`;
   return dateKey(start) === dateKey(end)
     ? `${startText} – ${formatTime(end)}`
