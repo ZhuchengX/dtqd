@@ -11,7 +11,11 @@ const inputSchema = z.object({
   text: z.string().trim().min(1).max(FEEDBACK_MAX_CHARS),
   page: z.string().max(40),
 });
+declare const __FEEDBACK_WEBHOOK__: string | undefined;
+
 const WEBHOOK_SETTING = 'feedback-webhook';
+/** 本机设置优先（方便换群），否则用打包时写入的地址，学生不用配置。 */
+const BUILT_IN_WEBHOOK = typeof __FEEDBACK_WEBHOOK__ === 'string' ? __FEEDBACK_WEBHOOK__ : '';
 const REQUEST_TIMEOUT_MS = 10_000;
 
 export interface QueuedFeedback {
@@ -52,7 +56,7 @@ function readQueue(): QueuedFeedback[] {
 }
 
 async function postToWebhook(message: string): Promise<boolean> {
-  const webhook = readSetting(WEBHOOK_SETTING);
+  const webhook = readSetting(WEBHOOK_SETTING) || BUILT_IN_WEBHOOK;
   if (!webhook) return false;
   try {
     const response = await fetch(webhook, {

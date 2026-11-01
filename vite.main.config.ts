@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
 function prepareMacosIcons(outputDirectory: string) {
   if (process.platform !== 'darwin') return;
@@ -22,8 +22,12 @@ function prepareMacosIcons(outputDirectory: string) {
   }
 }
 
+// 反馈群地址不进仓库：放在被 git 忽略的 .env.local（或环境变量），打包时写进程序。
+const { DTQD_FEEDBACK_WEBHOOK = '' } = loadEnv('production', process.cwd(), 'DTQD_');
+
 export default defineConfig({
   envDir: false,
+  define: { __FEEDBACK_WEBHOOK__: JSON.stringify(DTQD_FEEDBACK_WEBHOOK) },
   plugins: [
     {
       name: 'macos-icons',
