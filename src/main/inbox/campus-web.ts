@@ -74,6 +74,42 @@ export function noticeBody(html: string): string {
   return htmlToText(html.slice(open + 1, open + 1 + MAX_BODY_HTML)).trim();
 }
 
+/** 就业信息网的文章列表：日期在链接前面（通用解析会错配到下一行），单独解析。 */
+export function parseCareerNews(html: string, pageUrl: string): CampusNotice[] {
+  const rows = html.matchAll(
+    /<li class="span2 y">\s*(20\d\d-\d{2}-\d{2})\s*<\/li>\s*<li class="span1">\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gis,
+  );
+  return [...rows].map(([, date, href, title]) => ({
+    title: htmlToText(title!).trim(),
+    url: new URL(href!, pageUrl).href,
+    date: date!,
+  }));
+}
+
+/** 研招网列表：日、年月写在链接前面，也要单独解析。 */
+export function parseAdmissionsNews(html: string, pageUrl: string): CampusNotice[] {
+  const rows = html.matchAll(
+    /class="date_day">\s*(\d{1,2})\s*<\/div>\s*<div class="date_yearly">\s*(20\d\d)\s*\/\s*(\d{2})\s*<\/div>.*?<a\b[^>]*href="([^"]+)"[^>]*title="([^"]+)"/gis,
+  );
+  return [...rows].map(([, day, year, month, href, title]) => ({
+    title: title!,
+    url: new URL(href!, pageUrl).href,
+    date: `${year}-${month}-${day!.padStart(2, '0')}`,
+  }));
+}
+
+/** 就业信息网详情页没有 v_news_content：从标题往后取文字。 */
+export function careerBody(html: string): string {
+  const start = html.search(/class="aTitle"|<h1\b/);
+  return start < 0 ? '' : htmlToText(html.slice(start, start + MAX_BODY_HTML)).trim();
+}
+
+/** 博达 CMS 列表页的「下页」链接；到最后一页时没有。 */
+export function nextPageUrl(html: string, pageUrl: string): string | null {
+  const href = html.match(/<a\b[^>]*href="([^"]+\.htm)"[^>]*>\s*下页/)?.[1];
+  return href ? new URL(href, pageUrl).href : null;
+}
+
 /** 新通知：没读过，且不早于 since（YYYY-MM-DD）。旧的不补读，免得把整年通知当成新消息。 */
 export function newNotices(
   notices: readonly CampusNotice[],
@@ -83,7 +119,7 @@ export function newNotices(
   return notices.filter((notice) => !seen.has(notice.url) && notice.date >= since);
 }
 
-async function fetchPage(url: string): Promise<string> {
+export async function fetchPage(url: string): Promise<string> {
   const response = await net.fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.text();
@@ -107,7 +143,7 @@ export function parseOfficeNotices(json: string): CampusNotice[] {
 }
 
 /** 登录过期时办公网把请求转到统一身份认证页，返回的不是 JSON，这里返回 null。 */
-async function fetchOfficeNotices(): Promise<CampusNotice[] | null> {
+export async function fetchOfficeNotices(): Promise<CampusNotice[] | null> {
   const campus = await getCampusSession();
   const response = await campus.fetch(OFFICE_LIST_URL, {
     method: 'POST',
@@ -128,7 +164,7 @@ async function fetchOfficeNotices(): Promise<CampusNotice[] | null> {
 }
 
 /** 读不到正文（登录刚过期、扫描版）就只留标题，不影响这一轮。 */
-async function officeBody(noticeUrl: string): Promise<string> {
+export async function officeBody(noticeUrl: string): Promise<string> {
   const pdf = officePdfUrl(noticeUrl);
   if (!pdf) return '';
   try {

@@ -30,6 +30,7 @@ import {
   saveCursors,
   type SourceRead,
 } from './sources';
+import { refreshNoticeArchive } from './notice-archive';
 
 export const INBOX_INTERVAL_MS = 30 * 60_000;
 const STARTUP_DELAY_MS = 20_000;
@@ -261,6 +262,9 @@ export function scheduleInbox(): void {
   const tick = () => {
     nextRunAt = new Date(Date.now() + INBOX_INTERVAL_MS).toISOString();
     void runInbox().catch((error: unknown) => console.warn('[inbox] 同步失败', error));
+    void refreshNoticeArchive(Date.now()).catch((error: unknown) =>
+      console.warn('[notices] 刷新失败', error),
+    );
   };
   nextRunAt = new Date(Date.now() + STARTUP_DELAY_MS).toISOString();
   setTimeout(() => {

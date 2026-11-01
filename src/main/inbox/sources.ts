@@ -5,6 +5,7 @@ import { listTodoCanvasCourses } from '../canvas/api';
 import { defaultChatFileRoots, listChatFiles } from '../chatfiles/scan';
 import { readCampusWebSites } from './campus-web';
 import { getDatabase } from '../database';
+import { archiveNotices } from './notice-archive';
 import { readSetting, writeSetting } from '../settings/prefs';
 import { htmlToText } from '../teams/extract';
 import { hasTeamsLogin, syncTeams } from '../teams/sync';
@@ -142,6 +143,7 @@ export async function readCampusWeb(cursor: string | undefined, now: number): Pr
   const days = cursor ? NOTICE_RECHECK_DAYS : FIRST_LOOKBACK_DAYS;
   const since = new Date(now - days * 86_400_000).toISOString().slice(0, 10);
   const { items, failedSites, officeLoginExpired } = await readCampusWebSites(new Set(seen), since);
+  archiveNotices(items.map(({ site, notice, body }) => ({ ...notice, site, body })));
   const allFailed = items.length === 0 && failedSites.length > 0;
   return {
     source: 'campus',

@@ -127,7 +127,12 @@ describe('本地会话环境', () => {
   it('保留 dela 命令桥与内置工具，不给远程工具', async () => {
     state.remote = false;
     const options = await agentEnvironment().sessionOptions('p-local', 'E:\\proj');
-    expect(names(options.customTools)).toEqual(['web_fetch', 'web_search']);
+    expect(names(options.customTools)).toEqual([
+      'campus_notice_read',
+      'campus_notices_search',
+      'web_fetch',
+      'web_search',
+    ]);
     expect(options.commandPrefix).toContain('DELA_COMMAND_URL');
   });
 });

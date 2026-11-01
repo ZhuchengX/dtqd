@@ -5,7 +5,16 @@ vi.mock('../../campus', () => ({ getCampusSession: vi.fn() }));
 vi.mock('../../teams/extract', () => ({
   htmlToText: (html: string) => html.replace(/<[^>]+>/g, ''),
 }));
-import { newNotices, noticeBody, parseNoticeList, parseOfficeNotices } from '../campus-web';
+import {
+  careerBody,
+  newNotices,
+  nextPageUrl,
+  noticeBody,
+  parseAdmissionsNews,
+  parseCareerNews,
+  parseNoticeList,
+  parseOfficeNotices,
+} from '../campus-web';
 
 describe('parseNoticeList', () => {
   it('学院卡片式：日和年月分开写', () => {
@@ -80,5 +89,49 @@ describe('newNotices', () => {
     const notice = (url: string, date: string) => ({ title: url, url, date });
     const list = [notice('a', '2026-10-30'), notice('b', '2026-10-30'), notice('c', '2026-09-01')];
     expect(newNotices(list, new Set(['a']), '2026-10-01').map((n) => n.url)).toEqual(['b']);
+  });
+});
+
+describe('就业信息网与翻页', () => {
+  it('文章列表的日期在链接前面，不错配到下一行', () => {
+    const html = `<ul class="newsList"><li class="span2 y">2026-04-09</li>
+      <li class="span1"><a href="/news/view/aid/1/tag/kytj" target="_blank">山东大学调剂</a></li></ul>
+      <ul class="newsList"><li class="span2 y">2026-04-01</li>
+      <li class="span1"><a href="/news/view/aid/2/tag/kytj" target="_blank">西安交大调剂</a></li></ul>`;
+    expect(parseCareerNews(html, 'https://career.csu.edu.cn/news/index/tag/kytj')).toEqual([
+      {
+        title: '山东大学调剂',
+        url: 'https://career.csu.edu.cn/news/view/aid/1/tag/kytj',
+        date: '2026-04-09',
+      },
+      {
+        title: '西安交大调剂',
+        url: 'https://career.csu.edu.cn/news/view/aid/2/tag/kytj',
+        date: '2026-04-01',
+      },
+    ]);
+  });
+
+  it('研招网列表：日和年月在链接前面', () => {
+    const html = `<div class="date_day">16</div>
+      <div class="date_yearly">2026 / 10</div></div><div>
+      <div class="ellipsis"><a href="../info/1009/1544.htm" class="listnews" title="报考公告">报考…</a></div>`;
+    expect(parseAdmissionsNews(html, 'https://yz.csu.edu.cn/sszs/tzgg.htm')).toEqual([
+      { title: '报考公告', url: 'https://yz.csu.edu.cn/info/1009/1544.htm', date: '2026-10-16' },
+    ]);
+  });
+
+  it('下页链接按当前页解析，最后一页没有', () => {
+    const html =
+      '<span class="PrevDisabled">上页</span><a href="tztg/14.htm" class="Next">下页</a>';
+    expect(nextPageUrl(html, 'https://bksy.csu.edu.cn/tztg.htm')).toBe(
+      'https://bksy.csu.edu.cn/tztg/14.htm',
+    );
+    expect(nextPageUrl('<span class="NextDisabled">下页</span>', 'https://a.cn/x.htm')).toBeNull();
+  });
+
+  it('详情正文从标题往后取', () => {
+    expect(careerBody('<nav>导航</nav><h1>招聘</h1><p>岗位</p>')).toContain('岗位');
+    expect(careerBody('<nav>导航</nav>')).toBe('');
   });
 });

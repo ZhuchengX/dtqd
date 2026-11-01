@@ -166,6 +166,14 @@ const schema: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_todo_owner ON todo_items(owner)`,
   // 会话索引：完整记录是 Pi 的 JSONL 会话文件（file 列）；项目即 kind='project' 的条目，
   // 会话自带工作目录（通用会话是 chat-sessions 下的私有目录），cwd 为 NULL 时按条目 local_path 解析。
+  // 学校通知存档：供聊天按关键词查询；body 为空表示正文还没读过，查看时才读。
+  `CREATE TABLE IF NOT EXISTS campus_notices (
+    url TEXT PRIMARY KEY,
+    site TEXT NOT NULL,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    body TEXT
+  )`,
   `CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     project_id TEXT REFERENCES workspace_entries(id) ON DELETE SET NULL,
