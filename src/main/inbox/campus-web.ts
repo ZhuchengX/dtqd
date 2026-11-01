@@ -3,6 +3,8 @@
 import { net } from 'electron';
 import { htmlToText } from '../teams/extract';
 
+export const CAMPUS_OFFICE_URL = 'https://oa.csu.edu.cn/con/ggtz';
+
 export interface CampusWebSite {
   name: string;
   url: string;
@@ -10,9 +12,17 @@ export interface CampusWebSite {
 
 export const CAMPUS_WEB_SITES: readonly CampusWebSite[] = [
   { name: '邓迪国际学院 · 最新通知', url: 'https://dii.csu.edu.cn/xwtz/zxtz.htm' },
+  { name: '邓迪国际学院 · 新闻动态', url: 'https://dii.csu.edu.cn/xwtz/xwdt.htm' },
   { name: '邓迪国际学院 · 学生工作', url: 'https://dii.csu.edu.cn/xsgz/xgdt.htm' },
+  { name: '邓迪国际学院 · 国际交流', url: 'https://dii.csu.edu.cn/xsgz/lxzx.htm' },
   { name: '中南大学本科生院 · 通知公告', url: 'https://bksy.csu.edu.cn/tztg.htm' },
+  { name: '中南大学学工网', url: 'https://xgw.csu.edu.cn/' },
   { name: '中南大学学工网 · 资助通知', url: 'https://xgw.csu.edu.cn/zzgl/tzgg.htm' },
+  { name: '中南大学国际合作与交流处 · 公告', url: 'https://iecd.csu.edu.cn/xwzx/ggtz.htm' },
+  { name: '中南大学就业信息网', url: 'https://career.csu.edu.cn/' },
+  { name: '中南大学研究生院', url: 'https://gra.csu.edu.cn/' },
+  { name: '中南大学图书馆', url: 'https://lib.csu.edu.cn/' },
+  { name: '中南大学后勤保障部 · 通知', url: 'https://hqbzb.csu.edu.cn/zhxx/tzgg.htm' },
 ];
 
 export interface CampusNotice {
@@ -22,7 +32,8 @@ export interface CampusNotice {
   date: string;
 }
 
-const NOTICE_LINK = /<a\b[^>]*?href="([^"]*(?:info\/\d+\/\d+\.htm|\/con\/PDFPage\?[^"]*))"[^>]*>/gi;
+const NOTICE_LINK =
+  /<a\b[^>]*?href="([^"]*(?:info\/\d+\/\d+\.htm|\/con\/PDFPage\?[^"]*|\/(?:news|campus)\/view\/[^"]*))"[^>]*>/gi;
 const MAX_DETAILS_PER_SITE = 10;
 const MAX_BODY_HTML = 20_000;
 const FETCH_TIMEOUT_MS = 15_000;

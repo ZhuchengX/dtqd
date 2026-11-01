@@ -34,6 +34,19 @@ describe('parseNoticeList', () => {
   });
 });
 
+describe('就业信息网', () => {
+  it('招聘公告链接和 span 里的日期', () => {
+    const html = `<a href="/campus/view/id/573694" class="title"><font>招聘汇总</font></a><span class="time">2026-10-31</span>`;
+    expect(parseNoticeList(html, 'https://career.csu.edu.cn/')).toEqual([
+      {
+        title: '招聘汇总',
+        url: 'https://career.csu.edu.cn/campus/view/id/573694',
+        date: '2026-10-31',
+      },
+    ]);
+  });
+});
+
 describe('noticeBody', () => {
   it('取正文，没有正文返回空', () => {
     expect(noticeBody('<div class="v_news_content"><p>报名截止 11 月 5 日</p></div>')).toContain(

@@ -14,7 +14,9 @@ import type {
 import { checkWorkspaceSender } from '../ipc';
 import { readSetting, writeSetting } from '../settings/prefs';
 import { storageDirectory } from '../storage';
+import { getCampusSession, openCampusLoginWindow } from '../campus';
 import { isWorkspaceWindow } from '../notifications/system';
+import { CAMPUS_OFFICE_URL } from './campus-web';
 import { configuredTriageModel, triageInbox, type InboxInput } from './engine';
 import { inboxPrefs, setInboxPrefs } from './prefs';
 import {
@@ -271,6 +273,20 @@ export function registerInboxIpc(): void {
   ipcMain.handle('inbox:get-state', (event) => {
     checkWorkspaceSender(event);
     return getInboxState();
+  });
+  ipcMain.handle('inbox:login-campus-office', (event) => {
+    checkWorkspaceSender(event);
+    return openCampusLoginWindow({
+      sender: event.sender,
+      title: '登录中南大学校内办公网',
+      url: CAMPUS_OFFICE_URL,
+      reached: (url) => url.startsWith('https://oa.csu.edu.cn/con/') && !url.includes('logincas'),
+      probe: async () => {
+        const campus = await getCampusSession();
+        const html = await (await campus.fetch(CAMPUS_OFFICE_URL)).text();
+        if (html.includes('统一身份认证')) throw new Error('校内办公网仍未登录');
+      },
+    });
   });
   ipcMain.handle('inbox:run', (event) => {
     checkWorkspaceSender(event);

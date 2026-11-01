@@ -23,6 +23,16 @@ export function InboxSection() {
   const state = useInboxState();
   const [busy, setBusy] = useState(false);
 
+  const loginOffice = async () => {
+    if (!window.dela) return;
+    const result = await window.dela.inbox.loginCampusOffice();
+    showToast(
+      result.ok
+        ? { variant: 'success', title: '校内办公网已登录' }
+        : { variant: 'error', title: '登录没有完成', description: result.error },
+    );
+  };
+
   const save = async (patch: Partial<InboxPrefs>) => {
     if (!window.dela) return;
     try {
@@ -157,6 +167,11 @@ export function InboxSection() {
             settingId={`inbox-source-${source.source}`}
             title={inboxSourceLabels[source.source]}
           >
+            {source.source === 'campus' && (
+              <Button onClick={() => void loginOffice()} size="sm" variant="outline">
+                登录校内办公网
+              </Button>
+            )}
             <span
               className={cn(
                 'text-13',

@@ -71,6 +71,8 @@ export interface InboxApi {
   getState(): Promise<InboxState>;
   /** 立即同步所有来源并提取；正在同步时返回当前状态。 */
   run(): Promise<InboxState>;
+  /** 打开中南校内办公网登录窗；账号密码由学生本人输入。 */
+  loginCampusOffice(): Promise<{ ok: true } | { ok: false; error: string }>;
   setPrefs(patch: Partial<InboxPrefs>): Promise<InboxState>;
   onUpdate(listener: (state: InboxState) => void): () => void;
 }
