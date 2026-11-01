@@ -4,6 +4,7 @@ import type { DelaApi } from '../shared/api';
 import { canvas } from './canvas';
 import { teams } from './teams';
 import { inbox } from './inbox';
+import { feedback } from './feedback';
 import { cache } from './cache';
 import { chat } from './chat';
 import { consent } from './consent';
@@ -50,6 +51,7 @@ contextBridge.exposeInMainWorld('dela', {
   canvas,
   teams,
   inbox,
+  feedback,
   workspace,
   session,
   sidechat,

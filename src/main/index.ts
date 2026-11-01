@@ -29,6 +29,8 @@ import { flushTeamsSession } from './teams/session';
 import { registerTeamsIpc } from './teams/window';
 import { registerTeamsSyncIpc } from './teams/sync';
 import { registerInboxIpc, scheduleInbox } from './inbox';
+import { registerFeedbackIpc } from './feedback';
+import { windowBackground } from './window-background';
 import { registerReminderIpc, scheduleReminders } from './todo/reminders';
 import { registerShuiyuanIpc } from './shuiyuan/ipc';
 import { openShuiyuanLinkInApp } from './shuiyuan/links';
@@ -228,6 +230,7 @@ app
     registerTeamsIpc();
     registerTeamsSyncIpc();
     registerInboxIpc();
+    registerFeedbackIpc();
     scheduleInbox();
     registerShuiyuanIpc();
     registerAgentIpc();
@@ -311,7 +314,7 @@ async function createWindow(): Promise<void> {
     // 再紧就会像菜单顶出窗口上沿。
     minHeight: 600,
     show: !smokeTest && !startHidden,
-    backgroundColor: '#f7f7f8',
+    backgroundColor: windowBackground(),
     icon: nativeImage.createFromPath(
       join(app.getAppPath(), 'assets', `DTQD_${savedIcon()}_bg.png`),
     ),

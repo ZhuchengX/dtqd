@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Archive,
   Blocks,
@@ -26,24 +27,26 @@ import { settingsSectionLabels } from './search-index';
 export type { SettingsSectionId };
 
 /** 分区目录：group 为侧栏分组标题（设置内只有一层分类，分组仅作视觉归拢）。 */
+const ADVANCED_GROUP = '高级';
+
 const sections: Array<{ id: SettingsSectionId; group: string; icon: LucideIcon }> = [
   { id: 'general', group: '基本', icon: SlidersHorizontal },
   { id: 'appearance', group: '基本', icon: Palette },
-  { id: 'shortcuts', group: '基本', icon: Keyboard },
-  { id: 'workspace', group: '数据', icon: LayoutGrid },
-  { id: 'archived', group: '数据', icon: Archive },
-  { id: 'connections', group: '数据', icon: Plug },
-  { id: 'inbox', group: '数据', icon: Inbox },
-  { id: 'remotes', group: '数据', icon: Cloud },
-  { id: 'providers', group: '模型', icon: Bot },
-  { id: 'capabilities', group: '模型', icon: Blocks },
-  { id: 'commands', group: '模型', icon: Terminal },
-  { id: 'skills', group: '模型', icon: Puzzle },
-  { id: 'mcp', group: '模型', icon: Server },
-  { id: 'packages', group: '模型', icon: Package },
+  { id: 'connections', group: '基本', icon: Plug },
+  { id: 'inbox', group: '基本', icon: Inbox },
+  { id: 'providers', group: '基本', icon: Bot },
   { id: 'about', group: '关于', icon: Info },
   { id: 'privacy', group: '关于', icon: ShieldCheck },
   { id: 'terms', group: '关于', icon: ScrollText },
+  { id: 'workspace', group: ADVANCED_GROUP, icon: LayoutGrid },
+  { id: 'archived', group: ADVANCED_GROUP, icon: Archive },
+  { id: 'shortcuts', group: ADVANCED_GROUP, icon: Keyboard },
+  { id: 'remotes', group: ADVANCED_GROUP, icon: Cloud },
+  { id: 'capabilities', group: ADVANCED_GROUP, icon: Blocks },
+  { id: 'commands', group: ADVANCED_GROUP, icon: Terminal },
+  { id: 'skills', group: ADVANCED_GROUP, icon: Puzzle },
+  { id: 'mcp', group: ADVANCED_GROUP, icon: Server },
+  { id: 'packages', group: ADVANCED_GROUP, icon: Package },
 ];
 
 /** 按分组切分目录，保持目录顺序。 */
@@ -66,6 +69,11 @@ type SettingsNavProps = {
 export function SettingsNav({ value, onSectionChange }: SettingsNavProps) {
   // 窄屏那排横向分区行靠滚轮横滚；宽屏是纵列，不横向溢出，钩子自动放行。
   const navRef = useHorizontalWheel<HTMLElement>();
+  // 普通学生用不到的专业项默认收起；搜索跳到其中一项时自动展开。
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const showAdvanced =
+    advancedOpen || sections.some((s) => s.id === value && s.group === ADVANCED_GROUP);
+  const visibleGroups = sectionGroups.filter((g) => showAdvanced || g.title !== ADVANCED_GROUP);
 
   return (
     <nav
@@ -75,7 +83,7 @@ export function SettingsNav({ value, onSectionChange }: SettingsNavProps) {
     >
       {/* 壳层锚点：分区目录以「设置」标题开头（窄屏横向分区行不放标题）。 */}
       <span className="hidden px-2 pb-1 text-13 font-semibold text-ink md:block">设置</span>
-      {sectionGroups.map((group, index) => (
+      {visibleGroups.map((group, index) => (
         <div className="flex shrink-0 gap-1 md:grid md:gap-1" key={group.title}>
           {index > 0 && (
             <span aria-hidden="true" className="mx-1 w-px shrink-0 bg-line md:hidden" />
@@ -108,6 +116,15 @@ export function SettingsNav({ value, onSectionChange }: SettingsNavProps) {
           })}
         </div>
       ))}
+      {!showAdvanced && (
+        <button
+          className="flex h-8 shrink-0 items-center rounded-control px-2.5 text-13 text-ink-3 hover:bg-hover hover:text-ink"
+          onClick={() => setAdvancedOpen(true)}
+          type="button"
+        >
+          高级设置
+        </button>
+      )}
     </nav>
   );
 }

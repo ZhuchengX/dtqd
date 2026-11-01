@@ -6,6 +6,7 @@ import type { CapabilityApi } from './capabilities';
 import type { CanvasApi } from './canvas';
 import type { TeamsApi } from './teams';
 import type { InboxApi } from './inbox';
+import type { FeedbackApi } from './feedback';
 import type { ChatApi } from './chat';
 import type { PackageApi } from './packages';
 import type { ConsentApi } from './consent';
@@ -64,6 +65,7 @@ export interface DelaApi {
   readonly canvas: CanvasApi;
   readonly teams: TeamsApi;
   readonly inbox: InboxApi;
+  readonly feedback: FeedbackApi;
   readonly workspace: WorkspaceApi;
   readonly session: SessionApi;
   readonly sidechat: SidechatApi;

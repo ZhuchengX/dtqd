@@ -316,7 +316,8 @@ export default function App() {
           onOpenGeneralChat={() => void useNavigationStore.getState().openGeneralChat(false)}
           onNavigateBusiness={(id) =>
             id === 'teams'
-              ? void window.dela?.teams.open()
+              ? (showToast({ variant: 'neutral', title: '正在打开 Teams…' }),
+                void window.dela?.teams.open())
               : void useNavigationStore.getState().navigate(id)
           }
         >

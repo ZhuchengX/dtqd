@@ -17,6 +17,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   Search,
+  MessageSquarePlus,
   Settings,
   Square,
   SquareCheckBig,
@@ -49,6 +50,7 @@ import {
 } from './ui/dropdown-menu';
 import { dialogOverlay, dialogPanel, drawerFromLeft, fadeIn, overlayFade } from './ui/motion';
 import { chromeIconButton, navIcon, navRow } from '../navigation/nav-styles';
+import { FeedbackDialog } from '../features/feedback/FeedbackDialog';
 import { UpdateBadge } from '../features/settings/UpdateBadge';
 import { useVisibleNavEntries } from '../navigation/entries';
 
@@ -214,6 +216,7 @@ export function AppShell({
     }
   });
   const [sidebarResizing, setSidebarResizing] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   const drawer = mobileDrawer ?? null;
   const [helpOpen, setHelpOpen] = useState(false);
@@ -793,6 +796,13 @@ export function AppShell({
             sourcesActive={sourcesActive}
           />
           <div className="grid shrink-0 gap-0.5 pt-2">
+            <button className={navRow(false)} onClick={() => setFeedbackOpen(true)} type="button">
+              <MessageSquarePlus className={navIcon(false)} strokeWidth={1.8} />
+              <span className={cn('truncate', labelFade, sidebarCollapsed && 'opacity-0')}>
+                反馈
+              </span>
+            </button>
+            <FeedbackDialog onOpenChange={setFeedbackOpen} open={feedbackOpen} page={view} />
             <button
               aria-current={view === 'settings' ? 'page' : undefined}
               className={navRow(view === 'settings')}

@@ -68,6 +68,7 @@ vi.mock('electron', () => {
     }
   }
   return {
+    nativeTheme: { shouldUseDarkColors: false },
     BrowserWindow: Object.assign(MockWindow, { fromWebContents: () => mock.parent }),
     app: { getPath: () => mock.userData },
     net: { request: mock.netRequest },

@@ -12,6 +12,7 @@ import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'nod
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { attachContextMenu } from './ipc';
+import { windowBackground } from './window-background';
 
 export const CAMPUS_PARTITION = 'persist:dela-campus';
 let ready: Promise<Session> | undefined;
@@ -205,6 +206,7 @@ export interface CampusLoginOptions {
 export function createCampusLoginWindow(sender: WebContents, title: string): BrowserWindow {
   const parent = BrowserWindow.fromWebContents(sender) ?? undefined;
   const window = new BrowserWindow({
+    backgroundColor: windowBackground(),
     width: 920,
     height: 720,
     minWidth: 680,

@@ -1,6 +1,7 @@
 // Microsoft Teams 网页版独立窗口：学生在窗内自行登录 Dundee 账号，DTQD 不读取其中的消息或令牌。
 // 独立持久分区，与校园会话互不影响；只允许微软登录与 Teams 相关域名在窗内打开，其余链接交给系统浏览器。
 import { BrowserWindow, ipcMain, shell, type Session } from 'electron';
+import { windowBackground } from '../window-background';
 import { attachContextMenu, checkWorkspaceSender } from '../ipc';
 import { flushTeamsSession, getTeamsSession, TEAMS_PARTITION } from './session';
 
@@ -72,6 +73,11 @@ export function visibleTeamsWindow(): BrowserWindow | undefined {
   return teamsWindow && !teamsWindow.isDestroyed() ? teamsWindow : undefined;
 }
 
+const REVEAL_STEPS = 10;
+const REVEAL_STEP_MS = 20;
+const REVEAL_SETTLE_MS = 1200;
+const REVEAL_TIMEOUT_MS = 8000;
+
 let teamsWindow: BrowserWindow | undefined;
 
 function guardNavigation(window: BrowserWindow): void {
@@ -122,6 +128,8 @@ export async function openTeamsWindow(): Promise<void> {
     minHeight: 520,
     autoHideMenuBar: true,
     title: 'Teams · DTQD',
+    show: false,
+    backgroundColor: windowBackground(),
     webPreferences: {
       session: teams,
       contextIsolation: true,
@@ -136,7 +144,30 @@ export async function openTeamsWindow(): Promise<void> {
     teamsWindow = undefined;
   });
   teamsWindow = window;
+  revealWhenLoaded(window);
   void window.loadURL(TEAMS_URL);
+}
+
+/** Teams 先加载再露面，再淡入：不让学生看到白屏和加载中的闪烁。网页迟迟不好也按时露面。 */
+function revealWhenLoaded(window: BrowserWindow): void {
+  let revealed = false;
+  const reveal = () => {
+    if (revealed || window.isDestroyed()) return;
+    revealed = true;
+    window.setOpacity(0);
+    window.show();
+    let step = 0;
+    const timer = setInterval(() => {
+      step += 1;
+      if (window.isDestroyed()) clearInterval(timer);
+      else {
+        window.setOpacity(Math.min(step / REVEAL_STEPS, 1));
+        if (step >= REVEAL_STEPS) clearInterval(timer);
+      }
+    }, REVEAL_STEP_MS);
+  };
+  window.webContents.once('did-stop-loading', () => setTimeout(reveal, REVEAL_SETTLE_MS));
+  setTimeout(reveal, REVEAL_TIMEOUT_MS);
 }
 
 export function registerTeamsIpc(): void {
