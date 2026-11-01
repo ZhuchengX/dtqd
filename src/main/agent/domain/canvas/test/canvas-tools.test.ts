@@ -33,7 +33,7 @@ function canvasState(overrides: Partial<CanvasState> = {}): CanvasState {
         term: '2025 春',
         code: 'CS210',
         syncedAt: null,
-        error: '文件：Canvas HTTP 500',
+        error: '文件：myDundee HTTP 500',
         archived: true,
       },
     ],
@@ -81,7 +81,7 @@ describe('get_canvas_status', () => {
           code: 'CS210',
           archived: true,
           contentSyncedAt: null,
-          error: '文件：Canvas HTTP 500',
+          error: '文件：myDundee HTTP 500',
         },
       ],
     });
@@ -96,7 +96,7 @@ describe('get_canvas_status', () => {
     };
     expect(missing.credentialSaved).toBe(false);
     expect(missing.warnings).toHaveLength(1);
-    expect(missing.warnings[0]).toContain('未保存 Canvas 访问令牌');
+    expect(missing.warnings[0]).toContain('未登录 myDundee');
 
     state.mockReturnValue(canvasState({ syncedAt: null }));
     const unsynced = canvasTools.get_canvas_status.execute({}) as { warnings: string[] };
@@ -192,12 +192,12 @@ describe('refresh_canvas_courses', () => {
     });
 
     state.mockReturnValue(canvasState());
-    syncCourses.mockRejectedValue(new Error('Canvas HTTP 401：令牌失效或无权访问此内容'));
+    syncCourses.mockRejectedValue(new Error('myDundee HTTP 401：令牌失效或无权访问此内容'));
     await expect(canvasTools.refresh_canvas_courses.execute({})).rejects.toMatchObject({
       code: 'AUTH_EXPIRED',
     });
 
-    syncCourses.mockRejectedValue(new Error('无法连接 Canvas，请检查网络后重试'));
+    syncCourses.mockRejectedValue(new Error('无法连接 myDundee，请检查网络后重试'));
     await expect(canvasTools.refresh_canvas_courses.execute({})).rejects.toMatchObject({
       code: 'NETWORK_ERROR',
     });
@@ -215,7 +215,7 @@ describe('refresh_canvas_course', () => {
           term: '2026 秋',
           code: 'CS260',
           syncedAt: '2026-09-29T00:00:00.000Z',
-          error: '文件：Canvas HTTP 500\n课程模块：请求超时',
+          error: '文件：myDundee HTTP 500\n课程模块：请求超时',
         },
       ],
     });
@@ -226,13 +226,13 @@ describe('refresh_canvas_course', () => {
       warnings: string[];
     };
     expect(result.branches).toEqual([
-      { key: 'files', label: '文件', ok: false, error: 'Canvas HTTP 500' },
+      { key: 'files', label: '文件', ok: false, error: 'myDundee HTTP 500' },
       { key: 'assignments', label: '作业', ok: true, error: null },
       { key: 'discussions', label: '通知与讨论', ok: true, error: null },
       { key: 'modules', label: '课程模块', ok: false, error: '请求超时' },
     ]);
     expect(result.complete).toBe(false);
-    expect(result.warnings[0]).toContain('文件：Canvas HTTP 500');
+    expect(result.warnings[0]).toContain('文件：myDundee HTTP 500');
   });
 
   it('reports a fully successful sync', async () => {

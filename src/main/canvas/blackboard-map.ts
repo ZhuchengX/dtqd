@@ -1,7 +1,8 @@
 // Blackboard Learn（myDundee）REST 结构 → Canvas 模块的课程树与资料：纯函数，网络层见 blackboard.ts。
+import { LMS_ORIGIN } from '../../shared/canvas';
 import type { SourceItem } from '../../shared/api';
 
-export const BLACKBOARD_ORIGIN = 'https://my.dundee.ac.uk';
+export const BLACKBOARD_ORIGIN = LMS_ORIGIN;
 export const BLACKBOARD_API = `${BLACKBOARD_ORIGIN}/learn/api/public/v1/`;
 
 type Row = Record<string, unknown>;

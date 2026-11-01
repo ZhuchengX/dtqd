@@ -85,7 +85,7 @@ export function saveTodo(input: unknown): TodoState {
   const existing = value.id
     ? rows().find((row) => row.id === value.id && row.owner === 'local')
     : undefined;
-  if (value.id && !existing) throw new Error('待办不存在，Canvas 作业的完成状态只能通过同步更新');
+  if (value.id && !existing) throw new Error('待办不存在，myDundee 作业的完成状态只能通过同步更新');
   const old = existing ? (JSON.parse(existing.data) as TodoItem) : undefined;
   const now = new Date().toISOString();
   const item: TodoItem = {
@@ -147,7 +147,7 @@ export function addNoticedTodo(input: unknown): TodoState {
 }
 
 function noticeBody(item: TodoItem): string {
-  if (item.source === 'canvas') return `${item.courseName ?? 'Canvas'} · 新作业`;
+  if (item.source === 'canvas') return `${item.courseName ?? 'myDundee'} · 新作业`;
   return item.notes.split('\n')[0] || '新待办';
 }
 

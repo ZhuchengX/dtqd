@@ -1,5 +1,8 @@
 import type { DocumentContent } from './documents';
 
+/** 课程平台站点：DIICSU 的课内资料、作业和公告都在 myDundee。 */
+export const LMS_ORIGIN = 'https://my.dundee.ac.uk';
+
 export interface CanvasCourse {
   id: number;
   name: string;

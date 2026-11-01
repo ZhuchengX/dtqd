@@ -327,8 +327,8 @@ export function TodoView({ request }: { request?: { id: string } }) {
             {state?.syncedAt
               ? `${formatTime(new Date(state.syncedAt))}更新`
               : state?.connected
-                ? 'Canvas 尚未同步'
-                : '连接 Canvas 后可同步作业'}
+                ? 'myDundee 尚未同步'
+                : '连接 myDundee 后可同步作业'}
           </p>
           <div className="flex gap-1">
             <Button
@@ -382,7 +382,7 @@ export function TodoView({ request }: { request?: { id: string } }) {
               aria-pressed={filter === value}
               onClick={() => setFilter(value)}
             >
-              {value === 'all' ? '全部' : value === 'canvas' ? 'Canvas 作业' : '个人待办'}
+              {value === 'all' ? '全部' : value === 'canvas' ? 'myDundee 作业' : '个人待办'}
               {count > 0 && (
                 <span className="rounded-full bg-ink px-1.5 text-2xs font-medium leading-4 tabular-nums text-surface">
                   {count}
@@ -562,8 +562,8 @@ export function TodoView({ request }: { request?: { id: string } }) {
                           size="icon-sm"
                           variant="ghost"
                           className={rowActionClass}
-                          aria-label="在 Canvas 中打开"
-                          title="在 Canvas 中打开"
+                          aria-label="在 myDundee 中打开"
+                          title="在 myDundee 中打开"
                           onClick={() =>
                             void window.dela?.canvas.openLink(item.url!).catch((reason: unknown) =>
                               showToast({

@@ -20,7 +20,7 @@ import { assertShuiyuanEnabled, experimentEnabled } from '../settings/prefs';
 
 // 这些是 shell 的业务命令，不常驻模型工具表；复用应用已有的缓存、登录与操作边界。
 const commandDomains = [
-  { name: 'canvas', description: '查询、同步 Canvas 课程与资料', commands: canvasTools },
+  { name: 'canvas', description: '查询、同步 myDundee 课程与资料', commands: canvasTools },
   {
     name: 'chatfiles',
     description: '列出 QQ / 微信收到的文件（课件、通知），只读文件列表',
@@ -44,7 +44,7 @@ const commandDomains = [
     description: '查询课表与日程，同步课表、创建或删除日程',
     commands: timetableTools,
   },
-  { name: 'todo', description: '查询与管理待办、Canvas 作业', commands: todoTools },
+  { name: 'todo', description: '查询与管理待办、myDundee 作业', commands: todoTools },
   {
     name: 'workspace',
     description: '管理项目、关联校园资料与导入附件；普通文件用 read/write/edit/shell',

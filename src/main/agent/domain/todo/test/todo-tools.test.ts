@@ -113,7 +113,7 @@ describe('query_todos', () => {
     };
     expect(result.items).toHaveLength(1);
     expect(result.coverage.complete).toBe(false);
-    expect(result.coverage.warnings[0]).toContain('Canvas 未连接');
+    expect(result.coverage.warnings[0]).toContain('myDundee 未连接');
   });
 });
 
@@ -194,7 +194,9 @@ describe('remove_todo', () => {
 
 describe('refresh_todos', () => {
   it('refreshes the assignment cache and surfaces per-course errors', async () => {
-    refresh.mockResolvedValue(todoState({ error: '数据结构：无法连接 Canvas，请检查网络后重试' }));
+    refresh.mockResolvedValue(
+      todoState({ error: '数据结构：无法连接 myDundee，请检查网络后重试' }),
+    );
     const result = (await todoTools.refresh_todos.execute({})) as {
       coverage: { complete: boolean; warnings: string[] };
     };

@@ -12,6 +12,7 @@ import type { TodoItem } from '../../../shared/api';
 import { todoCompleted, todoStatusLabels } from '../../../shared/todo';
 import { Button } from '../../components/ui/button';
 import { useRootFontSize } from '../../lib/root-font-size';
+import { LMS_ORIGIN } from '../../../shared/canvas';
 import { sanitizeHtml } from '../../lib/sanitize-html';
 import { cn } from '../../lib/utils';
 import { TodoSheet } from './TodoSheet';
@@ -64,10 +65,7 @@ const INITIAL_BODY_HEIGHT = 240;
  */
 function CanvasHtml({ html, onLink }: { html: string; onLink: (url: string) => void }) {
   const rootSize = useRootFontSize();
-  const doc = useMemo(
-    () => sanitizeHtml(html, 'https://oc.sjtu.edu.cn', rootSize),
-    [html, rootSize],
-  );
+  const doc = useMemo(() => sanitizeHtml(html, LMS_ORIGIN, rootSize), [html, rootSize]);
   const [body, setBody] = useState<HTMLElement | null>(null);
   const [height, setHeight] = useState(INITIAL_BODY_HEIGHT);
   useEffect(() => {
@@ -176,7 +174,7 @@ export function TodoDetail({
           ) : (
             item.url && (
               <Button onClick={() => onOpenLink(item.url!)}>
-                <ExternalLink className="size-4" />在 Canvas 中打开
+                <ExternalLink className="size-4" />在 myDundee 中打开
               </Button>
             )
           )}

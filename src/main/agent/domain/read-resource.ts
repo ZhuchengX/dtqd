@@ -117,7 +117,7 @@ async function readDocumentRef(ref: DocumentRef, offset: number, limit: number) 
 }
 
 export const readResourceTool = tool(
-  '读取项目文本与笔记、Canvas 页面、邮件正文、水源帖子；图片直接附图。二进制文档与附件返回 document-reading skill 的读取指引，不在 Agent 内解析 Office/PDF。正文按字符分页；HTML 保留原始链接标记。',
+  '读取项目文本与笔记、myDundee 页面、邮件正文、水源帖子；图片直接附图。二进制文档与附件返回 document-reading skill 的读取指引，不在 Agent 内解析 Office/PDF。正文按字符分页；HTML 保留原始链接标记。',
   z
     .object({
       ref: resourceRefSchema,

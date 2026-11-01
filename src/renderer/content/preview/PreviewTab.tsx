@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '../../components/ui/button';
 import { ShuiyuanSourceDoc } from '../../features/shuiyuan/SourceRefCard';
 import { useRootFontSize } from '../../lib/root-font-size';
+import { LMS_ORIGIN } from '../../../shared/canvas';
 import { sanitizeHtml } from '../../lib/sanitize-html';
 import { showToast } from '../../app/toasts';
 import { errorText } from '../../workspace/store';
@@ -112,18 +113,13 @@ export function PreviewTab({ tabId, groupId }: { tabId: TabId; groupId: string }
   }, [content?.bytes, content?.mime]);
   /* HTML 消毒基址：Canvas 来源的相对地址补全到 Canvas 域；本地/导入条目（watchesDisk，
      Loader 接线里即 entry kind local/imported 的近似标记）不补外域 base——空 base 下
-     绝对 http(s) 链接保留、相对地址剥除，避免相对地址被补到 Canvas 域造成跨域请求泄露。
+     绝对 http(s) 链接保留、相对地址剥除，避免相对地址被补到 myDundee 域造成跨域请求泄露。
      iframe 固定为可视高度、无高度上报，内层文档自己滚（'auto'），阅读位置才记得住。 */
   const rootSize = useRootFontSize();
   const html = useMemo(
     () =>
       content?.format === 'html'
-        ? sanitizeHtml(
-            content.text,
-            doc?.watchesDisk ? '' : 'https://oc.sjtu.edu.cn',
-            rootSize,
-            'auto',
-          )
+        ? sanitizeHtml(content.text, doc?.watchesDisk ? '' : LMS_ORIGIN, rootSize, 'auto')
         : '',
     [content, doc?.watchesDisk, rootSize],
   );

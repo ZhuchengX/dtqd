@@ -39,18 +39,18 @@ export function canvasNextPage(header: string | null): string | null {
   if (!next) return null;
   const url = new URL(next, apiRoot);
   if (url.origin !== origin || !url.pathname.startsWith('/api/v1/'))
-    throw new Error('Canvas 分页地址无效');
+    throw new Error('myDundee 分页地址无效');
   return url.href;
 }
 
 async function request(path: string, token = loadCanvasToken()): Promise<Response> {
-  if (!token) throw new Error('请先连接 Canvas');
+  if (!token) throw new Error('请先连接 myDundee');
   const url = new URL(path, apiRoot);
   if (
     url.origin !== origin ||
     !(url.pathname.startsWith('/api/v1/') || url.pathname === '/login/session_token')
   )
-    throw new Error('Canvas 地址无效');
+    throw new Error('myDundee 地址无效');
   let response: Response;
   try {
     response = await fetch(url, {
@@ -59,11 +59,11 @@ async function request(path: string, token = loadCanvasToken()): Promise<Respons
       signal: AbortSignal.timeout(30000),
     });
   } catch {
-    throw new Error('无法连接 Canvas，请检查网络后重试');
+    throw new Error('无法连接 myDundee，请检查网络后重试');
   }
   if (!response.ok)
     throw new Error(
-      `Canvas HTTP ${response.status}${response.status === 401 ? '：令牌失效或无权访问此内容' : response.status === 404 ? '：内容不可用' : ''}`,
+      `myDundee HTTP ${response.status}${response.status === 401 ? '：登录已失效或无权访问此内容' : response.status === 404 ? '：内容不可用' : ''}`,
     );
   return response;
 }
@@ -73,7 +73,7 @@ async function list(path: string): Promise<Row[]> {
   const visited = new Set<string>();
   const result: Row[] = [];
   while (next) {
-    if (visited.has(next)) throw new Error('Canvas 返回了重复分页');
+    if (visited.has(next)) throw new Error('myDundee 返回了重复分页');
     visited.add(next);
     const response = await request(next);
     result.push(...z.array(rowSchema).parse(await response.json()));
@@ -118,10 +118,10 @@ export async function classroomLoginUrl(): Promise<string> {
     const login = new URL(
       z.object({ session_url: z.string() }).parse(await response.json()).session_url,
     );
-    if (login.origin !== origin) throw new Error('Canvas 登录地址无效');
+    if (login.origin !== origin) throw new Error('myDundee 登录地址无效');
     return login.href;
   }
-  throw new Error('Canvas 课程中没有找到课堂视频入口');
+  throw new Error('myDundee 课程中没有找到课堂视频入口');
 }
 
 /** TODO 等模块区分账号的身份：Canvas 用令牌，myDundee 用 Blackboard 用户主键。 */
@@ -593,7 +593,7 @@ async function downloadFile(source: StoredSource): Promise<{ path: string; mime:
   if (source.downloadUrl) return downloadBlackboardSource(source, dir, cacheKey);
   const metadata = row(await (await request(`files/${source.fileId}`)).json());
   const downloadUrl = new URL(str(metadata.url), origin);
-  if (downloadUrl.origin !== origin) throw new Error('Canvas 下载地址无效');
+  if (downloadUrl.origin !== origin) throw new Error('myDundee 下载地址无效');
   const first = await fetch(downloadUrl, {
     headers: { Authorization: `Bearer ${loadCanvasToken()}` },
     redirect: 'manual',
@@ -606,7 +606,7 @@ async function downloadFile(source: StoredSource): Promise<{ path: string; mime:
       target.protocol !== 'https:' ||
       ![new URL(origin).hostname, 's3.jcloud.sjtu.edu.cn'].includes(target.hostname)
     )
-      throw new Error('Canvas 下载重定向无效');
+      throw new Error('myDundee 下载重定向无效');
     // Signed storage URL is a credential: never expose it or forward the Canvas Authorization header.
     response = await fetch(target, { redirect: 'error', signal: AbortSignal.timeout(120000) });
   }

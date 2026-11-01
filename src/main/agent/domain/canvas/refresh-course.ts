@@ -15,7 +15,7 @@ function branchErrors(error: string | null) {
 }
 
 export const refreshCanvasCourseTool = tool(
-  '同步单门 Canvas 课程的内容（联网刷新本地缓存）：文件/作业/通知与讨论/课程模块四个分支独立提交，失败分支保留旧缓存并在 branches 中逐项报告——部分失败不是整体失败。courseId 见 list_canvas_courses。',
+  '同步单门 myDundee 课程的内容（联网刷新本地缓存）：文件/作业/通知与讨论/课程模块四个分支独立提交，失败分支保留旧缓存并在 branches 中逐项报告——部分失败不是整体失败。courseId 见 list_canvas_courses。',
   z.object({ courseId: z.number().int().positive() }).strict(),
   async ({ courseId }) => {
     requireCanvasConfigured();

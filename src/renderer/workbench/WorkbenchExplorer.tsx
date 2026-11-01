@@ -53,6 +53,7 @@ import {
   promoteEntry,
   runEntryWork,
 } from '../workspace/entry-actions';
+import { connectBlackboard } from '../features/settings/connections/canvas-connect';
 import { errorText, useWorkspaceStore } from '../workspace/store';
 import { showToast } from '../app/toasts';
 import { RemotePortsDialog } from '../workspace/remote-ports-dialog';
@@ -132,6 +133,12 @@ export function WorkbenchExplorer({
   const viewportWidth = useViewportWidth();
   const drawerRef = useRef<HTMLElement>(null);
   const [bySource, setBySource] = useState(false);
+  // myDundee 用 Dundee 账号登录，不走上游的 Access Token 对话框。
+  const loginMyDundee = () => {
+    void connectBlackboard().catch((cause: unknown) =>
+      showToast({ variant: 'error', title: '连接 myDundee 失败', description: errorText(cause) }),
+    );
+  };
   const [exportOpen, setExportOpen] = useState(false);
   // 课程资料只在通用（无项目）工作台显示（承接旧资料页），且默认展开；项目工作台不渲染课程资料。
   const [coursesOpen, setCoursesOpen] = useState(() => projectId === null);
@@ -536,19 +543,19 @@ export function WorkbenchExplorer({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          aria-label="Canvas 操作"
+                          aria-label="myDundee 操作"
                           className="hover:bg-hover-2"
                           size="icon-xs"
-                          title="Canvas 操作"
+                          title="myDundee 操作"
                           variant="ghost"
                         >
                           <Ellipsis />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
-                        <DropdownMenuItem onSelect={() => onAction('connect', null)}>
+                        <DropdownMenuItem onSelect={loginMyDundee}>
                           <KeyRound />
-                          {canvas.connected ? '更换 Canvas 令牌' : '连接 Canvas'}
+                          {canvas.connected ? '重新登录 myDundee' : '连接 myDundee'}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() => {
@@ -584,14 +591,14 @@ export function WorkbenchExplorer({
                       />
                     ) : (
                       <div className="px-4 py-3 text-xs text-ink-3">
-                        <p>连接 Canvas，查看课程资料。</p>
+                        <p>连接 myDundee，查看课程资料。</p>
                         <Button
                           className="mt-3"
-                          onClick={() => onAction('connect', null)}
+                          onClick={loginMyDundee}
                           size="sm"
                           variant="outline"
                         >
-                          连接 Canvas
+                          连接 myDundee
                         </Button>
                       </div>
                     ))}

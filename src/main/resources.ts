@@ -137,7 +137,7 @@ export async function withResourceFile<T>(
   source = resourceRefSchema.parse(source);
   if (source.type === 'canvas') return consume(await canvasFilePath(source.id));
   if (source.type === 'workspace') return consume(await workspaceFilePath(source.id));
-  if (source.type !== 'attachment') throw new Error('请选择项目文件、Canvas 文件或邮件附件');
+  if (source.type !== 'attachment') throw new Error('请选择项目文件、myDundee 文件或邮件附件');
   const mail = await readMailMessage(source.messageId);
   const attachment = mail.attachments.find((item) => item.part === source.part);
   if (!attachment) throw new Error('附件不存在，请先同步邮件');

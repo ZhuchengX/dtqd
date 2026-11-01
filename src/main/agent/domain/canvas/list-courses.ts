@@ -4,7 +4,7 @@ import { coverage, freshness, limit, match, offset, page, query, tool, toolError
 import { courseSummary, requireCanvasConfigured } from './helpers';
 
 export const listCanvasCoursesTool = tool(
-  '列出已缓存的 Canvas 课程（只读本地缓存）。query 按名称/代码/学期弱过滤；默认不含归档课程，includeArchived 为 true 时包含。空结果表示确实没有匹配的课程。',
+  '列出已缓存的 myDundee 课程（只读本地缓存）。query 按名称/代码/学期弱过滤；默认不含归档课程，includeArchived 为 true 时包含。空结果表示确实没有匹配的课程。',
   z
     .object({
       query,

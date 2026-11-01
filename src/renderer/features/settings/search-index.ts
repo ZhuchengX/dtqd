@@ -280,7 +280,7 @@ export const settingsSectionSummaries: Record<SettingsSectionId, string> = {
   shortcuts: '查看与修改快捷键',
   workspace: '工作目录与布局',
   archived: '恢复或永久删除已归档对话',
-  connections: 'Canvas、邮箱、教务与水源连接',
+  connections: 'myDundee、邮箱、教务与水源连接',
   inbox: 'Teams、Outlook、myDundee、QQ 的重要事项提取与同步状态',
   remotes: 'SSH 远程主机与连接',
   providers: 'AI 模型与 API 提供商',
