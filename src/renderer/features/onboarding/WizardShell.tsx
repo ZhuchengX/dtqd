@@ -85,7 +85,9 @@ export function WizardShell({
             )}
           </div>
           {footer ?? (
-            <p className="text-center text-xs text-ink-3">所有数据本地存储，不上传服务器</p>
+            <p className="text-center text-xs text-ink-3">
+              数据存在本机；聊天和重要事项提取的内容会发给你配置的 AI
+            </p>
           )}
           {onSkip ? (
             <button

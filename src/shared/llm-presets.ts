@@ -49,7 +49,7 @@ export const llmProviderPresets: readonly LlmProviderPreset[] = [
     id: 'deepseek',
     name: 'DeepSeek',
     baseUrl: 'https://api.deepseek.com',
-    models: ['deepseek-v4-pro', 'deepseek-flash'],
+    models: ['deepseek-flash', 'deepseek-v4-pro'],
     keyUrl: 'https://platform.deepseek.com/api_keys',
   },
   {
@@ -71,4 +71,9 @@ export const llmProviderPresets: readonly LlmProviderPreset[] = [
 
 export function findLlmPreset(id: string | null | undefined): LlmProviderPreset | undefined {
   return llmProviderPresets.find((preset) => preset.id === id);
+}
+
+/** 模型列表里的 DeepSeek Flash；DTQD 新会话默认用它，便宜且够用。 */
+export function deepseekFlashModel(models: readonly string[]): string | undefined {
+  return models.find((model) => /^deepseek-.*flash/i.test(model));
 }

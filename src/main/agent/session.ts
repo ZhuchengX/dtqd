@@ -2,6 +2,7 @@
  * 会话层：SQLite 只存索引（项目归属、cwd、标题、置顶、归档与 JSONL 路径），完整记录是 Pi 的会话文件。
  * renderer 看到的 WorkspaceChat 是 Pi 消息的投影；cwd 解析失败直接报错，不静默换目录。
  */
+import { deepseekFlashModel } from '../../shared/llm-presets';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -236,7 +237,7 @@ function readyChoice(
   };
 }
 
-/** 会话自己的选择优先；从未选过的沿用最近发过消息的会话，那个也用不了时取第一个可用提供商的首个模型。 */
+/** 会话自己的选择优先；从未选过的优先用 DeepSeek Flash，没有时沿用最近发过消息的会话，那个也用不了时取第一个可用提供商的首个模型。 */
 function modelChoice(meta: SessionRow): ModelChoice {
   const providers = llmProviders();
   const usable = usableLlmProviders(providers);
@@ -251,6 +252,10 @@ function modelChoice(meta: SessionRow): ModelChoice {
       model: meta.model,
       effort: meta.effort,
     };
+  }
+  for (const provider of usable) {
+    const flash = deepseekFlashModel(provider.models);
+    if (flash) return readyChoice(provider, flash, null, false);
   }
   const recent = getDatabase()
     .prepare(

@@ -21,14 +21,18 @@ import { llmProviderPresets, findLlmPreset } from '../../../../shared/llm-preset
 import type { LlmVerifyResult } from '../../../../shared/api';
 
 /** 向导 · 模型服务步骤：选预设或自定义 OpenAI 兼容服务，可先检测连通性并导入模型列表。 */
+/** 新学生默认选 DeepSeek；排第一的预设是上游交大校内模型，DIICSU 用不了。 */
+const defaultPreset =
+  llmProviderPresets.find(({ id }) => id === 'deepseek') ?? llmProviderPresets[0]!;
+
 export function LlmStep({ onDone }: { onDone: () => void }) {
-  const [presetId, setPresetId] = useState(llmProviderPresets[0]!.id);
+  const [presetId, setPresetId] = useState(defaultPreset.id);
   const [name, setName] = useState('');
-  const [baseUrl, setBaseUrl] = useState(llmProviderPresets[0]!.baseUrl);
+  const [baseUrl, setBaseUrl] = useState(defaultPreset.baseUrl);
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [models, setModels] = useState<string[]>([...llmProviderPresets[0]!.models]);
-  const [model, setModel] = useState(llmProviderPresets[0]!.models[0] ?? '');
+  const [models, setModels] = useState<string[]>([...defaultPreset.models]);
+  const [model, setModel] = useState(defaultPreset.models[0] ?? '');
   const [verifyBusy, setVerifyBusy] = useState(false);
   const [verifyResult, setVerifyResult] = useState<LlmVerifyResult | null>(null);
   const [importOpen, setImportOpen] = useState(false);

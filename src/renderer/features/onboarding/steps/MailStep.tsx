@@ -47,19 +47,24 @@ export function MailStep({ onDone }: { onDone: () => void }) {
     <div className="grid gap-7">
       <h2 className="text-2xl font-semibold tracking-tight">连接邮箱</h2>
       <OutlookWebConnect onConnected={onDone} />
-      <MailAccountForm
-        error={error}
-        onSubmit={(input) => void submit(input)}
-        submit={
-          <StepButton
-            busyLabel="正在连接…"
-            idleLabel="连接并同步"
-            state={state}
-            successLabel="连接成功，下一步"
+      <details className="text-13 text-ink-3">
+        <summary className="cursor-pointer">用其他邮箱（第三方 IMAP）</summary>
+        <div className="mt-4">
+          <MailAccountForm
+            error={error}
+            onSubmit={(input) => void submit(input)}
+            submit={
+              <StepButton
+                busyLabel="正在连接…"
+                idleLabel="连接并同步"
+                state={state}
+                successLabel="连接成功，下一步"
+              />
+            }
+            variant="wizard"
           />
-        }
-        variant="wizard"
-      />
+        </div>
+      </details>
     </div>
   );
 }
