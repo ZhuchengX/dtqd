@@ -5,7 +5,7 @@ import { OnboardingWindowBar } from './onboarding-window-bar';
 import { cn } from '../../lib/utils';
 
 // 氛围视频（854×474、静音、9.5s）：铺满整窗裁切不拉伸；品牌层出现后用高斯模糊退为背景，
-// 不叠白色蒙版。DTQD：上游 assets/onboarding-video.webm 含 Dela 品牌，停用引用（文件保留），
+// 不叠白色蒙版。DTQD：上游开场视频含 Dela 品牌，已移除，
 // 换成 DTQD 自有视频后在这里填 URL 即可恢复。
 const introVideoUrl: string | undefined = undefined;
 

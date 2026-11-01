@@ -99,14 +99,25 @@ export function threadMarkdown(thread: TeamsThread): string {
     .join('\n');
 }
 
+/** 进入 AI 提取的会话：私聊要学生另外开启；分不清类型的按私聊处理。 */
+export function extractionThreads(
+  threads: readonly TeamsThread[],
+  includePrivate: boolean,
+): TeamsThread[] {
+  return threads.filter(
+    (thread) => includePrivate || (thread.kind !== '私聊' && thread.kind !== '其他'),
+  );
+}
+
 /** 本次同步的新消息汇总（覆盖写入「最近更新.md」），agent 与 LLM 汇总只读这一份。 */
 export function digestMarkdown(
   threads: readonly TeamsThread[],
   since: number,
   now: number,
 ): string {
-  // 首次同步会读到全部历史，汇总只取最近几天，免得一份「最近更新」大到没法看。
-  const from = since > 0 ? since : now - FIRST_DIGEST_DAYS * 86_400_000;
+  // 首次同步或长期关闭后再开，会读到大量旧消息；汇总只取最近几天。
+  const earliest = now - FIRST_DIGEST_DAYS * 86_400_000;
+  const from = Math.max(since, earliest);
   const recent = threads
     .map((thread) => ({ ...thread, messages: thread.messages.filter((m) => m.time > from) }))
     .filter((thread) => thread.messages.length > 0);

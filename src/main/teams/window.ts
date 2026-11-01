@@ -1,4 +1,4 @@
-// Microsoft Teams 网页版独立窗口：学生在窗内自行登录 Dundee 账号，DTQD 不读取其中的消息或令牌。
+// Microsoft Teams 网页版独立窗口：学生在窗内自行登录 Dundee 账号，DTQD 不读取令牌；消息同步见 sync.ts。
 // 独立持久分区，与校园会话互不影响；只允许微软登录与 Teams 相关域名在窗内打开，其余链接交给系统浏览器。
 import { BrowserWindow, ipcMain, shell, type Session } from 'electron';
 import { windowBackground } from '../window-background';

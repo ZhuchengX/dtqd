@@ -49,7 +49,7 @@ function clip(text: string): string {
   return text.length > MAX_ITEM_CHARS ? `${text.slice(0, MAX_ITEM_CHARS)}…` : text;
 }
 
-export async function readTeams(): Promise<SourceRead> {
+export async function readTeams(includePrivate = false): Promise<SourceRead> {
   if (!hasTeamsLogin())
     return {
       source: 'teams',
@@ -77,7 +77,13 @@ export async function readTeams(): Promise<SourceRead> {
     source: 'teams',
     status,
     newItems: result.newMessages,
-    text: result.newMessages > 0 ? tagCourses(result.digest ?? '', await currentCourses()) : '',
+    text:
+      result.newMessages > 0
+        ? tagCourses(
+            (includePrivate ? result.digest : result.groupDigest) ?? '',
+            await currentCourses(),
+          )
+        : '',
     detail,
   };
 }
@@ -140,11 +146,19 @@ const MAX_NOTICE_CHARS = 3000;
 const NOTICE_RECHECK_DAYS = 30;
 
 /** 游标是读过的通知链接（列表页日期只到天，只比日期会漏掉同一天后发的）；首次只往回看 14 天。 */
-export async function readCampusWeb(cursor: string | undefined, now: number): Promise<SourceRead> {
+export async function readCampusWeb(
+  cursor: string | undefined,
+  now: number,
+  office = false,
+): Promise<SourceRead> {
   const seen: string[] = cursor ? (JSON.parse(cursor) as string[]) : [];
   const days = cursor ? NOTICE_RECHECK_DAYS : FIRST_LOOKBACK_DAYS;
   const since = new Date(now - days * 86_400_000).toISOString().slice(0, 10);
-  const { items, failedSites, officeLoginExpired } = await readCampusWebSites(new Set(seen), since);
+  const { items, failedSites, officeLoginExpired } = await readCampusWebSites(
+    new Set(seen),
+    since,
+    office,
+  );
   archiveNotices(items.map(({ site, notice, body }) => ({ ...notice, site, body })));
   const allFailed = items.length === 0 && failedSites.length > 0;
   return {

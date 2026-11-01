@@ -112,6 +112,7 @@ let refreshing: Promise<void> | null = null;
 export function refreshNoticeArchive(
   now: number,
   fetcher: typeof fetchPage = fetchPage,
+  office = false,
 ): Promise<void> {
   const last = Number(readSetting(SYNC_KEY) ?? 0);
   if (now - last < SYNC_INTERVAL_MS) return Promise.resolve();
@@ -121,7 +122,7 @@ export function refreshNoticeArchive(
         (site) => () =>
           archiveSite(site, fetcher, last === 0 ? FIRST_SYNC_PAGES : DAILY_SYNC_PAGES),
       ),
-      archiveOffice,
+      ...(office ? [archiveOffice] : []),
     ];
     for (const task of tasks) {
       await task().catch((error: unknown) =>

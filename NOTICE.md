@@ -11,7 +11,7 @@
 
 本项目 DTQD 是 Dela 的修改版（modified version），依 GPL-3.0-or-later 第 5 条发布。LICENSE 文件原样保留，未作改动。上游代码的版权归 Dela 原作者与贡献者所有。
 
-Dela 的名称、logo、开场视频等品牌素材版权归原作者所有，不在 GPL 授权范围内。DTQD 已将可见品牌替换为自有名称与字标；原素材文件仍留在仓库中（未被应用引用），仅用于保留上游历史。
+Dela 的名称、logo、开场视频等品牌素材版权归原作者所有，不在 GPL 授权范围内。DTQD 已替换为自有名称与字标，并从仓库和安装包中移除了这些素材及上游赞助商标识。
 
 ## 本 fork 的修改
 
@@ -22,12 +22,12 @@ Dela 的名称、logo、开场视频等品牌素材版权归原作者所有，�
   - 定位：面向中南大学邓迪国际学院（DIICSU）学生；myDundee（Blackboard）、Outlook / Microsoft、学习辅导与科研 skills 等为 DTQD 新增或改造的功能。
   - 外联：停用上游的应用内更新源（electron-builder `publish` 置空，应用内更新默认关闭）；关于页去掉上游官网与赞赏入口，保留「基于 Dela」致谢与上游仓库链接；`.github/FUNDING.yml` 注释停用。
   - 交大专属功能（课堂视频、水源、交大课表）代码保留，默认隐藏，可在设置中重新开启。
-  - 文档：README 改写为 DTQD 版；使用条款与隐私条款顶部增加 DTQD 版草稿段落（上游原文保留）。
+  - 文档：README 改写为 DTQD 版；使用条款与隐私条款改写为 DTQD 版。
 - 逐文件的修改记录以本仓库 git 历史为准。
 
 ## 源码获取方式
 
-**待定**。DTQD 分发安装包（二进制）时，必须依 GPL-3.0 第 6 条同时提供对应的完整源码（或提供获取源码的书面承诺），并附 LICENSE 与本 NOTICE。
+DTQD 每个安装包对应的完整源码，在同一 GitHub Release 页面及对应的版本标签（tag）下提供：<https://github.com/ZhuchengX/dtqd>。Release 同时附 LICENSE 和本 NOTICE。如无法获取，请联系【联系邮箱】。
 
 ## 免责声明
 

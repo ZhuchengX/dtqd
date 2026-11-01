@@ -2,11 +2,27 @@ import { app, ipcMain } from 'electron';
 import { z } from 'zod';
 import { getDatabase } from './database';
 import { checkWorkspaceSender } from './ipc';
+import { legalRevisions } from '../shared/legal';
 
 const recordSchema = z.object({
   document: z.enum(['terms', 'privacy']),
   revision: z.string().min(1).max(64),
 });
+
+/** 学生是否已接受当前版本的两份条款；读不到记录时按未接受处理。 */
+export function termsAccepted(): boolean {
+  try {
+    const query = getDatabase().prepare(
+      'SELECT 1 FROM consent_records WHERE document = ? AND revision = ? LIMIT 1',
+    );
+    return Object.entries(legalRevisions).every(([document, revision]) =>
+      Boolean(query.get(document, revision)),
+    );
+  } catch (error) {
+    console.error('条款接受记录读取失败', error);
+    return false;
+  }
+}
 
 /** 条款接受记录只追加：条款改版、用户再次同意时写新行，不改写历史。 */
 export function registerConsentIpc() {

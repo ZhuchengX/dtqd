@@ -1,16 +1,18 @@
-// 重要事项总调度：启动后与每 30 分钟同步一次各来源（Teams、Outlook、myDundee 公告、QQ 接收文件），
-// 有新内容且学生允许时交给模型提取，状态广播给页面（inbox:state）。
-// 没提取成功（没配模型、模型出错、学生关了 AI 提取）的新内容存进待提取队列，下次一并提取，不会丢。
+// 重要事项总调度：学生接受当前条款后，启动时与每 30 分钟同步一次开启的来源，
+// 学生点「开启」AI 提取后才把新内容交给模型，状态广播给页面（inbox:state）。
+// 提取失败（没配模型、模型出错）的内容进待提取队列重试；AI 提取关闭时不积压，已有积压立即清空。
 import { BrowserWindow, ipcMain } from 'electron';
 import { readFile, rename, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
+  InboxPrefs,
   InboxRun,
   InboxSource,
   InboxSourceStatus,
   InboxState,
   InboxUsage,
 } from '../../shared/inbox';
+import { termsAccepted } from '../consent';
 import { checkWorkspaceSender } from '../ipc';
 import { readSetting, writeSetting } from '../settings/prefs';
 import { storageDirectory } from '../storage';
@@ -152,17 +154,37 @@ export function mergePending(
   });
 }
 
+/** 关掉的内容立即从待提取队列移除；来源的游标同时清掉，重新开启时最多回看约 14 天。 */
+async function applyPrefsToPending(prefs: InboxPrefs, dropTeams: boolean): Promise<void> {
+  const dir = inboxDirectory();
+  const kept = prefs.aiExtract
+    ? (await readPending(dir)).filter(
+        (input) => prefs.sources[input.source] && !(dropTeams && input.source === 'teams'),
+      )
+    : [];
+  await writePending(dir, kept);
+  const cursors = readCursors();
+  saveCursors(
+    Object.fromEntries(
+      Object.entries(cursors).filter(([source]) => prefs.sources[source as InboxSource]),
+    ),
+  );
+}
+
 async function readSource(
   source: InboxSource,
   cursor: string | undefined,
   now: number,
+  prefs: InboxPrefs,
 ): Promise<SourceRead> {
+  if (!prefs.sources[source])
+    return { source, status: 'idle', newItems: 0, text: '', detail: '已关闭，不读取也不发送' };
   try {
-    if (source === 'teams') return await readTeams();
+    if (source === 'teams') return await readTeams(prefs.teamsPrivate);
     if (source === 'outlook')
       return outlookWebConnected() ? await readOutlookWeb(cursor) : readOutlook(cursor, now);
     if (source === 'mydundee') return readMyDundee(cursor, now);
-    if (source === 'campus') return await readCampusWeb(cursor, now);
+    if (source === 'campus') return await readCampusWeb(cursor, now, prefs.officeNetwork);
     return await readQq(cursor, now);
   } catch (error) {
     return {
@@ -181,10 +203,13 @@ async function runOnce(): Promise<InboxState> {
   const cursors = readCursors();
   const previous = storedState();
   const reads: SourceRead[] = [];
+  const startPrefs = inboxPrefs();
   for (const source of SOURCE_ORDER) {
-    const read = await readSource(source, cursors[source], now);
+    const read = await readSource(source, cursors[source], now, startPrefs);
     reads.push(read);
-    if (read.cursor !== undefined) cursors[source] = read.cursor;
+    // AI 提取关闭时只推进已有游标：从未提取过的来源首次开启时仍可回看最近几天。
+    if (read.cursor !== undefined && (startPrefs.aiExtract || cursors[source] !== undefined))
+      cursors[source] = read.cursor;
     // 每读完一个来源就更新一次状态，页面上能看到进度。
     const sources = [
       ...previous.sources.filter((item) => item.source !== source),
@@ -206,17 +231,22 @@ async function runOnce(): Promise<InboxState> {
   saveCursors(cursors);
 
   const dir = inboxDirectory();
-  const inputs = mergePending(
-    await readPending(dir),
-    reads.map((read) => ({ source: read.source, text: read.text })),
-  );
+  // 读取期间学生可能刚改了开关，以这里的最新状态为准。
   const prefs = inboxPrefs();
+  const inputs = prefs.aiExtract
+    ? mergePending(
+        (await readPending(dir)).filter((input) => prefs.sources[input.source]),
+        reads
+          .filter((read) => prefs.sources[read.source])
+          .map((read) => ({ source: read.source, text: read.text })),
+      )
+    : [];
   let lastRun: InboxRun;
-  if (inputs.length === 0) {
-    lastRun = { at, status: 'nothing-new', items: 0, todos: 0, model: configuredTriageModel() };
-  } else if (!prefs.aiExtract) {
-    await writePending(dir, inputs);
+  if (!prefs.aiExtract) {
+    await writePending(dir, []);
     lastRun = { at, status: 'off', items: 0, todos: 0, model: null };
+  } else if (inputs.length === 0) {
+    lastRun = { at, status: 'nothing-new', items: 0, todos: 0, model: configuredTriageModel() };
   } else {
     try {
       const result = await triageInbox(dir, inputs, {
@@ -249,9 +279,10 @@ async function runOnce(): Promise<InboxState> {
   return getInboxState();
 }
 
-/** 同步一次全部来源并提取；已在同步中时等同一次。 */
+/** 同步一次开启的来源并提取；已在同步中时等同一次；未接受当前条款时什么也不做。 */
 export function runInbox(): Promise<InboxState> {
   if (running) return running;
+  if (!termsAccepted()) return Promise.resolve(getInboxState());
   running = runOnce().finally(() => {
     running = null;
     broadcast();
@@ -260,14 +291,17 @@ export function runInbox(): Promise<InboxState> {
   return running;
 }
 
-/** 启动 20 秒后跑第一次，之后每 30 分钟一次。 */
+/** 启动 20 秒后第一次检查，之后每 30 分钟一次；未接受条款或关了后台同步时跳过。 */
 export function scheduleInbox(): void {
   const tick = () => {
     nextRunAt = new Date(Date.now() + INBOX_INTERVAL_MS).toISOString();
+    const prefs = inboxPrefs();
+    if (!termsAccepted() || !prefs.backgroundSync) return;
     void runInbox().catch((error: unknown) => console.warn('[inbox] 同步失败', error));
-    void refreshNoticeArchive(Date.now()).catch((error: unknown) =>
-      console.warn('[notices] 刷新失败', error),
-    );
+    if (prefs.sources.campus)
+      void refreshNoticeArchive(Date.now(), undefined, prefs.officeNetwork).catch(
+        (error: unknown) => console.warn('[notices] 刷新失败', error),
+      );
   };
   nextRunAt = new Date(Date.now() + STARTUP_DELAY_MS).toISOString();
   setTimeout(() => {
@@ -299,9 +333,12 @@ export function registerInboxIpc(): void {
     checkWorkspaceSender(event);
     return runInbox();
   });
-  ipcMain.handle('inbox:set-prefs', (event, patch: unknown) => {
+  ipcMain.handle('inbox:set-prefs', async (event, patch: unknown) => {
     checkWorkspaceSender(event);
-    setInboxPrefs(patch);
+    const hadPrivate = inboxPrefs().teamsPrivate;
+    const next = setInboxPrefs(patch);
+    // 刚关掉私聊时，队列里的 Teams 内容可能含私聊，一并清掉。
+    await applyPrefsToPending(next, hadPrivate && !next.teamsPrivate);
     return broadcast();
   });
 }

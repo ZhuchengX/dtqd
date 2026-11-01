@@ -8,7 +8,13 @@ import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { availablePath, diskName, storageDirectory } from '../storage';
-import { buildThreads, digestMarkdown, threadMarkdown, type TeamsThread } from './digest';
+import {
+  buildThreads,
+  digestMarkdown,
+  extractionThreads,
+  threadMarkdown,
+  type TeamsThread,
+} from './digest';
 import type { TeamsSyncResult } from '../../shared/teams';
 import { extractScript, mentionIndex, STATS_SCRIPT, type RawTeamsSnapshot } from './extract';
 import { saveTeamsEvents } from './calendar';
@@ -109,8 +115,8 @@ async function withTeamsPage<T>(run: (contents: WebContents) => Promise<T>): Pro
   }
 }
 
-/** 同步结果；digest 是本次新消息的汇总正文，交给重要事项提取（不经 IPC 发给页面）。 */
-export type TeamsSyncOutcome = TeamsSyncResult & { digest?: string };
+/** 同步结果；两份汇总交给重要事项提取（不经 IPC 发给页面），groupDigest 不含私聊。 */
+export type TeamsSyncOutcome = TeamsSyncResult & { digest?: string; groupDigest?: string };
 
 let running: Promise<TeamsSyncOutcome> | undefined;
 
@@ -154,6 +160,7 @@ export function syncTeams(): Promise<TeamsSyncOutcome> {
       conversations: threads.length,
       digestPath,
       digest,
+      groupDigest: digestMarkdown(extractionThreads(threads, false), state.since, now),
     } as const;
   }).finally(() => {
     running = undefined;
@@ -169,7 +176,7 @@ export function hasTeamsLogin(): boolean {
 export function registerTeamsSyncIpc(): void {
   ipcMain.handle('teams:sync', async (event) => {
     checkWorkspaceSender(event);
-    const { digest: _digest, ...result } = await syncTeams();
+    const { digest: _digest, groupDigest: _groupDigest, ...result } = await syncTeams();
     return result;
   });
 }

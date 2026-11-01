@@ -1,3 +1,5 @@
+import { legalRevisions } from '../../../shared/legal';
+
 const completedKey = 'dela.onboarding.completed';
 const stepKey = 'dela.onboarding.step';
 const consentKey = 'dela.onboarding.consent';
@@ -5,17 +7,15 @@ const consentKey = 'dela.onboarding.consent';
 // 冒烟与自动化由 main 或各 smoke 脚本在页面 URL 上注入该参数，整个引导直接短路。
 export const isSmokeTest = new URLSearchParams(window.location.search).has('smoke-test');
 
-/**
- * 条款接受记录：首次启动的条款接受页写入。
- * 只记「接受过」——使用条款第 14 节写明变更后继续使用即视为接受，所以这里不比对版本、
- * 也不在条款改版后要求重新接受；用户当时读到的是哪一版，由应用版本与 docs 里的日期回溯。
- */
+const acceptedRevisions = `${legalRevisions.terms}|${legalRevisions.privacy}`;
+
+/** 条款接受记录：只认当前版本，「最后更新」变化后重新展示条款。 */
 export function hasConsent() {
-  return localStorage.getItem(consentKey) === '1';
+  return localStorage.getItem(consentKey) === acceptedRevisions;
 }
 
 export function saveConsent() {
-  localStorage.setItem(consentKey, '1');
+  localStorage.setItem(consentKey, acceptedRevisions);
 }
 
 export function needsWizard() {

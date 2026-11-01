@@ -167,7 +167,13 @@ export const settingsSearchItems: SettingsSearchItem[] = [
     id: 'inbox-ai',
     section: 'inbox',
     title: 'AI 提取重要事项',
-    keywords: ['重要事项', '待办', '提取', 'teams', '通知', 'ai', '模型', '隐私'],
+    keywords: ['重要事项', '待办', '提取', 'teams', '通知', 'ai', '模型', '隐私', '私聊'],
+  },
+  {
+    id: 'inbox-background',
+    section: 'inbox',
+    title: '后台同步',
+    keywords: ['同步', '后台', '自动', '定时', '关闭'],
   },
   {
     id: 'inbox-interests',
@@ -179,7 +185,7 @@ export const settingsSearchItems: SettingsSearchItem[] = [
     id: 'inbox-sources',
     section: 'inbox',
     title: '来源与同步',
-    keywords: ['同步', 'teams', 'outlook', 'mydundee', 'qq', '立即同步'],
+    keywords: ['同步', 'teams', 'outlook', 'mydundee', 'qq', '立即同步', '校内办公网', '开关'],
   },
   {
     id: 'shuiyuan',

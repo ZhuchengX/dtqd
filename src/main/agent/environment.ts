@@ -5,6 +5,7 @@ import {
   refreshNoticeArchive,
   searchNotices,
 } from '../inbox/notice-archive';
+import { inboxPrefs } from '../inbox/prefs';
 import { searchRows } from '../outlook-web/store';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
@@ -207,7 +208,8 @@ const noticeTools: ToolDefinition[] = [
       required: ['query'],
     } as unknown as ToolDefinition['parameters'],
     execute: async (_id, params: { query: string }) => {
-      if (noticeArchiveEmpty()) await refreshNoticeArchive(Date.now());
+      if (noticeArchiveEmpty())
+        await refreshNoticeArchive(Date.now(), undefined, inboxPrefs().officeNetwork);
       return text(
         searchNotices(params.query).map((hit) => ({
           ...hit,

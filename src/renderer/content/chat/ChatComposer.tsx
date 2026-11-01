@@ -933,6 +933,7 @@ export function ChatComposer({
           </ul>
         )}
       </div>
+      <p className="mt-1 text-center text-xs text-ink-3">内容由 AI 生成，可能有误，请核实</p>
     </div>
   );
 }

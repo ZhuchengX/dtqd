@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildThreads, digestMarkdown } from '../digest';
+import { buildThreads, digestMarkdown, extractionThreads, type TeamsThread } from '../digest';
 import {
   conversationKind,
   htmlToText,
@@ -153,5 +153,24 @@ describe('@我 / 回复我', () => {
       new Map([['7', '@我']]),
     );
     expect(thread!.messages[0]!.text).toBe('【@我】Please reply');
+  });
+});
+
+describe('extractionThreads', () => {
+  const thread = (kind: TeamsThread['kind']): TeamsThread => ({
+    conversationId: kind,
+    kind,
+    name: kind,
+    messages: [],
+  });
+  const all = [thread('频道'), thread('群聊'), thread('会议'), thread('私聊'), thread('其他')];
+
+  it('默认不含私聊和分不清类型的会话', () => {
+    expect(extractionThreads(all, false).map((item) => item.kind)).toEqual([
+      '频道',
+      '群聊',
+      '会议',
+    ]);
+    expect(extractionThreads(all, true)).toHaveLength(5);
   });
 });

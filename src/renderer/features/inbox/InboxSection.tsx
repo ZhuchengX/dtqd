@@ -1,4 +1,4 @@
-// 设置 › 重要事项：AI 提取开关、关心的方向、各来源同步状态与「立即同步」。
+// 设置 › 重要事项：AI 提取与后台同步开关、关心的方向、各来源开关和状态、「立即同步」。
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { inboxInterestOptions, inboxSourceLabels, type InboxPrefs } from '../../../shared/api';
@@ -68,11 +68,11 @@ export function InboxSection() {
   return (
     <div className="grid gap-6">
       <SectionHeader
-        description="每 30 分钟把 Teams、Outlook、myDundee 公告和 QQ 收到的文件读一遍，只把对你重要的事放进待办，并提醒你。"
+        description="每 30 分钟同步一次你开启的来源。开启 AI 提取后，由你配置的模型挑出重要的事，放进待办并提醒你。"
         title="重要事项"
       />
       <SettingsGroup
-        description="开启后，新消息的正文会发给你在「模型供应商」里配置的模型（不经过 DTQD 的服务器，DTQD 没有服务器）。关闭后只在本机同步存档，新消息留着，开启后再提取。"
+        description="默认关闭。开启后，新内容会发给你在「模型供应商」里配置的模型服务，发出后无法撤回。关闭后，尚未发送的内容不再发送。"
         settingId="inbox-ai"
         title="AI 提取"
       >
@@ -86,10 +86,44 @@ export function InboxSection() {
           title="用模型从新消息里挑出重要的事"
         >
           <Switch
-            checked={prefs?.aiExtract ?? true}
+            checked={prefs?.aiExtract ?? false}
             disabled={!prefs}
             label="AI 提取"
-            onChange={(next) => void save({ aiExtract: next, noticeAcknowledged: true })}
+            // 打开时先弹说明框，学生点「开启」才生效。
+            onChange={(next) =>
+              void save(next ? { noticeAcknowledged: false } : { aiExtract: false })
+            }
+          />
+        </SettingRow>
+        <SettingRow
+          description="开启后，Teams 私聊也会发给模型服务。私聊含他人发言，不宜发送时请保持关闭。"
+          settingId="inbox-teams-private"
+          title="私聊进入提取"
+        >
+          <Switch
+            checked={prefs?.teamsPrivate ?? false}
+            disabled={!prefs}
+            label="私聊进入提取"
+            onChange={(next) => void save({ teamsPrivate: next })}
+          />
+        </SettingRow>
+      </SettingsGroup>
+
+      <SettingsGroup
+        description="关闭后不再自动读取，只在你点「立即同步」时读取。"
+        settingId="inbox-background"
+        title="后台同步"
+      >
+        <SettingRow
+          description="每 30 分钟读取一次开启的来源和学校公开网站。关闭窗口后仍会继续，从托盘退出才会停止。"
+          settingId="inbox-background-sync"
+          title="自动同步"
+        >
+          <Switch
+            checked={prefs?.backgroundSync ?? true}
+            disabled={!prefs}
+            label="自动同步"
+            onChange={(next) => void save({ backgroundSync: next })}
           />
         </SettingRow>
       </SettingsGroup>
@@ -138,7 +172,7 @@ export function InboxSection() {
         description={
           run
             ? `上次提取：${relativeTime(run.at)} · ${runStatusLabels[run.status]}${run.status === 'ok' ? `：重要 ${run.items} 件，新建待办 ${run.todos} 件` : ''}`
-            : '启动 20 秒后第一次同步'
+            : '还没有同步过'
         }
         settingId="inbox-sources"
         title="来源"
@@ -167,11 +201,6 @@ export function InboxSection() {
             settingId={`inbox-source-${source.source}`}
             title={inboxSourceLabels[source.source]}
           >
-            {source.source === 'campus' && (
-              <Button onClick={() => void loginOffice()} size="sm" variant="outline">
-                登录校内办公网
-              </Button>
-            )}
             <span
               className={cn(
                 'text-13',
@@ -185,8 +214,33 @@ export function InboxSection() {
               {sourceStatusLabels[source.status]}
               {source.status === 'ok' && source.newItems > 0 ? ` · 新 ${source.newItems} 条` : ''}
             </span>
+            <Switch
+              checked={prefs?.sources[source.source] ?? true}
+              disabled={!prefs}
+              label={inboxSourceLabels[source.source]}
+              onChange={(next) =>
+                prefs && void save({ sources: { ...prefs.sources, [source.source]: next } })
+              }
+            />
           </SettingRow>
         ))}
+        <SettingRow
+          description="默认关闭。开启后用你的校园登录读取 oa.csu.edu.cn 的通知，并进入 AI 提取和聊天问答，发给你配置的模型服务。这类通知可能不宜对外提供，请自行判断。"
+          settingId="inbox-office-network"
+          title="校内办公网"
+        >
+          {prefs?.officeNetwork && (
+            <Button onClick={() => void loginOffice()} size="sm" variant="outline">
+              登录校内办公网
+            </Button>
+          )}
+          <Switch
+            checked={prefs?.officeNetwork ?? false}
+            disabled={!prefs}
+            label="校内办公网"
+            onChange={(next) => void save({ officeNetwork: next })}
+          />
+        </SettingRow>
       </SettingsGroup>
     </div>
   );

@@ -31,6 +31,14 @@ describe('首次启动引导', () => {
     expect(state.onboardingCompleted()).toBe(true);
   });
 
+  it('旧版接受记录失效：条款版本变化后要重新同意', async () => {
+    localStorage.setItem('dela.onboarding.consent', '1');
+    const state = await import('./onboarding-state');
+    expect(state.hasConsent()).toBe(false);
+    state.saveConsent();
+    expect(state.hasConsent()).toBe(true);
+  });
+
   it('冒烟跳过且不写任何引导标记', async () => {
     window.location.search = '?smoke-test=1';
     const state = await import('./onboarding-state');

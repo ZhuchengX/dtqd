@@ -166,6 +166,8 @@ export function todoTitle(item: InboxItem): string {
   return `${prefix}${item.title}`.slice(0, 200);
 }
 
+const AI_LABEL = 'AI 提取，以原始通知为准';
+
 /** 待办备注：首行（也是通知正文）写来源与为什么重要，其后是做法。 */
 export function todoNotes(item: InboxItem): string {
   const head = [
@@ -174,7 +176,7 @@ export function todoNotes(item: InboxItem): string {
   ]
     .filter(Boolean)
     .join(' · ');
-  return [head, item.detail].filter(Boolean).join('\n');
+  return [head, item.detail, AI_LABEL].filter(Boolean).join('\n');
 }
 
 export function formatTime(time: number): string {
@@ -190,7 +192,7 @@ const KIND_TITLES: Record<InboxItem['kind'], string> = {
 };
 
 export function inboxMarkdown(items: readonly InboxItem[], now: number): string {
-  const lines = ['# 重要事项', '', `- 生成时间：${formatTime(now)}`, ''];
+  const lines = ['# 重要事项', '', `- 生成时间：${formatTime(now)}`, `- ${AI_LABEL}`, ''];
   if (items.length === 0) return [...lines, '这次的新消息里没有需要处理的事。', ''].join('\n');
   for (const kind of ['deadline', 'reply', 'notice'] as const) {
     const group = items

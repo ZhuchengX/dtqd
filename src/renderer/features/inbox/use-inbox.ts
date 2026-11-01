@@ -38,7 +38,7 @@ export const runStatusLabels: Record<InboxRunStatus, string> = {
   ok: '已提取',
   'no-model': '没配模型，新消息已留着，配好后自动提取',
   failed: '提取失败，下次自动重试',
-  off: 'AI 提取已关闭，新消息已留着',
+  off: 'AI 提取已关闭，只同步到本机',
   'nothing-new': '没有新消息',
 };
 

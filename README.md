@@ -17,16 +17,16 @@
 ---
 
 > [!IMPORTANT]
-> 下载、安装或使用 DTQD，即视为你已阅读并同意本项目的[使用条款](docs/terms.md)与[隐私条款](docs/privacy.md)（DTQD 版补充内容目前为草稿）。
-> 如果你不同意其中部分内容，可以跳过对应服务的配置、不提供该项凭据，从而仅使用其余功能；如果你不同意全部条款，请停止使用并卸载本软件。
+> 首次打开 DTQD 时，你需要阅读并同意[使用条款](docs/terms.md)与[隐私条款](docs/privacy.md)。
+> 如果你不同意其中部分内容，可以跳过对应服务的配置、不提供该项凭据，从而仅使用其余功能；如果你不同意全部条款，请退出并卸载本软件。
 >
-> **DTQD 是第三方工具，与中南大学、邓迪大学（University of Dundee）及中南大学邓迪国际学院（DIICSU）无官方关系**，不代表任何学校或学院立场，也不承诺任何成绩或结果。
+> **DTQD 是第三方工具，与中南大学、邓迪大学（University of Dundee）、中南大学邓迪国际学院（DIICSU）及 Microsoft 无官方关系，也未就访问校园系统取得它们的授权。** 这些系统的规则可能不允许第三方工具或自动化访问，你的账号可能因此受影响，请先阅读[使用条款第 2 节](docs/terms.md)再开启连接。DTQD 不代表任何学校或学院立场，也不承诺任何成绩或结果。
 >
 > 本项目基于 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）修改，修改说明见 [NOTICE.md](NOTICE.md)。
 
 DTQD 是一款专门面向 DIICSU 学生的 Agent 产品。
 
-DTQD 的内核基于 Pi 构建。凭据经系统钥匙串加密后保存在本机，其余数据保存在本地；DTQD 没有存放用户数据的服务器。聊天内容和用于提取重要事项的内容会发给你自己配置的大模型服务；只有你主动提交反馈时，反馈内容才会发给 DTQD 团队。
+DTQD 的内核基于 Pi 构建。凭据经系统钥匙串加密后保存在本机，其余数据保存在本地；DTQD 没有存放用户数据的服务器。聊天内容会发给你自己配置的大模型服务；重要事项 AI 提取默认关闭，开启后才会自动发送新内容。只有你主动提交反馈时，反馈内容才会发给 DTQD 团队。
 
 ## 功能概览
 
@@ -35,7 +35,7 @@ DTQD 的内核基于 Pi 构建。凭据经系统钥匙串加密后保存在本�
 ### 校园信息服务
 
 - **首页今天 / 本周**：把各处的截止时间和重要事项汇总到一页
-- **重要事项提取**：定期查看 Teams、Outlook、myDundee 和 QQ 接收文件，用你配置的 AI 挑出对你重要的事项（可关闭）
+- **重要事项提取**：定期同步 Teams、Outlook、myDundee、学校通知和 QQ 接收文件的文件名，开启后用你配置的 AI 挑出重要事项（AI 默认关闭，来源可逐项关闭）
 - **myDundee（Blackboard）**：查看课件、作业截止和公告，可批量下载或添加到本地项目
 - **Dundee 邮箱**：通过 Outlook 网页版一键连接，也支持第三方 IMAP/SMTP 邮箱
 - **Teams**：在独立窗口中使用 Teams，并把 @我 的消息和日历纳入提醒与课表
@@ -136,19 +136,4 @@ pnpm dev
 
 ## 赞助鸣谢
 
-以下是上游 Dela 项目的赞助鸣谢，原样保留。如果想支持 Dela 作者，请前往 [Dela 仓库](https://github.com/Chang-Yo/Dela)。
-
-<table>
-  <tr>
-    <td width="80" align="center" valign="middle">
-      <img src="assets/sponsors/FRAMENEO_logo_black.png" width="44" alt="FRAMENEO logo">
-    </td>
-    <td valign="middle">
-      <a href="https://www.frameneo.com/"><strong>FRAMENEO</strong></a><br>
-      为 Dela 的软件包分发提供免费的高速 CDN 服务。
-    </td>
-    <td valign="middle">
-      <a href="https://www.frameneo.com/">FRAMENEO Website</a>
-    </td>
-  </tr>
-</table>
+感谢上游 Dela 项目的赞助者 [FRAMENEO](https://www.frameneo.com/) 等。如果想支持 Dela 作者，请前往 [Dela 仓库](https://github.com/Chang-Yo/Dela)。

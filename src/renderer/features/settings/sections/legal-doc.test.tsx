@@ -54,13 +54,16 @@ it('使用条款：小节标题、加粗、接受声明与附录表格都按版�
   expect(sections).toContain('12. 开源协议');
 
   const strong = expectBoldAllRendered(terms);
-  expect(strong.some((text) => text.includes('不存在隶属、合作、赞助、认可或授权关系'))).toBe(true);
+  expect(
+    strong.some((text) => text.includes('发布方未就本软件访问校园系统取得学校或 Microsoft 的授权')),
+  ).toBe(true);
 
   expect(container.querySelector('blockquote')?.textContent).toContain(
-    '以其他方式安装、运行本软件，同样视为你已阅读、理解并接受',
+    '你点击「同意并继续」后本条款生效',
   );
-  // 附录联网位置表 16 行（含 Pi packages 的 Node 下载、npm/git 源与包自行访问的地址）。
-  expect(container.querySelectorAll('tbody tr').length).toBe(16);
+  // 第 2.3 节访问方式表 5 行 + 附录联网位置表 14 行。
+  const tables = [...container.querySelectorAll('table')];
+  expect(tables.map((table) => table.querySelectorAll('tbody tr').length)).toEqual([5, 14]);
   expect(container.textContent).toContain('已启用的 Pi package 自行访问的地址');
 });
 
@@ -75,19 +78,22 @@ it('隐私条款：小节标题、加粗与两张表格都按版式渲染', asyn
   expect(sections).toEqual([
     '1. 数据保存在本机',
     '2. 凭据如何保护',
-    '3. 运行 Agent 时发送到模型服务的内容',
+    '3. 发送到模型服务的内容',
     '4. 本软件会联网的位置',
     '5. 本机记录了什么',
     '6. 本软件没有的功能',
+    '7. 反馈',
+    '8. 未成年人',
+    '9. 你的权利与联系方式',
   ]);
 
   const strong = expectBoldAllRendered(privacy);
-  expect(strong.some((text) => text.includes('没有远程数据库'))).toBe(true);
+  expect(strong.some((text) => text.includes('发布方不运营存放你数据的服务器'))).toBe(true);
 
-  // 凭据文件表 5 行 + 联网位置表 15 行（含按需下载文档组件与 Pi packages）。
+  // 凭据文件表 4 行 + 联网位置表 14 行。
   const tables = [...container.querySelectorAll('table')];
-  expect(tables.map((table) => table.querySelectorAll('tbody tr').length)).toEqual([5, 15]);
-  expect(tables[1]?.textContent).toContain('Pi packages');
-  expect(tables[1]?.textContent).toContain('文档解析组件');
+  expect(tables.map((table) => table.querySelectorAll('tbody tr').length)).toEqual([4, 14]);
+  expect(tables[1]?.textContent).toContain('Pi package');
+  expect(tables[1]?.textContent).toContain('飞书');
   expect(tables[0]?.querySelector('th')?.textContent).toBe('凭据文件');
 });

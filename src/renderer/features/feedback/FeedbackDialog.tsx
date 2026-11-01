@@ -44,7 +44,7 @@ export function FeedbackDialog({ open, page, onOpenChange }: FeedbackDialogProps
         <Dialog.Content className={`${dialogPanel} grid max-w-[440px] gap-3 p-5`}>
           <Dialog.Title className="text-15 font-semibold text-ink">反馈</Dialog.Title>
           <Dialog.Description className="text-13 text-ink-2">
-            哪里不好用、想要什么，直接写。团队会看到这段话和你所在的页面，不会收到其他内容。
+            哪里不好用、想要什么，直接写。团队会在飞书群看到这段话、你所在的页面、软件版本和时间，不会收到其他内容。请不要写姓名、学号、账号或他人信息。
           </Dialog.Description>
           <Textarea
             autoFocus

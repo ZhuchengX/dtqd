@@ -20,21 +20,25 @@ import { addUsage, mergePending } from '..';
 beforeEach(() => store.clear());
 
 describe('inboxPrefs', () => {
-  it('默认开启 AI 提取、五个兴趣全选、未看过说明', () => {
+  it('默认关闭 AI 提取、私聊和校内办公网，五个来源开启，未询问过', () => {
     expect(inboxPrefs()).toEqual({
-      aiExtract: true,
+      aiExtract: false,
       interests: ['实习', '保研', '竞赛', '出国', '考研'],
       noticeAcknowledged: false,
+      sources: { teams: true, outlook: true, mydundee: true, campus: true, qq: true },
+      teamsPrivate: false,
+      backgroundSync: true,
+      officeNetwork: false,
     });
   });
 
   it('部分更新只改传入的字段；损坏的值回退默认', () => {
-    setInboxPrefs({ aiExtract: false });
-    expect(inboxPrefs()).toMatchObject({ aiExtract: false, noticeAcknowledged: false });
+    setInboxPrefs({ aiExtract: true });
+    expect(inboxPrefs()).toMatchObject({ aiExtract: true, noticeAcknowledged: false });
     setInboxPrefs({ interests: ['保研'] });
-    expect(inboxPrefs()).toMatchObject({ aiExtract: false, interests: ['保研'] });
-    store.set('inbox-prefs', '{坏');
-    expect(inboxPrefs().aiExtract).toBe(true);
+    expect(inboxPrefs()).toMatchObject({ aiExtract: true, interests: ['保研'] });
+    store.set('inbox-prefs-v2', '{坏');
+    expect(inboxPrefs().aiExtract).toBe(false);
   });
 
   it('非法输入报错', () => {

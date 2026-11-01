@@ -1,18 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import privacy from '../../../../docs/privacy.md?raw';
 import terms from '../../../../docs/terms.md?raw';
+import { legalRevisions } from '../../../shared/legal';
 import { LegalMarkdown } from '../../components/legal-markdown';
 import { OnboardingWindowBar } from './onboarding-window-bar';
 
-/** 正文顶部的「最后更新」就是这一版的日期，接受记录据此回溯同意的是哪一版。 */
-function revisionOf(markdown: string) {
-  return /最后更新：(\S+)/.exec(markdown)?.[1] ?? 'unknown';
-}
-
 /** 两份都读到最底部并同意后才放行，这里没有跳过。 */
 const documents = [
-  { key: 'terms', title: '使用条款', markdown: terms, revision: revisionOf(terms) },
-  { key: 'privacy', title: '隐私条款', markdown: privacy, revision: revisionOf(privacy) },
+  { key: 'terms', title: '使用条款', markdown: terms, revision: legalRevisions.terms },
+  { key: 'privacy', title: '隐私条款', markdown: privacy, revision: legalRevisions.privacy },
 ] as const;
 
 // 滚动位置的浮点误差与浏览器取整能差几个像素，留一点容差，别让按钮卡在临界点上。

@@ -13,11 +13,19 @@ export const inboxSourceLabels: Record<InboxSource, string> = {
 export const inboxInterestOptions = ['实习', '保研', '竞赛', '出国', '考研'] as const;
 
 export interface InboxPrefs {
-  /** 把新消息发给已配置的模型提取待办（默认开启，首次运行时提示一次）。 */
+  /** 把新内容发给已配置的模型提取待办。默认关闭，只有学生点「开启」才会打开。 */
   aiExtract: boolean;
   interests: string[];
-  /** 已看过「消息会发给模型」的说明。 */
+  /** 已回答过「是否开启 AI 提取」。设置页打开开关时重置，重新询问一次。 */
   noticeAcknowledged: boolean;
+  /** 各来源是否读取；关闭的来源不读取、不发送。 */
+  sources: Record<InboxSource, boolean>;
+  /** Teams 私聊是否进入 AI 提取（默认否）；存档不受影响。 */
+  teamsPrivate: boolean;
+  /** 是否每 30 分钟自动同步；关闭后只在点「立即同步」时读取。 */
+  backgroundSync: boolean;
+  /** 是否读取中南校内办公网（默认否）。 */
+  officeNetwork: boolean;
 }
 
 export type InboxSourceStatusKind =

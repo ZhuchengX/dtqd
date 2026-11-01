@@ -150,14 +150,14 @@ function PersonIdentity({ person }: { person: CreditPerson }) {
             src={person.logo.dark}
           />
         </span>
-      ) : (
+      ) : person.avatar ? (
         <img
           alt=""
           aria-hidden="true"
           className="size-6 rounded-full object-cover"
           src={person.avatar}
         />
-      )}
+      ) : null}
       <span className="text-13 font-medium text-ink">{person.name}</span>
     </div>
   );

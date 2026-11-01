@@ -190,16 +190,17 @@ export interface CampusWebRead {
 export async function readCampusWebSites(
   seen: ReadonlySet<string>,
   since: string,
+  office = false,
 ): Promise<CampusWebRead> {
   const read: CampusWebRead = { items: [], failedSites: [], officeLoginExpired: false };
   const known = new Set(seen);
   try {
-    const office = await fetchOfficeNotices();
-    if (office === null) read.officeLoginExpired = true;
+    const notices = office ? await fetchOfficeNotices() : [];
+    if (notices === null) read.officeLoginExpired = true;
     let bodies = 0;
     let chars = 0;
     let cjk = 0;
-    for (const notice of newNotices(office ?? [], known, since)) {
+    for (const notice of newNotices(notices ?? [], known, since)) {
       known.add(notice.url);
       const readBody = bodies < MAX_OFFICE_BODIES && officeTitleWorthReading(notice.title);
       if (readBody) bodies += 1;

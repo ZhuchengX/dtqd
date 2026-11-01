@@ -110,7 +110,6 @@ export interface CanvasApi {
   /** 在登录窗内用 Dundee Microsoft 账号登录 myDundee（Blackboard）。 */
   loginBlackboard(): Promise<void>;
   /** 仅 macOS：导入 Chrome / Edge 里已登录的 myDundee 会话，返回来源浏览器名。 */
-  importBlackboardFromBrowser(): Promise<string>;
   disconnect(): Promise<void>;
   syncCourses(): Promise<CanvasState>;
   syncCourse(id: number): Promise<CanvasState>;

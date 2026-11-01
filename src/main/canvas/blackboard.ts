@@ -6,7 +6,6 @@ import { rm } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { getCampusSession, openCampusLoginWindow, CampusAuthError } from '../campus';
 import { getDatabase } from '../database';
-import { importDundeeCookies } from './chrome-cookies';
 import type { CanvasCourse, SourceItem } from '../../shared/api';
 import {
   announcementSource,
@@ -164,15 +163,6 @@ export async function loginBlackboard(sender: WebContents): Promise<void> {
   });
   if (!result.ok) throw new Error(result.error);
   await saveBlackboardLogin();
-}
-
-/** 仅 macOS：把 Chrome / Edge 里已登录的 myDundee 会话导入校园分区，返回来源浏览器名。 */
-export async function importBlackboardFromBrowser(): Promise<string> {
-  const browser = await importDundeeCookies(await getCampusSession(), async () => {
-    await currentUser();
-  });
-  await saveBlackboardLogin();
-  return browser;
 }
 
 async function saveBlackboardLogin(): Promise<void> {

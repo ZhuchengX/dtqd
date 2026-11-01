@@ -20,7 +20,8 @@ vi.mock('electron', () => ({
 }));
 
 import { closeDatabase, getDatabase } from '../database';
-import { registerConsentIpc } from '../consent';
+import { registerConsentIpc, termsAccepted } from '../consent';
+import { legalRevisions } from '../../shared/legal';
 
 const frame = { url: 'file:///index.html' };
 const event = { senderFrame: frame, sender: { mainFrame: frame } };
@@ -77,4 +78,18 @@ it('不是主窗口发来的调用被拒绝', () => {
   expect(() => handler({ senderFrame: other, sender: { mainFrame: other } }, 'terms', 'x')).toThrow(
     '不允许的调用来源',
   );
+});
+
+it('两份条款都接受过当前版本才算接受', () => {
+  setup();
+  const insert = getDatabase().prepare(
+    "INSERT INTO consent_records (document, revision, app_version, accepted_at) VALUES (?, ?, '1', 'now')",
+  );
+  expect(termsAccepted()).toBe(false);
+  insert.run('terms', legalRevisions.terms);
+  expect(termsAccepted()).toBe(false);
+  insert.run('privacy', 'old-revision');
+  expect(termsAccepted()).toBe(false);
+  insert.run('privacy', legalRevisions.privacy);
+  expect(termsAccepted()).toBe(true);
 });

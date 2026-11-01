@@ -117,7 +117,7 @@ describe('isImportant / 待办文字 / 模型', () => {
     expect(todoTitle(item({ kind: 'reply', title: '回老师邮件' }))).toBe('回复：回老师邮件');
     expect(todoTitle(item({ kind: 'notice', title: '补考安排' }))).toBe('知悉：补考安排');
     expect(todoNotes(item())).toBe(
-      'Teams · DI12006 - Statistics › General · 占期末 20%\n在 My Dundee 提交 PDF',
+      'Teams · DI12006 - Statistics › General · 占期末 20%\n在 My Dundee 提交 PDF\nAI 提取，以原始通知为准',
     );
   });
 
@@ -240,7 +240,7 @@ describe('triageInbox', () => {
     expect(first).toMatchObject({ status: 'ok', todos: 1, model: 'm-flash' });
     expect(addNoticedTodo).toHaveBeenCalledWith({
       title: '交作业',
-      notes: 'myDundee 公告 · Stats · 占 20%',
+      notes: 'myDundee 公告 · Stats · 占 20%\nAI 提取，以原始通知为准',
       dueAt: future,
       calendar: true,
     });
