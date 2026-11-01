@@ -6,6 +6,8 @@ import { Input } from '../../components/ui/input';
 import { cn } from '../../lib/utils';
 
 const modes = ['交大邮箱', 'Dundee Outlook', '第三方 IMAP'] as const;
+/** DTQD 只给学生看第三方 IMAP：Dundee 邮箱走 OutlookWebConnect。其余模式是上游代码，保留不删。 */
+const visibleModes = ['第三方 IMAP'] as const;
 
 /** 向导页与邮箱空态共用的连接表单：交大邮箱走预设，第三方 IMAP 自填服务器参数。 */
 export function MailAccountForm({
@@ -21,7 +23,7 @@ export function MailAccountForm({
   /** wizard：向导画布上的 40px 控件；app：应用内的 32px 控件。 */
   variant?: 'app' | 'wizard';
 }) {
-  const [mode, setMode] = useState<(typeof modes)[number]>('交大邮箱');
+  const [mode, setMode] = useState<(typeof modes)[number]>(visibleModes[0]);
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [imapHost, setImapHost] = useState('');
@@ -83,7 +85,9 @@ export function MailAccountForm({
         });
       }}
     >
-      <SegmentedControl className="w-full" onChange={setMode} options={modes} value={mode} />
+      {visibleModes.length > 1 && (
+        <SegmentedControl className="w-full" onChange={setMode} options={modes} value={mode} />
+      )}
       <label className="grid gap-2">
         <span className={label}>邮箱地址</span>
         <Input

@@ -130,6 +130,7 @@ describe('本地会话环境', () => {
     expect(names(options.customTools)).toEqual([
       'campus_notice_read',
       'campus_notices_search',
+      'outlook_mail_search',
       'web_fetch',
       'web_search',
     ]);

@@ -19,6 +19,7 @@ import type {
   MailTrashItem,
 } from '../../../shared/api';
 import { MailAccountForm } from './MailAccountForm';
+import { OutlookWebConnect, OutlookWebPanel } from './OutlookWebPanel';
 import { MailFolders, type MailSelection } from './MailFolders';
 import { MailMessageList } from './MailMessageList';
 import { MailReader } from './MailReader';
@@ -110,6 +111,13 @@ function DesktopMailView({
 }: MailViewProps) {
   const dela = window.dela!;
   const [state, setState] = useState<MailState | null>(null);
+  const [webConnected, setWebConnected] = useState(false);
+  useEffect(() => {
+    void window.dela?.outlookWeb
+      ?.getState()
+      .then((web) => setWebConnected(web.connected))
+      .catch(() => {});
+  }, []);
   const [folders, setFolders] = useState<MailFolderInfo[]>([]);
   const [selection, setSelection] = useState<MailSelection | null>(null);
   const [messages, setMessages] = useState<MailMessageSummary[]>([]);
@@ -671,6 +679,8 @@ function DesktopMailView({
       });
   }, [account, dela.mail, folders, loadMessages, openMessage, openRequest, stacked]);
 
+  if (state !== null && !account && webConnected) return <OutlookWebPanel />;
+
   if (state !== null && !account) {
     return (
       <div className="flex h-full min-h-0 flex-col">
@@ -678,19 +688,22 @@ function DesktopMailView({
           <div className="m-auto grid w-full max-w-[25rem] gap-4 rounded-2xl border border-line bg-surface p-8 shadow-hairline">
             <div className="grid gap-1.5">
               <h2 className="text-lg font-semibold tracking-tight">连接邮箱</h2>
-              <p className="text-13 leading-relaxed text-ink-3">
-                交大邮箱用 jAccount 账号与密码；也可改用第三方 IMAP 服务器。凭据加密保存在本机。
-              </p>
             </div>
-            <MailAccountForm
-              error={configureError}
-              onSubmit={(input) => void handleConfigure(input)}
-              submit={
-                <Button disabled={configuring} type="submit">
-                  {configuring ? '正在验证…' : '连接并同步'}
-                </Button>
-              }
-            />
+            <OutlookWebConnect onConnected={() => setWebConnected(true)} />
+            <details className="text-13 text-ink-3">
+              <summary className="cursor-pointer">用其他邮箱（第三方 IMAP）</summary>
+              <div className="mt-3">
+                <MailAccountForm
+                  error={configureError}
+                  onSubmit={(input) => void handleConfigure(input)}
+                  submit={
+                    <Button disabled={configuring} type="submit">
+                      {configuring ? '正在验证…' : '连接并同步'}
+                    </Button>
+                  }
+                />
+              </div>
+            </details>
           </div>
         </div>
       </div>

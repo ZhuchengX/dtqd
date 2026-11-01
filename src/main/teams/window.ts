@@ -80,7 +80,7 @@ const REVEAL_TIMEOUT_MS = 8000;
 
 let teamsWindow: BrowserWindow | undefined;
 
-function guardNavigation(window: BrowserWindow): void {
+export function guardNavigation(window: BrowserWindow): void {
   const contents = window.webContents;
   contents.setWindowOpenHandler(({ url }) => {
     // 登录、会议等弹窗在同一分区打开；外部链接交给系统浏览器。

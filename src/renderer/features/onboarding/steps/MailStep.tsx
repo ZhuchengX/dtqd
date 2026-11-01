@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { MailConfigureInput } from '../../../../shared/mail';
 import { DesktopOnlyNotice } from '../../../components/ui/desktop-only-notice';
 import { MailAccountForm } from '../../mail/MailAccountForm';
+import { OutlookWebConnect } from '../../mail/OutlookWebPanel';
 import { errorText } from '../../../workspace/store';
 import { StepButton, type StepButtonState } from './step-controls';
 
@@ -45,6 +46,7 @@ export function MailStep({ onDone }: { onDone: () => void }) {
   return (
     <div className="grid gap-7">
       <h2 className="text-2xl font-semibold tracking-tight">连接邮箱</h2>
+      <OutlookWebConnect onConnected={onDone} />
       <MailAccountForm
         error={error}
         onSubmit={(input) => void submit(input)}

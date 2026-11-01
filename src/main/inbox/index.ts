@@ -25,12 +25,14 @@ import {
   readCursors,
   readMyDundee,
   readOutlook,
+  readOutlookWeb,
   readQq,
   readTeams,
   saveCursors,
   type SourceRead,
 } from './sources';
 import { refreshNoticeArchive } from './notice-archive';
+import { outlookWebConnected } from '../outlook-web/store';
 
 export const INBOX_INTERVAL_MS = 30 * 60_000;
 const STARTUP_DELAY_MS = 20_000;
@@ -157,7 +159,8 @@ async function readSource(
 ): Promise<SourceRead> {
   try {
     if (source === 'teams') return await readTeams();
-    if (source === 'outlook') return readOutlook(cursor, now);
+    if (source === 'outlook')
+      return outlookWebConnected() ? await readOutlookWeb(cursor) : readOutlook(cursor, now);
     if (source === 'mydundee') return readMyDundee(cursor, now);
     if (source === 'campus') return await readCampusWeb(cursor, now);
     return await readQq(cursor, now);

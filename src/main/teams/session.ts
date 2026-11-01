@@ -13,6 +13,8 @@ const LOGIN_ROOTS = [
   'login.live.com',
   'teams.cloud.microsoft',
   'teams.microsoft.com',
+  'outlook.cloud.microsoft',
+  'outlook.office.com',
   'dundee.ac.uk',
 ];
 

@@ -5,6 +5,7 @@ import { canvas } from './canvas';
 import { teams } from './teams';
 import { inbox } from './inbox';
 import { feedback } from './feedback';
+import { outlookWeb } from './outlook-web';
 import { cache } from './cache';
 import { chat } from './chat';
 import { consent } from './consent';
@@ -52,6 +53,7 @@ contextBridge.exposeInMainWorld('dela', {
   teams,
   inbox,
   feedback,
+  outlookWeb,
   workspace,
   session,
   sidechat,

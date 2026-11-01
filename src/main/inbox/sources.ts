@@ -6,6 +6,8 @@ import { defaultChatFileRoots, listChatFiles } from '../chatfiles/scan';
 import { readCampusWebSites } from './campus-web';
 import { getDatabase } from '../database';
 import { archiveNotices } from './notice-archive';
+import { syncOutlookWeb } from '../outlook-web';
+import { rowsSince } from '../outlook-web/store';
 import { readSetting, writeSetting } from '../settings/prefs';
 import { htmlToText } from '../teams/extract';
 import { hasTeamsLogin, syncTeams } from '../teams/sync';
@@ -217,6 +219,31 @@ export function readOutlook(cursor: string | undefined, now: number): SourceRead
     text,
     detail: null,
     cursor: maxId !== undefined ? String(maxId) : cursor,
+  };
+}
+
+/** 学校邮箱走 Outlook 网页版时：先读一遍列表，再把游标后的新邮件交给提取。 */
+export async function readOutlookWeb(cursor: string | undefined): Promise<SourceRead> {
+  const { status } = await syncOutlookWeb();
+  if (status !== 'ok')
+    return {
+      source: 'outlook',
+      status: status === 'needs-login' ? 'needs-login' : 'not-ready',
+      newItems: 0,
+      text: '',
+      detail:
+        status === 'needs-login'
+          ? '邮箱登录已过期，到邮箱页重新连接'
+          : '这次没读到收件箱，稍后重试',
+    };
+  const { labels, cursor: next } = rowsSince(cursor);
+  return {
+    source: 'outlook',
+    status: 'ok',
+    newItems: labels.length,
+    text: labels.map((label) => `### 邮件\n\n${clip(label)}\n`).join('\n'),
+    detail: null,
+    cursor: next,
   };
 }
 

@@ -174,6 +174,13 @@ const schema: string[] = [
     date TEXT NOT NULL,
     body TEXT
   )`,
+  // Outlook 网页版读到的收件箱列表（学校邮箱不走 IMAP 时用）。
+  `CREATE TABLE IF NOT EXISTS outlook_web_mail (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT NOT NULL UNIQUE,
+    label TEXT NOT NULL,
+    first_seen TEXT NOT NULL
+  )`,
   `CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     project_id TEXT REFERENCES workspace_entries(id) ON DELETE SET NULL,
