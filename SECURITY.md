@@ -1,6 +1,6 @@
 # 安全策略
 
-> 本仓库是 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）的 DTQD 修改版。**DTQD 版的安全问题请发送至应用内「反馈」，请勿报给上游作者。**
+> 本仓库是 [Chang-Yo/Dela](https://github.com/Chang-Yo/Dela)（GPL-3.0-or-later）的 DTQD 修改版。**DTQD 版的安全问题请通过下方的 GitHub 私密漏洞报告提交，请勿报给上游作者。**
 
 DTQD 是本地优先应用，用户数据、模型密钥与校园凭据都保存在本机。安全问题的修复会优先进入最新正式版本。
 
@@ -18,9 +18,9 @@ DTQD 是本地优先应用，用户数据、模型密钥与校园凭据都保存
 
 **请勿通过公开 issue、Discussions 或 Pull Request 报告安全漏洞。**
 
-请通过邮件私下联系发布方：应用内「反馈」。
+请通过 [GitHub 私密漏洞报告](https://github.com/ZhuchengX/dtqd/security/advisories/new)提交。
 
-邮件标题建议以 `[DTQD Security]` 开头。报告中请尽量包含：
+报告中请尽量包含：
 
 - 受影响的 DTQD 版本与操作系统；
 - 问题的具体位置或触发路径；
