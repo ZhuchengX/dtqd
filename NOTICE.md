@@ -27,7 +27,7 @@ Dela 的名称、logo、开场视频等品牌素材版权归原作者所有，�
 
 ## 源码获取方式
 
-DTQD 每个安装包对应的完整源码，在同一 GitHub Release 页面及对应的版本标签（tag）下提供：<https://github.com/ZhuchengX/dtqd>。Release 同时附 LICENSE 和本 NOTICE。如无法获取，请联系【联系邮箱】。
+DTQD 每个安装包对应的完整源码，在同一 GitHub Release 页面及对应的版本标签（tag）下提供：<https://github.com/ZhuchengX/dtqd>。Release 同时附 LICENSE 和本 NOTICE。如无法获取，请联系应用内「反馈」。
 
 ## 免责声明
 
