@@ -14,8 +14,10 @@ vi.mock('../engine', () => ({ formatTime: (time: number) => new Date(time).toISO
 import { getDatabase } from '../../database';
 import { listTodoCanvasCourses } from '../../canvas/api';
 import { defaultChatFileRoots, listChatFiles } from '../../chatfiles/scan';
+import { hasTeamsLogin, syncTeams } from '../../teams/sync';
 import {
   currentCourses,
+  FIRST_LOOKBACK_DAYS,
   readMyDundee,
   readOutlook,
   readQq,
@@ -110,6 +112,33 @@ describe('readQq / readTeams / currentCourses', () => {
 
   it('没登录过 Teams 时是 not-connected，不打开窗口', async () => {
     expect(await readTeams()).toMatchObject({ status: 'not-connected', newItems: 0 });
+  });
+
+  it('Teams 按重要事项自己的游标取汇总，成功才给新游标', async () => {
+    vi.mocked(hasTeamsLogin).mockReturnValue(true);
+    vi.mocked(listTodoCanvasCourses).mockResolvedValue([]);
+    vi.mocked(syncTeams).mockResolvedValue({
+      status: 'ok',
+      newMessages: 0,
+      conversations: 0,
+      groupDigest: '上次没进队列的消息',
+      privateDigest: '',
+      latest: 2000,
+    });
+    const read = await readTeams('1000', true, NOW);
+    expect(syncTeams).toHaveBeenLastCalledWith(1000);
+    expect(read).toMatchObject({ text: '上次没进队列的消息', cursor: '2000' });
+
+    await readTeams(undefined, true, NOW);
+    expect(syncTeams).toHaveBeenLastCalledWith(NOW - FIRST_LOOKBACK_DAYS * 86_400_000);
+
+    // 提取关着时不重读。
+    await readTeams(undefined, false, NOW);
+    expect(syncTeams).toHaveBeenLastCalledWith(undefined);
+
+    vi.mocked(syncTeams).mockResolvedValue({ status: 'busy', newMessages: 0, conversations: 0 });
+    expect((await readTeams('1000', true, NOW)).cursor).toBeUndefined();
+    vi.mocked(hasTeamsLogin).mockReturnValue(false);
   });
 
   it('课程列表拼成「代码 名称」，出错时为空', async () => {

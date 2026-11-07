@@ -7,7 +7,15 @@ description: 学校邮箱（DIICSU：Outlook @dundee.ac.uk）与第三方 IMAP �
 
 DIICSU 学生邮箱是邓迪 Outlook（Microsoft 365，地址 studentID@dundee.ac.uk，网页版 https://outlook.dundee.ac.uk），在 DTQD 里用 Dundee Microsoft 账号登录；也可接入第三方 IMAP 邮箱（如个人邮箱）。登录会话由应用保存，不索取密码明文。
 
-## 命令（Bash 内 dela）
+## Dundee 邮箱（Outlook 网页版连接，学生默认用这种）
+
+- 直接调用 `outlook_mail_search` 工具（不是 dela 命令），传 `query`，按发件人、主题、预览查已读到本机的收件箱邮件
+- 只有发件人、主题、时间和预览，没有正文和附件；要看全文，请学生点邮箱页的「打开 Outlook」
+- 需要回信时帮学生起草文本，由学生自己在 Outlook 里发送
+
+## 第三方 IMAP 邮箱（Bash 内 dela）
+
+以下命令只查第三方 IMAP 账号。返回 NOT_CONFIGURED 说明没有配置，改用上面的 `outlook_mail_search`。
 
 - `dela search_mail '{"query":"成绩单","limit":20}'`：搜索邮件（按文件夹/日期过滤）
 - `dela list_mail_folders '{}'`：文件夹与同步状态

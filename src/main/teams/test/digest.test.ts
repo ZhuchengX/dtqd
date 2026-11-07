@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildThreads, digestMarkdown, extractionThreads, type TeamsThread } from '../digest';
+import {
+  buildThreads,
+  digestMarkdown,
+  extractionDigests,
+  extractionThreads,
+  type TeamsThread,
+} from '../digest';
 import {
   conversationKind,
   htmlToText,
@@ -172,5 +178,40 @@ describe('extractionThreads', () => {
       '会议',
     ]);
     expect(extractionThreads(all, true)).toHaveLength(5);
+  });
+});
+
+describe('extractionDigests', () => {
+  const NOW = Date.parse('2026-10-31T12:00:00Z');
+  const thread = (kind: TeamsThread['kind'], text: string): TeamsThread => ({
+    conversationId: kind,
+    kind,
+    name: kind,
+    messages: [{ time: NOW - 1000, author: 'A', text, replyChainId: '' }],
+  });
+
+  it('群聊和私聊分成两份，分不清类型的算私聊', () => {
+    const { groupDigest, privateDigest } = extractionDigests(
+      [thread('频道', '频道消息'), thread('私聊', '私聊消息'), thread('其他', '其他消息')],
+      0,
+      NOW,
+    );
+    expect(groupDigest).toContain('频道消息');
+    expect(groupDigest).not.toContain('私聊消息');
+    expect(groupDigest).not.toContain('其他消息');
+    expect(privateDigest).toContain('私聊消息');
+    expect(privateDigest).toContain('其他消息');
+    expect(privateDigest).not.toContain('频道消息');
+  });
+
+  it('最近活跃的会话排在最后：超长截断时留下的是新内容', () => {
+    const named = (name: string): TeamsThread => ({ ...thread('频道', name), name });
+    const { groupDigest } = extractionDigests([named('新会话'), named('旧会话')], 0, NOW);
+    expect(groupDigest.indexOf('旧会话')).toBeLessThan(groupDigest.indexOf('新会话'));
+  });
+
+  it('只有私聊时群聊汇总为空，不让模型白跑一次', () => {
+    expect(extractionDigests([thread('私聊', 'x')], 0, NOW).groupDigest).toBe('');
+    expect(extractionDigests([thread('频道', 'x')], 0, NOW).privateDigest).toBe('');
   });
 });

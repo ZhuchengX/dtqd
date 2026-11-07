@@ -40,7 +40,7 @@ export interface InboxSourceStatus {
   detail: string | null;
 }
 
-export type InboxRunStatus = 'ok' | 'no-model' | 'failed' | 'off' | 'nothing-new';
+export type InboxRunStatus = 'ok' | 'no-model' | 'failed' | 'off' | 'nothing-new' | 'withdrawn';
 
 export interface InboxRun {
   at: string;

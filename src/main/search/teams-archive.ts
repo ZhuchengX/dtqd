@@ -1,5 +1,5 @@
 // 全局搜索里的 Teams 存档：在本机 ~/Documents/DTQD/teams 下的会话存档里逐行匹配，点开用系统默认程序打开。
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { shell } from 'electron';
 
@@ -14,7 +14,7 @@ export interface TeamsArchiveHit {
   snippet: string;
 }
 
-function archiveFiles(root: string): string[] {
+export function archiveFiles(root: string): string[] {
   const files: string[] = [];
   const walk = (dir: string) => {
     let names: string[];
@@ -26,7 +26,8 @@ function archiveFiles(root: string): string[] {
     for (const name of names) {
       if (files.length >= MAX_FILES || name.startsWith('.')) continue;
       const path = join(dir, name);
-      const stat = statSync(path, { throwIfNoEntry: false });
+      // 不跟随符号链接：逻辑路径可能指向私聊或存档外的文件。
+      const stat = lstatSync(path, { throwIfNoEntry: false });
       if (stat?.isDirectory()) walk(path);
       else if (stat?.isFile() && name.endsWith('.md') && !SKIPPED.has(name)) files.push(path);
     }
@@ -36,12 +37,18 @@ function archiveFiles(root: string): string[] {
 }
 
 /** 文件里第一处命中所在的那一行（去掉 Markdown 标记）作为摘要；会话名也算命中。 */
-export function searchTeamsArchive(root: string, query: string, limit: number): TeamsArchiveHit[] {
+export function searchTeamsArchive(
+  root: string,
+  query: string,
+  limit: number,
+  accept: (path: string) => boolean = () => true,
+): TeamsArchiveHit[] {
   const needle = query.trim().toLocaleLowerCase();
   if (!needle) return [];
   const hits: TeamsArchiveHit[] = [];
   for (const path of archiveFiles(root)) {
     if (hits.length >= limit) break;
+    if (!accept(path)) continue;
     const title = relative(root, path).replace(/\.md$/, '').split(sep).join(' › ');
     let text: string;
     try {

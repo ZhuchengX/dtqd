@@ -2,14 +2,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../../mail/graph', () => ({
+  getTeamsChatType: vi.fn(),
   listTeamsChats: vi.fn(),
   listTeamsChatMessages: vi.fn(),
   listTeamsChannelMessages: vi.fn(),
   listJoinedTeams: vi.fn(),
 }));
 vi.mock('../../../../mail/microsoft', () => ({ getMicrosoftConfig: vi.fn() }));
+vi.mock('electron', () => ({ shell: {} }));
+vi.mock('../../../../teams/sync', () => ({
+  teamsDirectory: () => '/nonexistent',
+  hasTeamsLogin: () => false,
+}));
+const prefs = vi.hoisted(() => ({ teamsPrivate: false }));
+vi.mock('../../../../inbox/prefs', () => ({ inboxPrefs: () => prefs }));
 
 import {
+  getTeamsChatType,
   listTeamsChannelMessages,
   listTeamsChatMessages,
   listTeamsChats,
@@ -28,23 +37,31 @@ const signedIn = {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  prefs.teamsPrivate = false;
   vi.mocked(getMicrosoftConfig).mockReturnValue(signedIn);
+  vi.mocked(getTeamsChatType).mockResolvedValue('group');
 });
 
 describe('teams 命令', () => {
-  it('注册三条命令', () => {
+  it('注册存档命令和上游 Graph 命令', () => {
     expect(Object.keys(teamsTools).sort()).toEqual([
+      'list_teams_archive',
       'list_teams_channels',
       'list_teams_chats',
+      'read_teams_archive',
       'read_teams_messages',
+      'search_teams_archive',
     ]);
   });
 
   it('未登录 Microsoft 365 时报 NOT_CONFIGURED，不发请求', async () => {
     vi.mocked(getMicrosoftConfig).mockReturnValue({ ...signedIn, signedIn: false, address: null });
-    await expect(teamsTools.list_teams_chats.execute({})).rejects.toMatchObject({
-      code: 'NOT_CONFIGURED',
-    });
+    const error = await Promise.resolve(teamsTools.list_teams_chats.execute({})).catch(
+      (cause: unknown) => cause as Error & { code: string },
+    );
+    expect(error).toMatchObject({ code: 'NOT_CONFIGURED' });
+    expect((error as Error).message).toContain('list_teams_archive');
+    expect((error as Error).message).not.toContain('Dundee Outlook');
     expect(listTeamsChats).not.toHaveBeenCalled();
   });
 
@@ -72,6 +89,34 @@ describe('teams 命令', () => {
     })) as { nextCursor: string | null };
     expect(listTeamsChatMessages).toHaveBeenCalledWith('19:x', 20, {}, 'prev');
     expect(result.nextCursor).toBe('next');
+  });
+
+  it('私聊开关关闭时不列出也不读取一对一聊天，分不清类型的同样处理', async () => {
+    const chat = (id: string, chatType: string) => ({ id, chatType }) as never;
+    vi.mocked(listTeamsChats).mockResolvedValue([
+      chat('g', 'group'),
+      chat('m', 'meeting'),
+      chat('p', 'oneOnOne'),
+      chat('u', 'unknown'),
+    ]);
+    const listed = (await teamsTools.list_teams_chats.execute({})) as { items: { id: string }[] };
+    expect(listed.items.map((item) => item.id)).toEqual(['g', 'm']);
+
+    for (const chatType of ['oneOnOne', 'unknown']) {
+      vi.mocked(getTeamsChatType).mockResolvedValue(chatType);
+      await expect(teamsTools.read_teams_messages.execute({ chatId: 'p' })).rejects.toMatchObject({
+        code: 'NOT_CONFIGURED',
+      });
+    }
+    expect(listTeamsChatMessages).not.toHaveBeenCalled();
+  });
+
+  it('私聊开关打开后可读一对一聊天', async () => {
+    prefs.teamsPrivate = true;
+    vi.mocked(listTeamsChatMessages).mockResolvedValue({ items: [], nextLink: null });
+    await teamsTools.read_teams_messages.execute({ chatId: 'p' });
+    expect(getTeamsChatType).not.toHaveBeenCalled();
+    expect(listTeamsChatMessages).toHaveBeenCalled();
   });
 
   it('频道 403 映射为 NOT_CONFIGURED 并保留管理员同意提示', async () => {

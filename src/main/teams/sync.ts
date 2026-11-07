@@ -11,7 +11,9 @@ import { availablePath, diskName, storageDirectory } from '../storage';
 import {
   buildThreads,
   digestMarkdown,
-  extractionThreads,
+  digestStart,
+  extractionDigests,
+  recentThreads,
   threadMarkdown,
   type TeamsThread,
 } from './digest';
@@ -115,13 +117,21 @@ async function withTeamsPage<T>(run: (contents: WebContents) => Promise<T>): Pro
   }
 }
 
-/** 同步结果；两份汇总交给重要事项提取（不经 IPC 发给页面），groupDigest 不含私聊。 */
-export type TeamsSyncOutcome = TeamsSyncResult & { digest?: string; groupDigest?: string };
+/** 同步结果；两份汇总交给重要事项提取（不经 IPC 发给页面），私聊单独一份。 */
+export type TeamsSyncOutcome = TeamsSyncResult & {
+  groupDigest?: string;
+  privateDigest?: string;
+  /** 读到的最新消息时间，重要事项据此推进自己的提取游标。 */
+  latest?: number;
+};
 
 let running: Promise<TeamsSyncOutcome> | undefined;
 
-/** 同步一次；已在同步中时返回 busy。 */
-export function syncTeams(): Promise<TeamsSyncOutcome> {
+/**
+ * 同步一次；已在同步中时返回 busy。
+ * digestFrom：给重要事项的汇总从这个时间往后取，可以早于存档进度；不传时只汇总本次新存档的消息。
+ */
+export function syncTeams(digestFrom?: number): Promise<TeamsSyncOutcome> {
   if (running) return Promise.resolve({ status: 'busy', newMessages: 0, conversations: 0 });
   running = withTeamsPage(async (contents) => {
     const ready = await waitUntilSynced(contents);
@@ -132,15 +142,18 @@ export function syncTeams(): Promise<TeamsSyncOutcome> {
     const dir = teamsDirectory();
     await mkdir(dir, { recursive: true });
     const state = await readState(dir);
+    const now = Date.now();
+    const digestSince = digestFrom === undefined ? state.since : digestStart(digestFrom, now);
     const snapshot = (await contents.executeJavaScript(
-      extractScript(state.since),
+      extractScript(Math.min(state.since, digestSince)),
     )) as RawTeamsSnapshot;
     const activities = snapshot.activities ?? [];
-    const threads = buildThreads(
+    const allThreads = buildThreads(
       snapshot.conversations,
       snapshot.messages,
       mentionIndex(activities),
     );
+    const threads = recentThreads(allThreads, state.since);
     if (snapshot.events) saveTeamsEvents(snapshot.events);
     // 只记动态类型与条数（不含内容），便于确认 @我 的类型名。
     const types = new Map<string, number>();
@@ -148,24 +161,29 @@ export function syncTeams(): Promise<TeamsSyncOutcome> {
       types.set(activity.type, (types.get(activity.type) ?? 0) + 1);
     console.info('[teams] 动态', Object.fromEntries(types), '日程', snapshot.events?.length ?? 0);
     for (const thread of threads) await archiveThread(dir, state, thread);
-    const now = Date.now();
     const digestPath = join(dir, '最近更新.md');
     const digest = digestMarkdown(threads, state.since, now);
     // 没有新消息时保留上一份「最近更新」，学生翻看时还能看到最近一批。
     if (threads.length > 0 || !existsSync(digestPath)) await writeFile(digestPath, digest);
-    await writeState(dir, { since: Math.max(state.since, snapshot.latest), files: state.files });
+    const latest = Math.max(state.since, snapshot.latest);
+    await writeState(dir, { since: latest, files: state.files });
     return {
       status: 'ok',
       newMessages: threads.reduce((sum, thread) => sum + thread.messages.length, 0),
       conversations: threads.length,
       digestPath,
-      digest,
-      groupDigest: digestMarkdown(extractionThreads(threads, false), state.since, now),
+      latest,
+      ...extractionDigests(allThreads, digestSince, now),
     } as const;
   }).finally(() => {
     running = undefined;
   });
   return running;
+}
+
+/** 等进行中的同步结束（断开账号前用，之后才能安全地删存档）。 */
+export async function teamsSyncSettled(): Promise<void> {
+  await running?.catch(() => undefined);
 }
 
 /** 登录过 Teams（有保存的登录会话）才在启动时自动同步。 */
@@ -176,7 +194,12 @@ export function hasTeamsLogin(): boolean {
 export function registerTeamsSyncIpc(): void {
   ipcMain.handle('teams:sync', async (event) => {
     checkWorkspaceSender(event);
-    const { digest: _digest, groupDigest: _groupDigest, ...result } = await syncTeams();
+    const {
+      groupDigest: _groupDigest,
+      privateDigest: _privateDigest,
+      latest: _latest,
+      ...result
+    } = await syncTeams();
     return result;
   });
 }

@@ -22,6 +22,8 @@ export interface SourceRead {
   status: InboxSourceStatusKind;
   newItems: number;
   text: string;
+  /** Teams 私聊内容，与 text 分开；只有发送时私聊开关开着才进入提取。 */
+  privateText?: string;
   detail: string | null;
   /** 读取成功后要保存的新游标；undefined 表示游标不变。 */
   cursor?: string;
@@ -49,7 +51,12 @@ function clip(text: string): string {
   return text.length > MAX_ITEM_CHARS ? `${text.slice(0, MAX_ITEM_CHARS)}…` : text;
 }
 
-export async function readTeams(includePrivate = false): Promise<SourceRead> {
+/** 提取进度记在重要事项自己的游标里：存档同步推进了，没进入队列的内容下次还能重读。 */
+export async function readTeams(
+  cursor?: string,
+  aiExtract = false,
+  now = Date.now(),
+): Promise<SourceRead> {
   if (!hasTeamsLogin())
     return {
       source: 'teams',
@@ -58,7 +65,7 @@ export async function readTeams(includePrivate = false): Promise<SourceRead> {
       text: '',
       detail: '在侧栏点 Teams 登录一次后自动同步',
     };
-  const result = await syncTeams();
+  const result = await syncTeams(aiExtract ? Number(cursor) || firstSince(now) : undefined);
   const status: InboxSourceStatusKind =
     result.status === 'ok'
       ? 'ok'
@@ -73,18 +80,15 @@ export async function readTeams(includePrivate = false): Promise<SourceRead> {
       : result.status === 'not-ready'
         ? 'Teams 两分钟内没加载完，稍后自动重试'
         : null;
+  const courses = result.groupDigest || result.privateDigest ? await currentCourses() : [];
   return {
     source: 'teams',
     status,
     newItems: result.newMessages,
-    text:
-      result.newMessages > 0
-        ? tagCourses(
-            (includePrivate ? result.digest : result.groupDigest) ?? '',
-            await currentCourses(),
-          )
-        : '',
+    text: tagCourses(result.groupDigest ?? '', courses),
+    privateText: tagCourses(result.privateDigest ?? '', courses),
     detail,
+    ...(result.latest !== undefined && { cursor: String(result.latest) }),
   };
 }
 
@@ -165,7 +169,8 @@ export async function readCampusWeb(
     source: 'campus',
     status: allFailed ? 'error' : 'ok',
     newItems: items.length,
-    text: items
+    text: [...items]
+      .sort((a, b) => a.notice.date.localeCompare(b.notice.date))
       .map(
         ({ site, notice, body }) =>
           `### ${site} · ${notice.title} · ${notice.date}\n\n${(body || '（正文未读取，只有标题）').slice(0, MAX_NOTICE_CHARS)}\n\n来源：${notice.url}\n`,

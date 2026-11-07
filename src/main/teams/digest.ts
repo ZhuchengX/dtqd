@@ -109,18 +109,41 @@ export function extractionThreads(
   );
 }
 
-/** 本次同步的新消息汇总（覆盖写入「最近更新.md」），agent 与 LLM 汇总只读这一份。 */
+/** 首次同步或长期关闭后再开，会读到大量旧消息；汇总只取最近几天。 */
+export function digestStart(since: number, now: number): number {
+  return Math.max(since, now - FIRST_DIGEST_DAYS * 86_400_000);
+}
+
+export function recentThreads(threads: readonly TeamsThread[], from: number): TeamsThread[] {
+  return threads
+    .map((thread) => ({ ...thread, messages: thread.messages.filter((m) => m.time > from) }))
+    .filter((thread) => thread.messages.length > 0);
+}
+
+/** 交给 AI 提取的两份汇总：群聊和私聊分开，由提取时的最新开关决定发哪份；没有内容时为空串。 */
+export function extractionDigests(
+  threads: readonly TeamsThread[],
+  since: number,
+  now: number,
+): { groupDigest: string; privateDigest: string } {
+  const group = extractionThreads(threads, false);
+  const privateThreads = threads.filter((thread) => !group.includes(thread));
+  // 提取超长时留末尾，所以最近活跃的会话排在最后（「最近更新.md」给人看，仍是新的在前）。
+  const digest = (part: readonly TeamsThread[]) =>
+    recentThreads(part, digestStart(since, now)).length > 0
+      ? digestMarkdown([...part].reverse(), since, now)
+      : '';
+  return { groupDigest: digest(group), privateDigest: digest(privateThreads) };
+}
+
+/** 本次同步的新消息汇总（覆盖写入「最近更新.md」）。 */
 export function digestMarkdown(
   threads: readonly TeamsThread[],
   since: number,
   now: number,
 ): string {
-  // 首次同步或长期关闭后再开，会读到大量旧消息；汇总只取最近几天。
-  const earliest = now - FIRST_DIGEST_DAYS * 86_400_000;
-  const from = Math.max(since, earliest);
-  const recent = threads
-    .map((thread) => ({ ...thread, messages: thread.messages.filter((m) => m.time > from) }))
-    .filter((thread) => thread.messages.length > 0);
+  const from = digestStart(since, now);
+  const recent = recentThreads(threads, from);
   const total = recent.reduce((sum, thread) => sum + thread.messages.length, 0);
   const firstNote =
     since > 0 ? '' : `（首次同步，只汇总最近 ${FIRST_DIGEST_DAYS} 天；更早的消息在各会话存档里）`;

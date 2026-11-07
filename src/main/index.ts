@@ -31,6 +31,7 @@ import { registerTeamsSyncIpc } from './teams/sync';
 import { registerInboxIpc, scheduleInbox } from './inbox';
 import { registerFeedbackIpc } from './feedback';
 import { registerOutlookWebIpc } from './outlook-web';
+import { registerMicrosoftWebDisconnectIpc } from './teams/disconnect';
 import { windowBackground } from './window-background';
 import { registerReminderIpc, scheduleReminders } from './todo/reminders';
 import { registerShuiyuanIpc } from './shuiyuan/ipc';
@@ -233,6 +234,7 @@ app
     registerInboxIpc();
     registerFeedbackIpc();
     registerOutlookWebIpc();
+    registerMicrosoftWebDisconnectIpc();
     scheduleInbox();
     registerShuiyuanIpc();
     registerAgentIpc();

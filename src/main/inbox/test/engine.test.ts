@@ -8,6 +8,7 @@ vi.mock('../../agent/providers', () => ({ usableLlmProviders: vi.fn(() => []) })
 vi.mock('../../todo', () => ({ addNoticedTodo: vi.fn() }));
 vi.mock('@earendil-works/pi-ai/compat', () => ({ completeSimple: vi.fn() }));
 import { completeSimple } from '@earendil-works/pi-ai/compat';
+import { resolveModel } from '../../agent/pi';
 import { usableLlmProviders } from '../../agent/providers';
 import { addNoticedTodo } from '../../todo';
 import {
@@ -17,10 +18,12 @@ import {
   inboxPrompt,
   isImportant,
   parseInboxItems,
+  splitByBudget,
   todoNotes,
   todoTitle,
   triageInbox,
   triageModel,
+  type InboxInput,
   type InboxItem,
 } from '../engine';
 
@@ -145,15 +148,29 @@ describe('inboxPrompt / inboxMarkdown', () => {
     expect(prompt).toContain('hello bb');
   });
 
-  it('没有课程与兴趣时不写那两段；总长度超限截断', () => {
+  it('没有课程与兴趣时不写那两段；总长度超限截断，只留最新内容', () => {
     const prompt = inboxPrompt(
-      [{ source: 'teams', text: 'x'.repeat(70000) }],
+      [{ source: 'teams', text: `最早${'x'.repeat(70000)}最新` }],
       { courses: [], interests: [] },
       'now',
     );
     expect(prompt).not.toContain('在读课程');
     expect(prompt).not.toContain('关心的方向');
     expect(prompt).toContain('已截断');
+    expect(prompt).toContain('最新');
+    expect(prompt).not.toContain('最早');
+  });
+
+  it('排在后面的来源不会因为前面的来源太长而被吃掉', () => {
+    const prompt = inboxPrompt(
+      [
+        { source: 'teams', text: 't'.repeat(70000) },
+        { source: 'mydundee', text: 'myDundee 作业 3 周五截止' },
+      ],
+      { courses: [], interests: [] },
+      'now',
+    );
+    expect(prompt).toContain('myDundee 作业 3 周五截止');
   });
 
   it('按类型分组，截止日期按时间排序，写出来源', () => {
@@ -190,6 +207,7 @@ describe('triageInbox', () => {
       items: [],
       todos: 0,
       model: null,
+      rest: [],
     });
   });
 
@@ -252,6 +270,22 @@ describe('triageInbox', () => {
     expect(addNoticedTodo).toHaveBeenCalledTimes(1);
   });
 
+  it('模型准备好后开关已关：不发请求，返回 withdrawn', async () => {
+    vi.mocked(usableLlmProviders).mockReturnValue([
+      { id: 'p', name: 'p', baseUrl: 'https://x/v1', apiKey: 'k', models: ['m'], enabled: true },
+    ] as never);
+    vi.mocked(completeSimple).mockClear();
+    let allowed = true;
+    vi.mocked(resolveModel).mockImplementationOnce(async () => {
+      allowed = false;
+      return { model: {} } as never;
+    });
+    await expect(
+      triageInbox(dir, [{ source: 'teams', text: '私聊', private: true }], profile, () => allowed),
+    ).resolves.toMatchObject({ status: 'withdrawn', items: [] });
+    expect(completeSimple).not.toHaveBeenCalled();
+  });
+
   it('回复解析不出 JSON 时返回 failed', async () => {
     vi.mocked(usableLlmProviders).mockReturnValue([
       { id: 'p', name: 'p', baseUrl: 'https://x/v1', apiKey: 'k', models: ['m'], enabled: true },
@@ -264,5 +298,56 @@ describe('triageInbox', () => {
       status: 'failed',
       model: 'm',
     });
+  });
+});
+
+describe('splitByBudget', () => {
+  const size = (inputs: readonly InboxInput[]) =>
+    inputs.reduce((sum, input) => sum + input.text.length, 0);
+
+  it('没超预算时全部发送，不改内容', () => {
+    const inputs: InboxInput[] = [
+      { source: 'teams', text: 'a' },
+      { source: 'mydundee', text: 'b' },
+    ];
+    expect(splitByBudget(inputs)).toEqual({ sent: inputs, rest: [] });
+  });
+
+  it('每个来源都有份额，用不完的份额先给更权威的来源', () => {
+    const { sent, rest } = splitByBudget(
+      [
+        { source: 'teams', text: 't'.repeat(50000) },
+        { source: 'mydundee', text: 'm'.repeat(50000) },
+        { source: 'qq', text: 'q'.repeat(100) },
+      ],
+      60000,
+    );
+    const bySource = new Map(sent.map((input) => [input.source, input.text]));
+    expect(bySource.get('qq')).toBe('q'.repeat(100));
+    expect(bySource.get('mydundee')!.length).toBeGreaterThan(bySource.get('teams')!.length);
+    expect(bySource.get('teams')!.length).toBeGreaterThanOrEqual(19000);
+    expect(size(sent)).toBeLessThanOrEqual(60000);
+    expect(rest.map((input) => input.source).sort()).toEqual(['mydundee', 'teams']);
+  });
+
+  it('发送最新的部分，更早的留到下次；两部分拼起来不丢内容', () => {
+    const paragraphs = Array.from({ length: 400 }, (_, i) => `消息${i} ${'x'.repeat(200)}`);
+    const text = paragraphs.join('\n\n');
+    const { sent, rest } = splitByBudget([{ source: 'teams', text }], 20000);
+    expect(sent[0]!.text).toContain('已截断');
+    expect(sent[0]!.text).toContain('消息399');
+    expect(sent[0]!.text).not.toContain('消息0 ');
+    expect(sent[0]!.text.length).toBeLessThanOrEqual(20000);
+    const body = sent[0]!.text.slice(sent[0]!.text.indexOf('\n') + 1);
+    expect(`${rest[0]!.text}\n\n${body}`).toBe(text);
+  });
+
+  it('切分后保留私聊标记', () => {
+    const { sent, rest } = splitByBudget(
+      [{ source: 'teams', text: 'p'.repeat(30000), private: true }],
+      10000,
+    );
+    expect(sent[0]!.private).toBe(true);
+    expect(rest[0]!.private).toBe(true);
   });
 });

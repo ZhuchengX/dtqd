@@ -95,7 +95,7 @@ async function connect(): Promise<boolean> {
   if (!ok) return false;
   markOutlookWebConnected();
   window.destroy();
-  void syncOutlookWeb();
+  void syncOutlookWeb().catch((error: unknown) => console.warn('[outlook] 同步失败', error));
   return true;
 }
 
@@ -127,7 +127,10 @@ async function runSync(): Promise<OutlookWebSync> {
     window.setIgnoreMouseEvents(true);
     window.showInactive();
     void window.loadURL(OUTLOOK_URL);
-    if (!(await waitForRows(window.webContents, LOAD_TIMEOUT_MS)))
+    const loaded = await waitForRows(window.webContents, LOAD_TIMEOUT_MS);
+    // 同步途中学生断开了账号，窗口已被销毁。
+    if (window.isDestroyed()) return { status: 'not-ready', added: 0 };
+    if (!loaded)
       return {
         status: onLoginPage(window.webContents) ? 'needs-login' : 'not-ready',
         added: 0,
@@ -152,6 +155,11 @@ export function syncOutlookWeb(): Promise<OutlookWebSync> {
       running = null;
     });
   return running;
+}
+
+/** 等进行中的同步结束（断开账号前用）。 */
+export async function outlookWebSyncSettled(): Promise<void> {
+  await running?.catch(() => undefined);
 }
 
 export function registerOutlookWebIpc(): void {

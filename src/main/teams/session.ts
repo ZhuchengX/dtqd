@@ -71,6 +71,7 @@ async function restoreSnapshot(teams: Session, path: string, cookies: Map<string
 }
 
 let ready: Promise<Session> | undefined;
+let trackedCookies: Map<string, Cookie> | undefined;
 
 /** Teams 分区；首次调用时写回上次的 session Cookie，并开始跟踪变化。 */
 export function getTeamsSession(configure: (teams: Session) => void): Promise<Session> {
@@ -79,6 +80,7 @@ export function getTeamsSession(configure: (teams: Session) => void): Promise<Se
     configure(teams);
     const path = snapshotPath();
     const cookies = new Map<string, Cookie>();
+    trackedCookies = cookies;
     for (const cookie of await teams.cookies.get({})) cookies.set(cookieKey(cookie), cookie);
     await restoreSnapshot(teams, path, cookies);
     teams.cookies.on('changed', (_event, cookie, _cause, removed) => {
@@ -102,4 +104,19 @@ export async function flushTeamsSession(): Promise<void> {
   const teams = await ready;
   await teams.cookies.flushStore();
   teams.flushStorageData();
+}
+
+/** 删除保存的登录会话：hasTeamsLogin 随即为假，后台不再启动新的同步。 */
+export function removeTeamsSnapshot(): void {
+  rmSync(snapshotPath(), { force: true });
+}
+
+/** 退出登录：清掉分区里的 Cookie、本地存储和缓存（含 Teams 本地消息缓存），再删保存的会话。 */
+export async function clearTeamsLogin(teams: Session): Promise<void> {
+  await teams.clearStorageData();
+  await Promise.all([teams.clearCache(), teams.clearAuthCache()]);
+  // 清空跟踪表：之后到达的 Cookie 变化事件不会把旧会话写回磁盘。
+  trackedCookies?.clear();
+  removeTeamsSnapshot();
+  await teams.cookies.flushStore();
 }

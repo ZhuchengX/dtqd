@@ -20,6 +20,7 @@ import {
   archiveCanvasCourse,
 } from './api';
 import type { CanvasState } from '../../shared/api';
+import { forgetInboxSources } from '../inbox';
 import { blackboardConnected, disconnectBlackboard, loginBlackboard } from './blackboard';
 
 export function registerCanvasIpc() {
@@ -52,6 +53,7 @@ export function registerCanvasIpc() {
   handle('disconnect', async () => {
     clearCanvasToken();
     await disconnectBlackboard();
+    await forgetInboxSources(['mydundee']);
     broadcastTodos();
   });
   handle('sync-courses', syncCanvasCourses);

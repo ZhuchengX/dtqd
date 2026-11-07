@@ -272,6 +272,12 @@ export async function listTeamsChats(limit: unknown = 20, deps: GraphDeps = {}) 
   );
 }
 
+/** 单个聊天的类型（oneOnOne / group / meeting）；查不到时为 unknown。 */
+export async function getTeamsChatType(chatId: string, deps: GraphDeps = {}): Promise<string> {
+  const body = await graphGet(`/chats/${encodeURIComponent(chatId)}`, 'graph', deps);
+  return chatSchema.safeParse(body).data?.chatType ?? 'unknown';
+}
+
 export async function listTeamsChatMessages(
   chatId: unknown,
   limit: unknown = 20,

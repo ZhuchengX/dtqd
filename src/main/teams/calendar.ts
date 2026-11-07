@@ -10,6 +10,10 @@ export function saveTeamsEvents(events: readonly RawTeamsEvent[]): void {
   writeSetting(KEY, JSON.stringify(events.filter((event) => !event.cancelled)));
 }
 
+export function clearTeamsEvents(): void {
+  writeSetting(KEY, '[]');
+}
+
 function savedEvents(): RawTeamsEvent[] {
   try {
     const parsed: unknown = JSON.parse(readSetting(KEY) ?? '[]');

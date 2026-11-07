@@ -20,6 +20,7 @@ import {
   setMailTrashRetention,
 } from './api';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { forgetInboxSources } from '../inbox';
 import { checkWorkspaceSender } from '../ipc';
 import { saveLocalDraft, listLocalDrafts, deleteLocalDraft } from './drafts';
 import { basename } from 'node:path';
@@ -116,7 +117,11 @@ export function registerMailIpc(): void {
     return configureMailAccount(parsed.data);
   });
 
-  ipcMain.handle('mail:disconnect', (): MailResult => disconnectMailAccount());
+  ipcMain.handle('mail:disconnect', async (): Promise<MailResult> => {
+    const result = disconnectMailAccount();
+    await forgetInboxSources(['outlook']);
+    return result;
+  });
 
   ipcMain.handle('mail:list-folders', () => listMailFolders());
 

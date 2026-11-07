@@ -180,6 +180,18 @@ async function saveBlackboardLogin(): Promise<void> {
   })();
 }
 
+const LOGIN_COOKIE_ROOTS = [
+  'dundee.ac.uk',
+  'login.microsoftonline.com',
+  'login.microsoft.com',
+  'login.live.com',
+];
+
+/** myDundee 走邓迪 SSO 和微软登录，断开时这几处的 Cookie 都要清。中南教务的不动。 */
+export function isBlackboardLoginDomain(domain: string): boolean {
+  return LOGIN_COOKIE_ROOTS.some((root) => domain === root || domain.endsWith(`.${root}`));
+}
+
 export async function disconnectBlackboard(): Promise<void> {
   getDatabase()
     .prepare('DELETE FROM workspace_settings WHERE key IN (?, ?)')
@@ -187,7 +199,7 @@ export async function disconnectBlackboard(): Promise<void> {
   const campus = await getCampusSession();
   for (const cookie of await campus.cookies.get({})) {
     const domain = cookie.domain?.replace(/^\./, '') ?? '';
-    if (domain === 'dundee.ac.uk' || domain.endsWith('.dundee.ac.uk'))
+    if (isBlackboardLoginDomain(domain))
       await campus.cookies.remove(`https://${domain}${cookie.path || '/'}`, cookie.name);
   }
 }

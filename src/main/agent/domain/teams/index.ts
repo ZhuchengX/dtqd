@@ -1,19 +1,23 @@
-// Teams（Microsoft Graph）只读命令：随 Dundee Outlook（Microsoft 365）登录可用，实时联网查询，不落本地库。
+// Teams 只读命令。存档命令（./archive）读本机同步下来的消息，学生默认用这组；
+// Graph 命令是上游保留代码，要自备 Azure 应用并登录 Microsoft 365 才可用，实时联网查询，不落本地库。
 import { z } from 'zod';
 import {
+  getTeamsChatType,
   listJoinedTeams,
   listTeamsChannelMessages,
   listTeamsChatMessages,
   listTeamsChats,
 } from '../../../mail/graph';
+import { inboxPrefs } from '../../../inbox/prefs';
 import { getMicrosoftConfig } from '../../../mail/microsoft';
 import { coverage, cursorPage, freshness, tool, toolError } from '../shared';
+import { PRIVATE_HIDDEN, teamsArchiveTools } from './archive';
 
 function assertSignedIn(): void {
   if (!getMicrosoftConfig().signedIn) {
     throw toolError(
       'NOT_CONFIGURED',
-      'Teams 未连接：请先在设置的邮件页选择「Dundee Outlook」并用 Microsoft 365 登录',
+      '这条命令需要 Microsoft 365 登录，学生默认没有；请改用 list_teams_archive、read_teams_archive、search_teams_archive 读本机 Teams 存档',
     );
   }
 }
@@ -35,17 +39,24 @@ function asToolError(error: unknown): never {
 
 const limit = z.number().int().min(1).max(50).default(20);
 
+/** 和存档一样：只有群聊和会议聊天不受私聊开关限制，分不清类型的按私聊处理。 */
+const GROUP_CHAT_TYPES = new Set(['group', 'meeting']);
+
 export const listTeamsChatsTool = tool(
   '列出 Microsoft Teams 最近的聊天（1:1、群聊、会议聊天）：id、主题、成员、最近更新时间。只读，实时联网。read_teams_messages 的 chatId 取自这里。',
   z.object({ limit }).strict(),
   async ({ limit: top }) => {
     assertSignedIn();
     try {
-      const items = await listTeamsChats(top);
+      const chats = await listTeamsChats(top);
+      const items = inboxPrefs().teamsPrivate
+        ? chats
+        : chats.filter((chat) => GROUP_CHAT_TYPES.has(chat.chatType));
+      const hidden = items.length < chats.length ? [PRIVATE_HIDDEN] : [];
       return {
         items,
         freshness: freshness('realtime'),
-        coverage: coverage('teams_recent_chats', false, [`只列出最近 ${top} 个聊天`]),
+        coverage: coverage('teams_recent_chats', false, [`只列出最近 ${top} 个聊天`, ...hidden]),
       };
     } catch (error) {
       asToolError(error);
@@ -70,6 +81,12 @@ export const readTeamsMessagesTool = tool(
   async (input) => {
     assertSignedIn();
     try {
+      if (
+        input.chatId &&
+        !inboxPrefs().teamsPrivate &&
+        !GROUP_CHAT_TYPES.has(await getTeamsChatType(input.chatId))
+      )
+        throw toolError('NOT_CONFIGURED', PRIVATE_HIDDEN);
       const { items, nextLink } = input.chatId
         ? await listTeamsChatMessages(input.chatId, input.limit, {}, input.cursor)
         : await listTeamsChannelMessages(
@@ -105,6 +122,7 @@ export const listTeamsChannelsTool = tool(
 );
 
 export const teamsTools = {
+  ...teamsArchiveTools,
   list_teams_chats: listTeamsChatsTool,
   read_teams_messages: readTeamsMessagesTool,
   list_teams_channels: listTeamsChannelsTool,

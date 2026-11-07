@@ -31,6 +31,21 @@ export function markOutlookWebConnected(): void {
   writeSetting(CONNECTED_KEY, '1');
 }
 
+/** 断开：忘记连接状态；deleteRows 时连同读到本机的收件箱列表一起删除。 */
+export function clearOutlookWebConnection(deleteRows: boolean): void {
+  const db = getDatabase();
+  db.prepare('DELETE FROM workspace_settings WHERE key IN (?, ?, ?)').run(
+    CONNECTED_KEY,
+    LAST_SYNC_KEY,
+    LAST_STATUS_KEY,
+  );
+  if (deleteRows) db.prepare('DELETE FROM outlook_web_mail').run();
+}
+
+export function outlookWebHasRows(): boolean {
+  return Boolean(getDatabase().prepare('SELECT 1 FROM outlook_web_mail LIMIT 1').get());
+}
+
 export function recordOutlookWebSync(status: OutlookWebStatus, at: string): void {
   writeSetting(LAST_STATUS_KEY, status);
   if (status === 'ok') writeSetting(LAST_SYNC_KEY, at);
@@ -90,7 +105,8 @@ export function rowsSince(cursor: string | undefined): {
         )
         .all(FIRST_READ_ROWS)) as unknown as StoredRow[];
   return {
-    labels: rows.map((row) => row.label),
+    // 查询按新到旧才能配合 LIMIT；交给提取时旧的在前，超长时留下的是新邮件。
+    labels: rows.map((row) => row.label).reverse(),
     cursor: rows[0] ? String(rows[0].seq) : cursor,
   };
 }

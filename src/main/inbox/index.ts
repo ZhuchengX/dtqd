@@ -49,6 +49,8 @@ interface StoredState {
 
 let running: Promise<InboxState> | null = null;
 let nextRunAt: string | null = null;
+/** 本轮开始后断开了账号的来源；下一轮开始时清空。 */
+const forgotten = new Set<InboxSource>();
 
 export function inboxDirectory(): string {
   return join(storageDirectory(), '重要事项');
@@ -137,32 +139,81 @@ async function writePending(dir: string, inputs: readonly InboxInput[]): Promise
   await rename(`${path}.tmp`, path);
 }
 
+let pendingQueue: Promise<unknown> = Promise.resolve();
+
+/** 队列的读改写一个接一个，免得旧快照盖掉刚写入的内容。 */
+function updatePending(change: (pending: InboxInput[]) => InboxInput[]): Promise<InboxInput[]> {
+  const dir = inboxDirectory();
+  const done = pendingQueue.then(async () => {
+    const next = change(await readPending(dir));
+    await writePending(dir, next);
+    return next;
+  });
+  pendingQueue = done.catch(() => undefined);
+  return done;
+}
+
 /** 同一来源的待提取内容合并成一段；超长时丢最早的部分，留最新的。 */
 export function mergePending(
   pending: readonly InboxInput[],
   fresh: readonly InboxInput[],
 ): InboxInput[] {
-  return SOURCE_ORDER.flatMap((source) => {
-    const text = [...pending, ...fresh]
-      .filter((input) => input.source === source && input.text.trim())
-      .map((input) => input.text)
-      .join('\n\n');
-    if (!text) return [];
-    return [
-      { source, text: text.length > MAX_PENDING_CHARS ? text.slice(-MAX_PENDING_CHARS) : text },
-    ];
-  });
+  // 私聊单独成段，关掉私聊开关时能只丢这一段。
+  return SOURCE_ORDER.flatMap((source) =>
+    [false, true].flatMap((isPrivate) => {
+      const text = [...pending, ...fresh]
+        .filter(
+          (input) =>
+            input.source === source && Boolean(input.private) === isPrivate && input.text.trim(),
+        )
+        .map((input) => input.text)
+        .join('\n\n');
+      if (!text) return [];
+      if (text.length > MAX_PENDING_CHARS)
+        console.warn('[inbox] 积压超过上限，丢弃最早的内容', source, text.length);
+      return [
+        {
+          source,
+          text: text.length > MAX_PENDING_CHARS ? text.slice(-MAX_PENDING_CHARS) : text,
+          ...(isPrivate && { private: true }),
+        },
+      ];
+    }),
+  );
+}
+
+/** 按此刻的开关留下还允许处理的内容；发送前和写回队列前都要重新过一遍。 */
+function allowedInputs(inputs: readonly InboxInput[], prefs: InboxPrefs): InboxInput[] {
+  if (!prefs.aiExtract) return [];
+  return inputs.filter(
+    (input) =>
+      prefs.sources[input.source] &&
+      !forgotten.has(input.source) &&
+      (!input.private || prefs.teamsPrivate),
+  );
+}
+
+function readInputs(read: SourceRead): InboxInput[] {
+  return [
+    { source: read.source, text: read.text },
+    ...(read.privateText ? [{ source: read.source, text: read.privateText, private: true }] : []),
+  ];
+}
+
+/** 账号断开后调用：清掉队列和游标，正在进行的那一轮也不再发送或写回这些来源。 */
+export async function forgetInboxSources(sources: readonly InboxSource[]): Promise<void> {
+  for (const source of sources) forgotten.add(source);
+  await updatePending((pending) => pending.filter((input) => !sources.includes(input.source)));
+  saveCursors(
+    Object.fromEntries(
+      Object.entries(readCursors()).filter(([source]) => !forgotten.has(source as InboxSource)),
+    ),
+  );
 }
 
 /** 关掉的内容立即从待提取队列移除；来源的游标同时清掉，重新开启时最多回看约 14 天。 */
-async function applyPrefsToPending(prefs: InboxPrefs, dropTeams: boolean): Promise<void> {
-  const dir = inboxDirectory();
-  const kept = prefs.aiExtract
-    ? (await readPending(dir)).filter(
-        (input) => prefs.sources[input.source] && !(dropTeams && input.source === 'teams'),
-      )
-    : [];
-  await writePending(dir, kept);
+async function applyPrefsToPending(prefs: InboxPrefs): Promise<void> {
+  await updatePending((pending) => allowedInputs(pending, prefs));
   const cursors = readCursors();
   saveCursors(
     Object.fromEntries(
@@ -180,7 +231,7 @@ async function readSource(
   if (!prefs.sources[source])
     return { source, status: 'idle', newItems: 0, text: '', detail: '已关闭，不读取也不发送' };
   try {
-    if (source === 'teams') return await readTeams(prefs.teamsPrivate);
+    if (source === 'teams') return await readTeams(cursor, prefs.aiExtract, now);
     if (source === 'outlook')
       return outlookWebConnected() ? await readOutlookWeb(cursor) : readOutlook(cursor, now);
     if (source === 'mydundee') return readMyDundee(cursor, now);
@@ -198,6 +249,7 @@ async function readSource(
 }
 
 async function runOnce(): Promise<InboxState> {
+  forgotten.clear();
   const now = Date.now();
   const at = new Date(now).toISOString();
   const cursors = readCursors();
@@ -228,32 +280,44 @@ async function runOnce(): Promise<InboxState> {
     writeSetting('inbox-state', JSON.stringify(previous));
     broadcast();
   }
-  saveCursors(cursors);
 
   const dir = inboxDirectory();
-  // 读取期间学生可能刚改了开关，以这里的最新状态为准。
+  // 读取期间学生可能刚改了开关：选内容和存游标都以最新开关为准。
+  // 先落盘再推进游标、再发给模型：中途退出时内容还在队列里，不会丢。
+  const fresh = reads.flatMap(readInputs);
+  const inputs = await updatePending((pending) =>
+    allowedInputs(mergePending(pending, fresh), inboxPrefs()),
+  );
+  const cursorPrefs = inboxPrefs();
+  saveCursors(
+    Object.fromEntries(
+      Object.entries(cursors).filter(
+        ([source]) =>
+          cursorPrefs.sources[source as InboxSource] && !forgotten.has(source as InboxSource),
+      ),
+    ),
+  );
+  const courses = inputs.length > 0 ? await currentCourses() : [];
   const prefs = inboxPrefs();
-  const inputs = prefs.aiExtract
-    ? mergePending(
-        (await readPending(dir)).filter((input) => prefs.sources[input.source]),
-        reads
-          .filter((read) => prefs.sources[read.source])
-          .map((read) => ({ source: read.source, text: read.text })),
-      )
-    : [];
+  const sendable = allowedInputs(inputs, prefs);
   let lastRun: InboxRun;
   if (!prefs.aiExtract) {
-    await writePending(dir, []);
+    await updatePending(() => []);
     lastRun = { at, status: 'off', items: 0, todos: 0, model: null };
-  } else if (inputs.length === 0) {
+  } else if (sendable.length === 0) {
+    await updatePending(() => []);
     lastRun = { at, status: 'nothing-new', items: 0, todos: 0, model: configuredTriageModel() };
   } else {
     try {
-      const result = await triageInbox(dir, inputs, {
-        courses: await currentCourses(),
-        interests: prefs.interests,
-      });
-      await writePending(dir, result.status === 'ok' ? [] : inputs);
+      const result = await triageInbox(
+        dir,
+        sendable,
+        { courses, interests: prefs.interests },
+        () => allowedInputs(sendable, inboxPrefs()).length === sendable.length,
+      );
+      // 提取期间开关可能又变了，写回前再过滤一次。
+      const remaining = result.status === 'ok' ? result.rest : sendable;
+      await updatePending(() => allowedInputs(remaining, inboxPrefs()));
       lastRun = {
         at,
         status: result.status,
@@ -265,7 +329,7 @@ async function runOnce(): Promise<InboxState> {
       if (result.usage) previous.usage = addUsage(previous.usage ?? null, result.usage, new Date());
     } catch (error) {
       console.warn('[inbox] 提取失败', error instanceof Error ? error.message : error);
-      await writePending(dir, inputs);
+      await updatePending(() => allowedInputs(sendable, inboxPrefs()));
       lastRun = { at, status: 'failed', items: 0, todos: 0, model: configuredTriageModel() };
     }
   }
@@ -335,10 +399,7 @@ export function registerInboxIpc(): void {
   });
   ipcMain.handle('inbox:set-prefs', async (event, patch: unknown) => {
     checkWorkspaceSender(event);
-    const hadPrivate = inboxPrefs().teamsPrivate;
-    const next = setInboxPrefs(patch);
-    // 刚关掉私聊时，队列里的 Teams 内容可能含私聊，一并清掉。
-    await applyPrefsToPending(next, hadPrivate && !next.teamsPrivate);
+    await applyPrefsToPending(setInboxPrefs(patch));
     return broadcast();
   });
 }

@@ -151,6 +151,12 @@ export const settingsSearchItems: SettingsSearchItem[] = [
     ],
   },
   {
+    id: 'microsoft',
+    section: 'connections',
+    title: 'Teams 与 Dundee 邮箱',
+    keywords: ['连接', 'teams', '微软', 'microsoft', 'outlook', '断开', '退出登录', '存档'],
+  },
+  {
     id: 'mail',
     section: 'connections',
     title: '学校邮箱',
@@ -286,7 +292,7 @@ export const settingsSectionSummaries: Record<SettingsSectionId, string> = {
   shortcuts: '查看与修改快捷键',
   workspace: '工作目录与布局',
   archived: '恢复或永久删除已归档对话',
-  connections: 'myDundee、邮箱、教务与水源连接',
+  connections: 'myDundee、Teams、邮箱、教务与水源连接',
   inbox: 'Teams、Outlook、myDundee、QQ 的重要事项提取与同步状态',
   remotes: 'SSH 远程主机与连接',
   providers: 'AI 模型与 API 提供商',

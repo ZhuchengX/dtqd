@@ -13,11 +13,18 @@ import { addNoticedTodo } from '../todo';
 const MAX_PROMPT_CHARS = 60000;
 const MAX_REMEMBERED_KEYS = 2000;
 const sources = Object.keys(inboxSourceLabels) as [InboxSource, ...InboxSource[]];
+/** 预算有富余时先给更权威的来源，与提示词里的权威顺序一致。 */
+const AUTHORITY_ORDER: InboxSource[] = ['mydundee', 'outlook', 'teams', 'campus', 'qq'];
+const TRUNCATED_NOTE = '（更早的内容已截断，下次继续）';
+/** 切分时尽量落在消息之间，往后找这么远的段落边界。 */
+const BOUNDARY_SEARCH_CHARS = 2000;
 
 export interface InboxInput {
   source: InboxSource;
   /** 该来源本次的新内容（Markdown 或纯文本）。 */
   text: string;
+  /** Teams 私聊：只有学生开着私聊开关时才发送或留在队列。 */
+  private?: boolean;
 }
 
 export interface InboxProfile {
@@ -46,11 +53,13 @@ export interface ModelUsage {
 }
 
 export interface InboxTriageResult {
-  status: 'ok' | 'no-model' | 'failed';
+  status: 'ok' | 'no-model' | 'failed' | 'withdrawn';
   items: InboxItem[];
   todos: number;
   model: string | null;
   usage?: ModelUsage;
+  /** 超出本次预算、没有发给模型的内容，留到下次提取。 */
+  rest: InboxInput[];
 }
 
 const SOURCE_HINTS: Record<InboxSource, string> = {
@@ -76,18 +85,59 @@ function profileLines(profile: InboxProfile): string[] {
   return lines;
 }
 
+/** 每段先得一份平均额度；用不完的额度按权威顺序补给还不够的来源。 */
+function budgetShares(inputs: readonly InboxInput[], max: number): number[] {
+  const fair = Math.floor(max / inputs.length);
+  const shares = inputs.map((input) => Math.min(input.text.length, fair));
+  let left = max - shares.reduce((sum, share) => sum + share, 0);
+  const byAuthority = inputs
+    .map((input, index) => ({ index, rank: AUTHORITY_ORDER.indexOf(input.source) }))
+    .sort((a, b) => a.rank - b.rank);
+  for (const { index } of byAuthority) {
+    const extra = Math.min(left, inputs[index]!.text.length - shares[index]!);
+    shares[index]! += extra;
+    left -= extra;
+  }
+  return shares;
+}
+
+/** 留下最新的部分：截止日期和待回复多在新消息里；更早的内容留到下次。 */
+function splitAtShare(input: InboxInput, share: number): { sent: InboxInput; rest?: InboxInput } {
+  if (input.text.length <= share) return { sent: input };
+  const start = input.text.length - (share - TRUNCATED_NOTE.length - 1);
+  const boundary = input.text.indexOf('\n\n', start);
+  const atBoundary = boundary >= 0 && boundary - start <= BOUNDARY_SEARCH_CHARS;
+  const head = input.text.slice(0, atBoundary ? boundary : start);
+  const tail = input.text.slice(atBoundary ? boundary + 2 : start);
+  return {
+    sent: { ...input, text: `${TRUNCATED_NOTE}\n${tail}` },
+    rest: { ...input, text: head },
+  };
+}
+
+/** 按预算切分：sent 这次发给模型，rest 留在队列。一个来源再长也不会挤掉其他来源。 */
+export function splitByBudget(
+  inputs: readonly InboxInput[],
+  max = MAX_PROMPT_CHARS,
+): { sent: InboxInput[]; rest: InboxInput[] } {
+  const filled = inputs.filter((input) => input.text);
+  const shares = budgetShares(filled, max);
+  const parts = filled.map((input, index) => splitAtShare(input, shares[index]!));
+  return {
+    sent: parts.map((part) => part.sent),
+    rest: parts.flatMap((part) => (part.rest ? [part.rest] : [])),
+  };
+}
+
 export function inboxPrompt(
   inputs: readonly InboxInput[],
   profile: InboxProfile,
   now: string,
 ): string {
-  let budget = MAX_PROMPT_CHARS;
-  const bodies = inputs.map((input) => {
-    const text =
-      input.text.length > budget ? `${input.text.slice(0, budget)}\n（后面已截断）` : input.text;
-    budget = Math.max(0, budget - text.length);
-    return `## 来源：${input.source}（${inboxSourceLabels[input.source]}；${SOURCE_HINTS[input.source]}）\n\n${text}`;
-  });
+  const bodies = splitByBudget(inputs).sent.map(
+    (input) =>
+      `## 来源：${input.source}（${inboxSourceLabels[input.source]}；${SOURCE_HINTS[input.source]}）\n\n${input.text}`,
+  );
   return [
     `你在帮一名中南大学邓迪国际学院（DIICSU）的学生整理他各渠道收到的新消息。现在是 ${now}（北京时间 UTC+8）。`,
     ...profileLines(profile),
@@ -244,12 +294,15 @@ export function configuredTriageModel(): string | null {
 /** 用第一个可用提供商发一次无工具请求。 */
 async function complete(
   prompt: string,
-): Promise<{ text: string; model: string; usage: ModelUsage } | null> {
+  stillAllowed: () => boolean,
+): Promise<{ text: string; model: string; usage: ModelUsage } | null | 'withdrawn'> {
   const provider = usableLlmProviders()[0];
   const modelId = provider && triageModel(provider.models);
   if (!provider || !modelId) return null;
   const { model } = await resolveModel({ provider, model: modelId, effort: null });
   const { completeSimple } = await import('@earendil-works/pi-ai/compat');
+  // 准备模型要时间，学生可能刚关掉开关：真正发出前再确认一次。
+  if (!stillAllowed()) return 'withdrawn';
   const reply = await completeSimple(
     model,
     { messages: [{ role: 'user', content: prompt, timestamp: Date.now() }] },
@@ -276,13 +329,16 @@ export async function triageInbox(
   dir: string,
   inputs: readonly InboxInput[],
   profile: InboxProfile,
+  stillAllowed: () => boolean = () => true,
 ): Promise<InboxTriageResult> {
   const now = Date.now();
-  const reply = await complete(inboxPrompt(inputs, profile, formatTime(now)));
-  if (reply === null) return { status: 'no-model', items: [], todos: 0, model: null };
+  const { sent, rest } = splitByBudget(inputs);
+  const reply = await complete(inboxPrompt(sent, profile, formatTime(now)), stillAllowed);
+  if (reply === 'withdrawn') return { status: 'withdrawn', items: [], todos: 0, model: null, rest };
+  if (reply === null) return { status: 'no-model', items: [], todos: 0, model: null, rest };
   const parsed = parseInboxItems(reply.text);
   if (!parsed)
-    return { status: 'failed', items: [], todos: 0, model: reply.model, usage: reply.usage };
+    return { status: 'failed', items: [], todos: 0, model: reply.model, usage: reply.usage, rest };
   const important = dedupeItems(parsed.filter((item) => isImportant(item, now)));
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, '待办提取.md'), inboxMarkdown(important, now));
@@ -309,5 +365,6 @@ export async function triageInbox(
     todos: added.length,
     model: reply.model,
     usage: reply.usage,
+    rest,
   };
 }

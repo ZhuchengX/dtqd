@@ -44,7 +44,9 @@ describe('outlook-web store', () => {
     );
     const first = rowsSince(undefined);
     expect(first.labels).toHaveLength(20);
-    expect(first.labels[0]).toBe('邮件 m0');
+    // 交给提取时旧的在前，超长时留下末尾的新邮件。
+    expect(first.labels.at(-1)).toBe('邮件 m0');
+    expect(first.labels[0]).toBe('邮件 m19');
     saveRows([row('fresh'), row('m0')], AT);
     const next = rowsSince(first.cursor);
     expect(next.labels).toEqual(['邮件 fresh']);

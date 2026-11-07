@@ -40,6 +40,7 @@ export const runStatusLabels: Record<InboxRunStatus, string> = {
   failed: '提取失败，下次自动重试',
   off: 'AI 提取已关闭，只同步到本机',
   'nothing-new': '没有新消息',
+  withdrawn: '开关刚改过，这次没有发送，下次按新开关提取',
 };
 
 /** 「刚刚 / 12 分钟前 / 3 小时前 / 10-30 14:05」。 */

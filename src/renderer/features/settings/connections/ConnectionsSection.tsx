@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Dialog } from 'radix-ui';
-import { CalendarDays, GraduationCap, Mail, type LucideIcon } from 'lucide-react';
+import { CalendarDays, GraduationCap, Mail, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { ShuiyuanIcon } from '../../../components/ui/shuiyuan-icon';
 import {
@@ -13,6 +13,7 @@ import {
 import { cn } from '../../../lib/utils';
 import type { MailTrashRetention } from '../../../../shared/api';
 import { CanvasTokenForm } from './CanvasTokenForm';
+import { MicrosoftDisconnectDialog } from './MicrosoftDisconnectDialog';
 import { SectionHeader } from '../SectionHeader';
 import { SettingsGroup } from '../SettingsGroup';
 import { errorText, useWorkspaceStore } from '../../../workspace/store';
@@ -40,7 +41,7 @@ type Connection = {
   extra?: ReactNode;
 };
 
-/** 设置 › 连接：Canvas、邮箱、教务、水源四张连接卡的容器。 */
+/** 设置 › 连接：Canvas、Teams 与邮箱、学校邮箱、教务、水源连接卡的容器。 */
 export function ConnectionsSection({
   onOpenMail,
   onOpenShuiyuan,
@@ -48,6 +49,9 @@ export function ConnectionsSection({
 }: ConnectionsSectionProps) {
   const canvas = useWorkspaceStore((state) => state.canvas);
   const [mailAddress, setMailAddress] = useState<string | null>(null);
+  const [outlookConnected, setOutlookConnected] = useState(false);
+  const [microsoft, setMicrosoft] = useState({ connected: false, hasData: false });
+  const [microsoftDialog, setMicrosoftDialog] = useState(false);
   const [trashRetention, setTrashRetention] = useState<MailTrashRetention | null>(null);
   const [timetableSyncedAt, setTimetableSyncedAt] = useState<string | null>(null);
   const [shuiyuanUser, setShuiyuanUser] = useState<string | null>(null);
@@ -61,10 +65,18 @@ export function ConnectionsSection({
     const dela = window.dela;
     if (!dela) return undefined;
     let active = true;
-    void Promise.all([dela.mail.getState(), dela.timetable.getState(), dela.shuiyuan.getState()])
-      .then(([mailState, timetableState, shuiyuanState]) => {
+    void Promise.all([
+      dela.mail.getState(),
+      dela.timetable.getState(),
+      dela.shuiyuan.getState(),
+      dela.outlookWeb.getState(),
+      dela.teams.connection(),
+    ])
+      .then(([mailState, timetableState, shuiyuanState, outlookState, microsoftState]) => {
         if (!active) return;
         setMailAddress(mailState.account?.address ?? null);
+        setOutlookConnected(outlookState.connected);
+        setMicrosoft(microsoftState);
         setTimetableSyncedAt(timetableState.lastSyncedAt);
         setShuiyuanUser(shuiyuanState.connected ? shuiyuanState.username : null);
         if (mailState.account) {
@@ -143,11 +155,34 @@ export function ConnectionsSection({
       onClick: openDialog,
     },
     {
+      itemId: 'microsoft',
+      name: 'Teams 与 Dundee 邮箱',
+      icon: MessagesSquare,
+      state: microsoft.connected ? '已连接' : '未连接',
+      connected: microsoft.connected,
+      description: '共用一个微软登录，断开时一起退出',
+      actionLabel: microsoft.connected ? '断开' : '打开 Teams',
+      onClick: microsoft.connected
+        ? () => setMicrosoftDialog(true)
+        : () => void window.dela?.teams.open(),
+      // 断开时保留了存档的，之后还能在这里删除。
+      extra:
+        !microsoft.connected && microsoft.hasData ? (
+          <Button onClick={() => setMicrosoftDialog(true)} size="sm" variant="ghost">
+            删除存档
+          </Button>
+        ) : undefined,
+    },
+    {
       itemId: 'mail',
       name: '学校邮箱',
       icon: Mail,
-      state: mailAddress ? `已连接 · ${mailAddress}` : '未配置',
-      connected: Boolean(mailAddress),
+      state: mailAddress
+        ? `已连接 · ${mailAddress}`
+        : outlookConnected
+          ? '已连接 · Outlook 网页版'
+          : '未配置',
+      connected: Boolean(mailAddress) || outlookConnected,
       actionLabel: '前往',
       onClick: onOpenMail,
       // 仅在邮箱已连接且保留期已读取时显示;浏览器预览无 window.dela,自然不渲染。
@@ -301,6 +336,15 @@ export function ConnectionsSection({
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+      <MicrosoftDisconnectDialog
+        connected={microsoft.connected}
+        onClose={() => setMicrosoftDialog(false)}
+        onDisconnected={(connection) => {
+          setMicrosoft(connection);
+          setOutlookConnected(false);
+        }}
+        open={microsoftDialog}
+      />
     </div>
   );
 }

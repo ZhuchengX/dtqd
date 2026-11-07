@@ -96,7 +96,7 @@ export function InboxSection() {
           />
         </SettingRow>
         <SettingRow
-          description="开启后，Teams 私聊也会发给模型服务。私聊含他人发言，不宜发送时请保持关闭。"
+          description="开启后，Teams 私聊也会发给模型服务，聊天时的 Teams 命令也能查询私聊。关闭时聊天仍可能通过通用文件工具读到私聊存档文件。私聊含他人发言，不宜发送时请保持关闭。"
           settingId="inbox-teams-private"
           title="私聊进入提取"
         >
