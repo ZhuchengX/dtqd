@@ -122,6 +122,15 @@ describe('blackboardSubmission', () => {
     expect(status({ status: 'NeedsGrading' })).toBe('submitted');
     expect(status(undefined)).toBe('unknown');
   });
+
+  it('邓迪实际返回的形状：已判分不带 score 字段，已交待判分只有状态', () => {
+    // 2026-11-07 用真实账号只读核对 14 个有截止日期的成绩列：只出现 Graded、NeedsGrading 和无成绩行。
+    const status = (grade?: Record<string, unknown>) =>
+      canvasTodoStatus({ submission: blackboardSubmission(grade) });
+    const base = { changeIndex: 1, columnId: '_1_1', userId: '_2_1', exempt: false };
+    expect(status({ ...base, status: 'Graded', displayGrade: {}, overridden: '' })).toBe('graded');
+    expect(status({ ...base, status: 'NeedsGrading' })).toBe('submitted');
+  });
 });
 
 describe('blackboardTerm', () => {
