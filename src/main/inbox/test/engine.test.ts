@@ -14,6 +14,7 @@ import { addNoticedTodo } from '../../todo';
 import {
   dedupeItems,
   inboxKey,
+  taskSignature,
   inboxMarkdown,
   inboxPrompt,
   isImportant,
@@ -37,6 +38,7 @@ function item(overrides: Partial<InboxItem> = {}): InboxItem {
     source: 'teams',
     course: 'DI12006',
     title: 'DI12006 作业 3 提交',
+    task: '',
     dueAt: '2026-11-05T15:59:00.000Z',
     conversation: 'DI12006 - Statistics › General',
     detail: '在 My Dundee 提交 PDF',
@@ -52,6 +54,7 @@ describe('parseInboxItems', () => {
       {
         kind: 'deadline',
         title: '交作业',
+        task: '',
         dueAt: '2026-11-05T15:59:00.000Z',
         importance: 'medium',
         why: '',
@@ -83,15 +86,38 @@ describe('parseInboxItems', () => {
 });
 
 describe('去重', () => {
-  it('同一门课同一天截止，不同来源、不同措辞算同一件事', () => {
-    const teams = item({ source: 'teams', title: '交统计作业' });
+  it('同一门课同一天同一任务，不同来源、不同措辞算同一件事', () => {
+    const teams = item({ source: 'teams', title: '交统计作业', task: '第三次作业' });
     const mail = item({
       source: 'outlook',
       title: 'DI12006 Assignment 3 提交',
+      task: 'Assignment 3',
       dueAt: '2026-11-05T10:00:00.000Z',
     });
     expect(inboxKey(teams)).toBe(inboxKey(mail));
     expect(dedupeItems([mail, teams])).toEqual([mail]);
+  });
+
+  it('同一门课同一天的不同任务不合并', () => {
+    const report = item({ title: '交实验报告', task: '实验报告' });
+    const quiz = item({ title: '完成测验', task: 'Quiz 2' });
+    expect(dedupeItems([report, quiz])).toEqual([report, quiz]);
+    expect(inboxKey(item({ task: 'Assignment 3' }))).not.toBe(
+      inboxKey(item({ task: 'Assignment 4' })),
+    );
+  });
+
+  it('模型没填任务名时按标题，标题不同就留两条', () => {
+    const first = item({ title: '交实验报告', task: '' });
+    const second = item({ title: '完成测验', task: '' });
+    expect(dedupeItems([first, second])).toEqual([first, second]);
+  });
+
+  it('任务名只有写法差异时归一', () => {
+    const same = ['第三次作业', '作业3', '作业 ３', 'Assignment 3', 'HW3', 'homework-3'];
+    expect(new Set(same.map((name) => taskSignature(name, '')))).toEqual(new Set(['作业3']));
+    expect(taskSignature('DI12006 Quiz 2', 'DI12006')).toBe('测验2');
+    expect(taskSignature('Coursework 2', '')).not.toBe(taskSignature('Assignment 2', ''));
   });
 
   it('不同课程或不同日期不算重复；没有课程代码时按标题', () => {
@@ -236,6 +262,7 @@ describe('triageInbox', () => {
                 source: 'mydundee',
                 course: 'DI12006',
                 title: '交作业',
+                task: 'Assignment 3',
                 dueAt: future,
                 why: '占 20%',
                 conversation: 'Stats',
@@ -246,6 +273,7 @@ describe('triageInbox', () => {
                 source: 'teams',
                 course: 'DI12006',
                 title: '统计作业截止',
+                task: '第三次作业',
                 dueAt: future,
               },
               { kind: 'notice', importance: 'medium', title: '讲座宣传' },
@@ -284,6 +312,36 @@ describe('triageInbox', () => {
       triageInbox(dir, [{ source: 'teams', text: '私聊', private: true }], profile, () => allowed),
     ).resolves.toMatchObject({ status: 'withdrawn', items: [] });
     expect(completeSimple).not.toHaveBeenCalled();
+  });
+
+  it('同课同日两份作业都进待办', async () => {
+    vi.mocked(usableLlmProviders).mockReturnValue([
+      { id: 'p', name: 'p', baseUrl: 'https://x/v1', apiKey: 'k', models: ['m'], enabled: true },
+    ] as never);
+    const due = new Date(Date.now() + 86_400_000).toISOString();
+    const entry = (title: string, task: string) => ({
+      kind: 'deadline',
+      importance: 'high',
+      source: 'mydundee',
+      course: 'DI12006',
+      title,
+      task,
+      dueAt: due,
+    });
+    vi.mocked(completeSimple).mockResolvedValue({
+      stopReason: 'stop',
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            items: [entry('交实验报告', '实验报告'), entry('完成测验', 'Quiz 2')],
+          }),
+        },
+      ],
+    } as never);
+    const result = await triageInbox(dir, [{ source: 'mydundee', text: 'x' }], profile);
+    expect(result.todos).toBe(2);
+    expect(addNoticedTodo).toHaveBeenCalledTimes(2);
   });
 
   it('回复解析不出 JSON 时返回 failed', async () => {

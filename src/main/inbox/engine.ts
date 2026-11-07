@@ -36,6 +36,7 @@ export interface InboxProfile {
 const itemSchema = z.object({
   kind: z.enum(['deadline', 'notice', 'reply']),
   title: z.string().trim().min(1).max(200),
+  task: z.string().trim().max(80).default(''),
   dueAt: z.string().nullable().optional(),
   importance: z.enum(['high', 'medium', 'low']).default('medium'),
   why: z.string().max(300).default(''),
@@ -147,8 +148,8 @@ export function inboxPrompt(
     '- reply：有人直接问这名学生、在等他回复的消息。',
     '每条给 importance：high＝影响成绩、学分、考试资格或有人急等回复；medium＝有用、有截止但影响较小；low＝知道也行不知道也无妨（low 直接不要输出）。',
     '同一件事在多个来源出现时只输出一次，source 填最权威的来源（myDundee 公告 > Outlook > Teams > QQ）。',
-    'title 用中文、20 字以内，写成要做的动作（如「提交 DI12006 作业 3」）。course 填课程代码（如 DI12006），没有就空串。why 用一句中文说为什么对他重要、不做会怎样。conversation 填来源会话、发件人或课程名，detail 用一两句中文写清具体怎么做、原文关键要求与链接。',
-    '只输出一个 JSON 对象，不要别的文字：{"items":[{"kind":"deadline","importance":"high","source":"mydundee","course":"DI12006","title":"…","dueAt":"…","why":"…","conversation":"…","detail":"…"}]}。没有就输出 {"items":[]}。',
+    'title 用中文、20 字以内，写成要做的动作（如「提交 DI12006 作业 3」）。course 填课程代码（如 DI12006），没有就空串。task 填这项任务在课程里的名称，优先用原文的类型和编号（如 Assignment 3、Quiz 2、实验报告），同一任务在不同来源写法一致；同一门课同一天的不同任务必须分开输出。why 用一句中文说为什么对他重要、不做会怎样。conversation 填来源会话、发件人或课程名，detail 用一两句中文写清具体怎么做、原文关键要求与链接。',
+    '只输出一个 JSON 对象，不要别的文字：{"items":[{"kind":"deadline","importance":"high","source":"mydundee","course":"DI12006","title":"…","task":"Assignment 3","dueAt":"…","why":"…","conversation":"…","detail":"…"}]}。没有就输出 {"items":[]}。',
     '',
     '---',
     '',
@@ -183,11 +184,47 @@ function beijingDate(iso: string): string {
   return new Date(Date.parse(iso) + 8 * 3600_000).toISOString().slice(0, 10);
 }
 
-/** 去重键：有课程代码和截止日期时按「类型 + 课程 + 日期」，跨来源、标题措辞不同也认得出；否则按标题。 */
+const TASK_SYNONYMS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/assignments?|homeworks?|(?<![a-z])hw(?![a-z])|作业/g, '作业'],
+  [/quiz(zes)?|小测|测验/g, '测验'],
+  [/(?<![a-z])labs?(?![a-z])|实验/g, '实验'],
+  [/reports?|报告/g, '报告'],
+  [/exams?|考试/g, '考试'],
+];
+const CHINESE_DIGITS: Readonly<Record<string, string>> = {
+  一: '1',
+  二: '2',
+  三: '3',
+  四: '4',
+  五: '5',
+  六: '6',
+  七: '7',
+  八: '8',
+  九: '9',
+};
+
+/** 写法差异算同一份（全半角、大小写、第三次作业≈作业3≈Assignment 3），内容差异不算。 */
+export function taskSignature(name: string, course: string): string {
+  let text = name
+    .normalize('NFKC')
+    .toLowerCase()
+    .replaceAll(course.toLowerCase() || '\0', '');
+  for (const [pattern, word] of TASK_SYNONYMS) text = text.replace(pattern, word);
+  text = text.replace(/[一二三四五六七八九]/g, (digit) => CHINESE_DIGITS[digit]!);
+  const numbers = [...(text.match(/\d+/g) ?? [])].map(Number).sort((a, b) => a - b);
+  const words = text.replace(/第|次|个|[^\p{L}]/gu, '');
+  return `${words}${numbers.join('-')}`;
+}
+
+/**
+ * 去重键。有课程代码和截止日期时按「类型 + 课程 + 日期 + 任务名」，跨来源措辞不同也认得出，
+ * 同一天的实验报告和测验不会合并；对不上时宁可多一条，也不能漏掉截止日期。其余按标题。
+ */
 export function inboxKey(item: InboxItem): string {
+  const task = taskSignature(item.task, item.course) || taskSignature(item.title, item.course);
   const basis =
     item.dueAt && item.course
-      ? `${item.kind}|${item.course}|${beijingDate(item.dueAt)}`
+      ? `${item.kind}|${item.course}|${beijingDate(item.dueAt)}|${task}`
       : `${item.kind}|${item.course}|${item.title}|${item.dueAt ? beijingDate(item.dueAt) : ''}`;
   return createHash('sha256').update(basis).digest('hex').slice(0, 16);
 }
